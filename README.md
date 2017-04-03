@@ -1,2 +1,2 @@
 # OCFit
-Python package for fitting of O-C diagrams.
+Python package for fitting of O-C diagrams of Eclipsing binaries.
