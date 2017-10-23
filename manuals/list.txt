@@ -1,0 +1,2 @@
+navod.pdf - manual/documentation in Slovak
+manual.pdf - manual/documentation in English (comming soon)
