@@ -1,6 +1,6 @@
 #class for Genetic Algorithms
-#version 0.1
-#update: 2.3.2017
+#version 0.1.1
+#update: 12.3.2017
 
 import numpy as np
 import random 

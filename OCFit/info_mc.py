@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 #class for statistics about GA fitting
-#version 0.1
-#update: 14.6.2017 PlotCorr
+#version 0.1.1
+#update: 14.6.2017
 
 import gc #cleaning var from RAM
 

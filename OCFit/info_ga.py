@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 #class for statistics about GA fitting
-#version 0.1
-#update: 17.1.2017
+#version 0.1.1
+#update: 5.4.2017
 
 from pickle import load
 
