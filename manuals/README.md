@@ -4,4 +4,4 @@ List of manuals/documentations:
 
 - manual.pdf - in English
 
-These manual are without any language corrections. If you found mistakes in any of them, please let me know. 
+These manuals are without any language corrections. If you found mistakes in any of them, please let me know. 
