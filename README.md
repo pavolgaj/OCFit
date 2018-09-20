@@ -7,7 +7,7 @@ and used models.
 
 For install it, download/clone this repository or download suitable binary file from releases.
 
-**Not working yet! The first release comming soon...**
+**Not working yet! The first release comming soon... I hope that it will be this year:)**
 
 ### Requirements
 * numpy
