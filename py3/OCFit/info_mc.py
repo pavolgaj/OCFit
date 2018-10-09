@@ -7,7 +7,10 @@
 import gc #cleaning var from RAM
 
 from PyAstronomy.funcFit import TraceAnalysis
-import pymc
+
+try: import pymc
+except: warnings.warn('Module pymc not found! Using FitMC will not be possible!')
+
 import numpy as np
 
 try: import matplotlib.pyplot as mpl
