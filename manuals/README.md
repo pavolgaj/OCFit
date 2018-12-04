@@ -1,5 +1,7 @@
 List of manuals/documentations:
 
+- gui.pdf - short presentation about GUI (in English)
+
 - navod.pdf - in Slovak
 
 - manual.pdf - in English
