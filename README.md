@@ -7,7 +7,7 @@ and used models.
 
 For install it, download/clone this repository or download suitable binary file from releases.
 
-**Not working yet! The first release comming soon... I hope that it will be this year:)**
+**OCFit class is fully available! :) GUI will be published later this week. I also plan to build windows installer and exe version of GUI.**
 
 ### Requirements
 * numpy
