@@ -7,8 +7,6 @@ and used models.
 
 For install it, download/clone this repository or download suitable binary file from releases.
 
-**OCFit class is fully available! :) GUI will be published later this week. I also plan to build windows installer and exe version of GUI.**
-
 ### Requirements
 * numpy
 * matplotlib
