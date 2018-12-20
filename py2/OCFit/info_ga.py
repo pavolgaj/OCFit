@@ -3,6 +3,7 @@
 #class for statistics about GA fitting
 #version 0.1.1
 #update: 5.4.2017
+# (c) Pavol Gajdos, 2018
 
 from pickle import load
 
@@ -53,7 +54,7 @@ class InfoGA():
             f.close()
             
         
-    def PlotChi2(self,best=True,mean=True,besti=False,mini=False,maxi=False,i=None,full=False):
+    def PlotChi2(self,best=True,mean=True,besti=False,mini=False,maxi=False,i=None,full=False,log=True):
         '''plot chi2 error for best (Global), mean, best, minimal or maximal value in each generation or for selected individual or for all individuals'''
         plot=[]
         
@@ -101,7 +102,8 @@ class InfoGA():
             mpl.figure()
             mpl.xlabel('Number of generations')
             mpl.ylabel(r'$\chi^2$ error') 
-            mpl.plot(self.chi2)
+            if log:  mpl.semilogy(self.chi2)
+            else: mpl.plot(self.chi2)
             
         if len(plot)>0:
             x=np.arange(1,self.info['gen']+1,1)
@@ -109,7 +111,8 @@ class InfoGA():
             mpl.xlabel('Number of generations')
             mpl.ylabel(r'$\chi^2$ error')            
             for pl in plot: 
-                mpl.plot(x,pl[1],label=pl[0])
+                if log:  mpl.semilogy(x,pl[1],label=pl[0])
+                else: mpl.plot(x,pl[1],label=pl[0])
             mpl.legend()
             return plot
             

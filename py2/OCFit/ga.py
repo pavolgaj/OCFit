@@ -1,6 +1,7 @@
 #class for Genetic Algorithms
 #version 0.1.1
 #update: 12.3.2017
+# (c) Pavol Gajdos, 2018
 
 import numpy as np
 import random 

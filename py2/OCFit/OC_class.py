@@ -2,7 +2,8 @@
 
 #main classes of OCFit package
 #version 0.1.1
-#update: 18.12.2018  
+#update: 18.12.2018 
+# (c) Pavol Gajdos, 2018 
 
 from time import time
 import sys
