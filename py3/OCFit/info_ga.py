@@ -3,6 +3,7 @@
 #class for statistics about GA fitting
 #version 0.1.1
 #update: 5.4.2017
+# (c) Pavol Gajdos, 2018
 
 from pickle import load
 
