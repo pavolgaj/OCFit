@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
 #main file for GUI for OCFit class
-#update: 20.12.2018 
-# (c) Pavol Gajdos, 2018
+#update: 31.1.2019
+# (c) Pavol Gajdos, 2018-2019
 
 import tkinter as tk
 import tkinter.ttk
