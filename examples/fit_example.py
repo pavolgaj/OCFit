@@ -17,8 +17,11 @@ err = 0.01*np.ones(E.shape)  #errors of 'observed' times
 lin = FitLinear(t, t0, P, err = err)
 oc = lin.oc  #O-C calculated from original ephemeris
 
-# WARNING! FitLinear sorts input data. "oc" is sorted now! Combination of
-# sorted and unsorted data ("t", "err") leads to bad O-C diagram.
+#WARNING! FitLinear sorts input data. "oc" is sorted now! Combination of
+#sorted and unsorted data ("t", "err") leads to bad O-C diagram.
+#Next to lines sort all data.
+t=t[lin._order]
+err=err[lin._order]
 
 #initialization of class OCFit and O-C calculated using FitLinear
 fit=OCFit(t,oc,err = err)
