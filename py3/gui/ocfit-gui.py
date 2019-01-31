@@ -12,6 +12,8 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as mpl
 
+import numpy as np
+
 import subprocess
 
 import os,sys
@@ -487,6 +489,8 @@ def save0():
     oc=OCFit.FitLinear(data['tO'],t0,P,err=err)
     if weight: oc._set_err=False
     
+    for x in data: data[x]=np.array(data[x])[simple._order]   #save sorted values
+    
     f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save O-C to file',filetypes=[('Data files','*.dat *.txt'),('All files','*.*')],defaultextension='.dat')
     if len(f)==0: return
     
@@ -524,6 +528,7 @@ def lin():
     simple.FitLinear()
     
     #save results
+    for x in data: data[x]=np.array(data[x])[simple._order]   #save sorted values
     data['oc']=simple.new_oc
     data['tC']=simple.tC
     t0Var.set(simple.t0)
@@ -565,6 +570,7 @@ def quad():
     simple.FitQuad()
     
     #save results
+    for x in data: data[x]=np.array(data[x])[simple._order]   #save sorted values
     data['oc']=simple.new_oc
     data['tC']=simple.tC
     t0Var.set(simple.t0)
@@ -646,6 +652,7 @@ def initC():
         P=float(pVar.get())
     
         lin=OCFit.FitLinear(data['tO'],t0,P)  
+        for x in data: data[x]=np.array(data[x])[simple._order]   #save sorted values
         data['oc']=lin.oc
     
     if not 'tO' in data: data['tO']=[data['tC'][i]+data['oc'][i] for i in range(len(data['oc']))]  
