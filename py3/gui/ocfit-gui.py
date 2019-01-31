@@ -451,7 +451,7 @@ def plot0():
         err=data['err']
     else:
         weight=True
-        err=[1 for x in range(len(data['oc']))]    
+        err=[1 for x in range(len(data['tO']))]    
 
     oc=OCFit.FitLinear(data['tO'],t0,P,err=err)
     if weight: oc._set_err=False
@@ -484,7 +484,7 @@ def save0():
         err=data['err']
     else:
         weight=True
-        err=[1 for x in range(len(data['oc']))]    
+        err=[1 for x in range(len(data['tO']))]    
 
     oc=OCFit.FitLinear(data['tO'],t0,P,err=err)
     if weight: oc._set_err=False
@@ -519,7 +519,7 @@ def lin():
         err=data['err']
     else:
         weight=True
-        err=[1 for x in range(len(data['oc']))]
+        err=[1 for x in range(len(data['tO']))]
     
 
     simple=OCFit.FitLinear(data['tO'],t0,P,err=err)
@@ -562,7 +562,7 @@ def quad():
         err=data['err']
     else:
         weight=True
-        err=[1 for x in range(len(data['oc']))]
+        err=[1 for x in range(len(data['tO']))]
         
     simple=OCFit.FitQuad(data['tO'],t0,P,err=err)
     if weight: simple._set_err=False    
@@ -664,7 +664,7 @@ def initC():
         err=[1./x for x in data['w']]
     elif not 'err' in data and not 'w' in data:
         weight=True
-        err=[1 for x in range(len(data['oc']))]
+        err=[1 for x in range(len(data['tO']))]
     else: err=data['err']
     
     ocf=OCFit.OCFit(data['tO'],data['oc'],err)
