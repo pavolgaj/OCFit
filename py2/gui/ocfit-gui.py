@@ -489,7 +489,7 @@ def save0():
     oc=OCFit.FitLinear(data['tO'],t0,P,err=err)
     if weight: oc._set_err=False
     
-    for x in data: data[x]=np.array(data[x])[simple._order]   #save sorted values
+    for x in data: data[x]=np.array(data[x])[oc._order]   #save sorted values
     
     f=tkFileDialog.asksaveasfilename(parent=master,title='Save O-C to file',filetypes=[('Data files','*.dat *.txt'),('All files','*.*')],defaultextension='.dat')
     if len(f)==0: return
