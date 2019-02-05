@@ -274,7 +274,7 @@ class SimpleFit():
         trans_weight - transform weights to range (1,10)
         bw - Black&White plot
         double_ax - two axes -> time and epoch
-        fig_size - costum figure size - e.g. (12,6)
+        fig_size - custom figure size - e.g. (12,6)
         
         warning: weights have to be in same order as input data!
         '''
@@ -415,7 +415,7 @@ class SimpleFit():
         trans_weight - transform weights to range (1,10)
         bw - Black&White plot
         double_ax - two axes -> time and epoch
-        fig_size - costum figure size - e.g. (12,6)
+        fig_size - custom figure size - e.g. (12,6)
         
         warning: weights have to be in same order as input data!
         '''
@@ -2171,7 +2171,7 @@ class OCFit(ComplexFit):
         bw - Black&White plot
         double_ax - two axes -> time and epoch
         legend - labels for data and model(s) - give '' if no show label, 2nd model given in "params" is the last
-        fig_size - costum figure size - e.g. (12,6)
+        fig_size - custom figure size - e.g. (12,6)
         
         warning: weights have to be in same order as input data!
         '''
@@ -2436,7 +2436,7 @@ class OCFit(ComplexFit):
         trans_weight - transform weights to range (1,10)
         bw - Black&White plot
         double_ax - two axes -> time and epoch
-        fig_size - costum figure size - e.g. (12,6)
+        fig_size - custom figure size - e.g. (12,6)
         
         warning: weights have to be in same order as input data!
         '''
