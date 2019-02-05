@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 #main classes of OCFit package
-#version 0.1.1
-#update: 18.12.2018  
-# (c) Pavol Gajdos, 2018
+#version 0.1.2
+#update: 5.2.2019
+# (c) Pavol Gajdos, 2018-2019
 
 from time import time
 import sys
@@ -256,7 +256,8 @@ class SimpleFit():
 
     def PlotRes(self,name='',no_plot=0,no_plot_err=0,eps=False,oc_min=True,
                 time_type='JD',offset=2400000,trans=True,title='',epoch=False,
-                min_type=False,weight=[],trans_weight=False,bw=False,double_ax=False):
+                min_type=False,weight=[],trans_weight=False,bw=False,double_ax=False,
+                fig_size=None):
         '''plotting residue (new O-C)
         name - name of file to saving plot (if not given -> show graph)
         no_plot - count of outlier point which will not be plot
@@ -273,11 +274,16 @@ class SimpleFit():
         trans_weight - transform weights to range (1,10)
         bw - Black&White plot
         double_ax - two axes -> time and epoch
+        fig_size - costum figure size - e.g. (12,6)
         
-        warning: weights have to be in same order as input date!
+        warning: weights have to be in same order as input data!
         '''
 
-        fig=mpl.figure()
+       if fig_size:
+            fig=mpl.figure(figsize=fig_size)
+        else:
+            fig=mpl.figure()
+            
         ax1=fig.add_subplot(111)
         #setting labels
         if epoch and not double_ax:
@@ -391,7 +397,8 @@ class SimpleFit():
 
     def Plot(self,name='',no_plot=0,no_plot_err=0,eps=False,oc_min=True,
              time_type='JD',offset=2400000,trans=True,title='',epoch=False,
-             min_type=False,weight=[],trans_weight=False,bw=False,double_ax=False):
+             min_type=False,weight=[],trans_weight=False,bw=False,double_ax=False,
+             fig_size=None):
         '''plotting original O-C with linear fit
         name - name of file to saving plot (if not given -> show graph)
         no_plot - count of outlier point which will not be plot
@@ -408,10 +415,16 @@ class SimpleFit():
         trans_weight - transform weights to range (1,10)
         bw - Black&White plot
         double_ax - two axes -> time and epoch
-        warning: weights have to be in same order as input date!
+        fig_size - costum figure size - e.g. (12,6)
+        
+        warning: weights have to be in same order as input data!
         '''
 
-        fig=mpl.figure()
+        if fig_size:
+            fig=mpl.figure(figsize=fig_size)
+        else:
+            fig=mpl.figure()
+            
         ax1=fig.add_subplot(111)
         #setting labels
         if epoch and not double_ax:
@@ -2137,7 +2150,7 @@ class OCFit(ComplexFit):
     def Plot(self,name='',no_plot=0,no_plot_err=0,params={},eps=False,oc_min=True,
              time_type='JD',offset=2400000,trans=True,title='',epoch=False,
              min_type=False,weight=[],trans_weight=False,model2=False,with_res=False,
-             bw=False,double_ax=False,legend=[]):
+             bw=False,double_ax=False,legend=[],fig_size=None):
         '''plotting original O-C with model O-C based on current parameters set
         name - name of file to saving plot (if not given -> show graph)
         no_plot - number of outlier point which will not be plot
@@ -2158,8 +2171,9 @@ class OCFit(ComplexFit):
         bw - Black&White plot
         double_ax - two axes -> time and epoch
         legend - labels for data and model(s) - give '' if no show label, 2nd model given in "params" is the last
+        fig_size - costum figure size - e.g. (12,6)
         
-        warning: weights have to be in same order as input date!
+        warning: weights have to be in same order as input data!
         '''
         if epoch:
             if not len(self.epoch)==len(self.t):
@@ -2175,9 +2189,13 @@ class OCFit(ComplexFit):
             legend=['','','']
             show_legend=False
         else: show_legend=True
+        
+        if fig_size:
+            fig=mpl.figure(figsize=fig_size)
+        else:
+            fig=mpl.figure()
             
         #2 plots - for residue
-        fig=mpl.figure()
         if with_res:    
             gs=gridspec.GridSpec(2,1,height_ratios=[4,1])
             ax1=fig.add_subplot(gs[0])
@@ -2399,7 +2417,8 @@ class OCFit(ComplexFit):
 
     def PlotRes(self,name='',no_plot=0,no_plot_err=0,params={},eps=False,oc_min=True,
                 time_type='JD',offset=2400000,trans=True,title='',epoch=False,
-                min_type=False,weight=[],trans_weight=False,bw=False,double_ax=False):
+                min_type=False,weight=[],trans_weight=False,bw=False,double_ax=False,
+                fig_size=None):
         '''plotting residue (new O-C)
         name - name of file to saving plot (if not given -> show graph)
         no_plot - count of outlier point which will not be plot
@@ -2417,8 +2436,9 @@ class OCFit(ComplexFit):
         trans_weight - transform weights to range (1,10)
         bw - Black&White plot
         double_ax - two axes -> time and epoch
+        fig_size - costum figure size - e.g. (12,6)
         
-        warning: weights have to be in same order as input date!
+        warning: weights have to be in same order as input data!
         '''
 
         if epoch:
@@ -2427,7 +2447,11 @@ class OCFit(ComplexFit):
 
         if len(params)==0: params=self.params
             
-        fig=mpl.figure()
+        if fig_size:
+            fig=mpl.figure(figsize=fig_size)
+        else:
+            fig=mpl.figure()
+            
         ax1=fig.add_subplot(1,1,1)
         ax1.yaxis.set_label_coords(-0.11,0.5)
         
