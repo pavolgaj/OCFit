@@ -279,7 +279,7 @@ class SimpleFit():
         warning: weights have to be in same order as input data!
         '''
 
-       if fig_size:
+        if fig_size:
             fig=mpl.figure(figsize=fig_size)
         else:
             fig=mpl.figure()
