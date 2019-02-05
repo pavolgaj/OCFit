@@ -13,7 +13,7 @@ if not py_version==(2,7):
 #requires=['numpy==1.10.2','matplotlib==1.5.0','PyAstronomy==0.9.0','pymc==2.3.6']
 
 dist=setup(name="OCFit",
-      version="0.1.1",
+      version="0.1.2",
       description="Fitting O-C diagrams",
       author="Pavol Gajdos",
       classifiers=[
