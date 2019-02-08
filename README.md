@@ -1,6 +1,7 @@
 # OCFit
 [![DOI](https://zenodo.org/badge/56975408.svg)](https://zenodo.org/badge/latestdoi/56975408)
 [![DOI](https://img.shields.io/badge/ascl-1901.002-blue.svg?colorB=262255)](http://ascl.net/1901.002)
+[![Coverage Status](https://coveralls.io/repos/github/pavolgaj/OCFit/badge.svg?branch=master)](https://coveralls.io/github/pavolgaj/OCFit?branch=master)
 
 Python package OCFit includes 4 classes for analysis and fitting of O-C diagrams of Eclipsing binaries
 
