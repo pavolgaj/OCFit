@@ -21,3 +21,7 @@ Windows). The following procedure is only for installation from the source code.
 files and go to new-created folder. Running script ``setup.py`` the installation will be done:
 
 ``python setup.py install``
+
+Or using pip:
+
+``python pip install OCFit``
