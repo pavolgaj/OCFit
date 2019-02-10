@@ -1,5 +1,5 @@
 # OCFit
-[![DOI](https://zenodo.org/badge/56975408.svg)](https://zenodo.org/badge/latestdoi/56975408)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.2561300.svg)](https://doi.org/10.5281/zenodo.2561300)
 [![DOI](https://img.shields.io/badge/ascl-1901.002-blue.svg?colorB=262255)](http://ascl.net/1901.002)
 [![PyPI version](https://badge.fury.io/py/ocfit.svg)](https://badge.fury.io/py/ocfit)
 
