@@ -27,7 +27,7 @@ lin.Summary() #summary of parameters
 #plot of original values of O-C with fit, without transformation of x axis
 lin.Plot(trans = False)
 #plot of residual O-C, without transformation of x axis
-lin.PlotRes(trans = False)   
+lin.PlotRes(trans = False)
 
 #usage of class FitQuad
 #as estimation of linear ephemeris the resault from FitLinear are used
@@ -43,4 +43,4 @@ quad.Summary() #summary of parameters
 #plot of original values of O-C with fit, without transformation of x axis
 quad.Plot(trans = False)
 #plot of residual O-C, without transformation of x axis
-quad.PlotRes(trans = False)   
+quad.PlotRes(trans = False)
