@@ -89,6 +89,6 @@ class TPopul:
         
         #reversing population
         for i in range(self.size): self.p[i]=dict(self.o[i])
-        
+
         #applying mutation
         for mut in range(self.n_mut): self.Mutation(random.randint(0,self.size-1))
