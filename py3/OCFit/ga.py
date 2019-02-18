@@ -4,7 +4,7 @@
 # (c) Pavol Gajdos, 2018
 
 import numpy as np
-import random 
+import random
 
 class TPopul:
     '''class for Genetic Algorithms'''
@@ -16,7 +16,7 @@ class TPopul:
         self.steps=steps    #variation of Gauss distribution for changing of params
         self.limits=limits   #limits of parameters
         self.edge=[]        #edges for roulette wheel
-        
+
         #creating of population
         self.p=[]
         self.o=[]
@@ -29,13 +29,13 @@ class TPopul:
 
         #create sectors for roulette wheel (selective pressure) for crossing generations
         #given by Razali, N. M., Geraghty, J., 2011, Lect. Notes in Eng. Comp. Sci., 2191, 1134
-        self.sectors=[]        
+        self.sectors=[]
         for i in range(self.size,0,-1): self.sectors.append(2-SP+2*(SP-1)*(i-1)/float(size-1))
-        
+
 
     def Roulette(self,objfun):
         '''creating roulette wheel for crossing generations'''
-        rank=np.argsort(objfun)       
+        rank=np.argsort(objfun)
         self.edge=np.zeros(self.size)
         self.edge[rank]=self.sectors
         for i in range(1,self.size): self.edge[i]+=self.edge[i-1]
@@ -44,7 +44,7 @@ class TPopul:
     def Rand(self):
         '''select individual from population according to slot in roulette wheel'''
         temp=np.random.rand()
-        i=np.where(temp<self.edge)[0][0]        
+        i=np.where(temp<self.edge)[0][0]
         return i
 
     def Cross(self,p1,p2):
@@ -86,11 +86,9 @@ class TPopul:
             self.o[i]=dict(o[0])
             self.o[i+1]=dict(o[1])
             i+=2
-        
+
         #reversing population
         for i in range(self.size): self.p[i]=dict(self.o[i])
-        
+
         #applying mutation
         for mut in range(self.n_mut): self.Mutation(random.randint(0,self.size-1))
-
-
