@@ -2,7 +2,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.2547766.svg)](https://doi.org/10.5281/zenodo.2547766)
 [![DOI](https://img.shields.io/badge/ascl-1901.002-blue.svg?colorB=262255)](http://ascl.net/1901.002)
 [![PyPI version](https://img.shields.io/pypi/v/ocfit.svg?colorB=green&style=flat)](https://pypi.org/project/OCFit/)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/c2dcabe3c2784395a7c5b12a0d648538)](https://app.codacy.com/app/pavolgaj/OCFit?utm_source=github.com&utm_medium=referral&utm_content=pavolgaj/OCFit&utm_campaign=Badge_Grade_Dashboard)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/43bfcc1eb43940b0b5125ea7b494d12a)](https://www.codacy.com/app/pavolgaj/OCFit?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=pavolgaj/OCFit&amp;utm_campaign=Badge_Grade)
 
 ![](https://img.shields.io/github/languages/top/pavolgaj/ocfit.svg?style=flat)
 ![](https://img.shields.io/github/downloads/pavolgaj/ocfit/total.svg?label=GitHub&nbsp;downloads&style=flat)
