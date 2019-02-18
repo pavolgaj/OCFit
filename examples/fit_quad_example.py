@@ -4,7 +4,7 @@ import numpy as np
 #generate data
 E = np.arange(0, 100, 1)  #epochs
 #simulation of observed times
-t = 1e-5*E**2+15*E + 1540.4 + np.random.normal(scale = 0.01, size = E.shape) 
+t = 1e-5*E**2+15*E + 1540.4 + np.random.normal(scale = 0.01, size = E.shape)
 err = 0.01*np.ones(E.shape)  #errors of 'observed' times
 
 #usage of FitLinear to first estimation of linear ephemeris
