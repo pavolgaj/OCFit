@@ -4,8 +4,8 @@
 [![PyPI version](https://img.shields.io/pypi/v/ocfit.svg?colorB=green&style=flat)](https://pypi.org/project/OCFit/)
 
 ![](https://img.shields.io/github/languages/top/pavolgaj/ocfit.svg?style=flat)
-![](https://img.shields.io/github/downloads/pavolgaj/ocfit/total.svg?style=flat)
-![](https://img.shields.io/pypi/dm/ocfit.svg?style=flat)
+![](https://img.shields.io/github/downloads/pavolgaj/ocfit/total.svg?label=GitHub&nbsp;downloads&style=flat)
+![](https://img.shields.io/pypi/dm/ocfit.svg?label=PyPI&nbsp;downloads&style=flat)
 ![](https://img.shields.io/github/issues/pavolgaj/ocfit.svg?style=flat)
 ![](https://img.shields.io/github/issues-closed/pavolgaj/ocfit.svg?style=flat)
 
