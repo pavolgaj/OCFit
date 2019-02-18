@@ -41,7 +41,7 @@ fit.Summary()
 #fitting using MCMC without displaying fitting progress
 fit.FitMCMC(1e3,visible=False)
 #sumarry of results after MC
-fit.Summary() 
+fit.Summary()
 
 #plotting figure
 #figure with original O-C with fit without transformation of x axis
