@@ -1,6 +1,6 @@
 try: from setuptools import setup
 except ImportError: from distutils.core import setup
-    
+
 import sys
 
 py_version = sys.version_info[0]
