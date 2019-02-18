@@ -86,7 +86,7 @@ class TPopul:
             self.o[i]=dict(o[0])
             self.o[i+1]=dict(o[1])
             i+=2
-        
+
         #reversing population
         for i in range(self.size): self.p[i]=dict(self.o[i])
 
