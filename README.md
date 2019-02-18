@@ -3,6 +3,13 @@
 [![DOI](https://img.shields.io/badge/ascl-1901.002-blue.svg?colorB=262255)](http://ascl.net/1901.002)
 [![PyPI version](https://img.shields.io/pypi/v/ocfit.svg?colorB=green&style=flat)](https://pypi.org/project/OCFit/)
 
+![](https://img.shields.io/github/languages/top/pavolgaj/ocfit.svg?style=flat)
+![](https://img.shields.io/github/downloads/pavolgaj/ocfit/total.svg?style=flat)
+![](https://img.shields.io/pypi/dm/ocfit.svg?style=flat)
+![](https://img.shields.io/github/issues/pavolgaj/ocfit.svg?style=flat)
+![](https://img.shields.io/github/issues-closed/pavolgaj/ocfit.svg?style=flat)
+
+
 Python package OCFit includes 4 classes for analysis and fitting of O-C diagrams of Eclipsing binaries
 
 In a case of using this package for scientific purposes, please, cite our paper Gajdoš &
