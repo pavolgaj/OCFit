@@ -6,8 +6,7 @@ E = np.arange(0, 100, 1)  #epochs
 #simulation of observed times, LiTE with amplitude 72 min. and period 1125 d
 P = 15
 t0 = 1540
-t = P*E + t0 + 0.05*np.sin(2*np.pi/(5*P)*E)
-    + np.random.normal(scale = 0.01, size = E.shape) 
+t = P*E + t0 + 0.05*np.sin(2*np.pi/(5*P)*E) + np.random.normal(scale = 0.01, size = E.shape)
 err = 0.01*np.ones(E.shape)  #errors of 'observed' times
 
 #usage of FitLinear for calculation of O-C
