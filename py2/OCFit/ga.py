@@ -16,7 +16,7 @@ class TPopul:
         self.steps=steps    #variation of Gauss distribution for changing of params
         self.limits=limits   #limits of parameters
         self.edge=[]        #edges for roulette wheel
- 
+
         #creating of population
         self.p=[]
         self.o=[]
