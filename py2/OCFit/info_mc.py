@@ -120,9 +120,10 @@ class InfoMC():
         gc.collect() #cleaning RAM...
 
 
-    def ConfidInt(self,nbins=20,points=True,levels=[0.6827,0.9545],params=None):
+    def ConfidInt(self,nbins=20,points=True,levels=None,params=None):
         '''plot of Confidence Regions for 1 sigma=0.6827 and 2 sigma = 0.9545 (or 3 sigma = 0.9973)'''
         if params is None: params=self.ta.availableParameters()
+        if levels is None: levels=[0.6827,0.9545]
         traces={}
         for p in params: traces[p]=self.ta[p]
         fontmap={1:10,2:8,3:6,4:5,5:4}
