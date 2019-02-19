@@ -621,7 +621,7 @@ class FitLinear(SimpleFit):
         self._mcmc=False
         return self.new_oc
         
-    def FitMCMC(self,n_iter,limits,steps,fit_params=['P','t0'],burn=0,binn=1,visible=True,db=''):
+    def FitMCMC(self,n_iter,limits,steps,fit_params=None,burn=0,binn=1,visible=True,db=''):
         '''fitting with Markov chain Monte Carlo
         n_iter - number of MC iteration - should be at least 1e5
         limits - limits of parameters for fitting
@@ -634,6 +634,7 @@ class FitLinear(SimpleFit):
         '''
 
         #setting pymc sampling for fitted parameters
+        if fit_params is None: fit_params=['P','t0']
         vals0={'P': self._t0P[1], 't0': self._t0P[0]}
         vals={}        
         pars={}
@@ -782,7 +783,7 @@ class FitQuad(SimpleFit):
         self._mcmc=False
         return self.new_oc
         
-    def FitMCMC(self,n_iter,limits,steps,fit_params=['Q','P','t0'],burn=0,binn=1,visible=True,db=''):
+    def FitMCMC(self,n_iter,limits,steps,fit_params=None,burn=0,binn=1,visible=True,db=''):
         '''fitting with Markov chain Monte Carlo
         n_iter - number of MC iteration - should be at least 1e5
         limits - limits of parameters for fitting
@@ -795,6 +796,7 @@ class FitQuad(SimpleFit):
         '''
 
         #setting pymc sampling for fitted parameters
+        if fit_params is None: fit_params=['Q','P','t0']
         vals0={'P': self._t0P[1], 't0': self._t0P[0], 'Q':0}
         vals={}        
         pars={}
@@ -2153,10 +2155,10 @@ class OCFit(ComplexFit):
 
 
 
-    def Plot(self,name='',no_plot=0,no_plot_err=0,params={},eps=False,oc_min=True,
+    def Plot(self,name='',no_plot=0,no_plot_err=0,params=None,eps=False,oc_min=True,
              time_type='JD',offset=2400000,trans=True,title='',epoch=False,
-             min_type=False,weight=[],trans_weight=False,model2=False,with_res=False,
-             bw=False,double_ax=False,legend=[],fig_size=None):
+             min_type=False,weight=None,trans_weight=False,model2=False,with_res=False,
+             bw=False,double_ax=False,legend=None,fig_size=None):
         '''plotting original O-C with model O-C based on current parameters set
         name - name of file to saving plot (if not given -> show graph)
         no_plot - number of outlier point which will not be plot
@@ -2186,12 +2188,12 @@ class OCFit(ComplexFit):
                 raise NameError('Epoch not callculated! Run function "Epoch" before it.')
 
         if model2:
-            if len(params)==0:
+            if params is None:
                 raise ValueError('Parameters set for 2nd model not given!')
             params_model=dict(params)
             params=self.params
-        if len(params)==0: params=self.params
-        if len(legend)==0: 
+        if params is None: params=self.params
+        if legend is None: 
             legend=['','','']
             show_legend=False
         else: show_legend=True
@@ -2250,7 +2252,7 @@ class OCFit(ComplexFit):
 
         #set weight
         set_w=False
-        if len(weight)>0:
+        if weight is not None:
             weight=np.array(weight)[self._order]
             if trans_weight:
                 w_min=min(weight)
@@ -2421,9 +2423,9 @@ class OCFit(ComplexFit):
             mpl.close(fig)
 
 
-    def PlotRes(self,name='',no_plot=0,no_plot_err=0,params={},eps=False,oc_min=True,
+    def PlotRes(self,name='',no_plot=0,no_plot_err=0,params=None,eps=False,oc_min=True,
                 time_type='JD',offset=2400000,trans=True,title='',epoch=False,
-                min_type=False,weight=[],trans_weight=False,bw=False,double_ax=False,
+                min_type=False,weight=None,trans_weight=False,bw=False,double_ax=False,
                 fig_size=None):
         '''plotting residue (new O-C)
         name - name of file to saving plot (if not given -> show graph)
@@ -2451,7 +2453,7 @@ class OCFit(ComplexFit):
             if not len(self.epoch)==len(self.t):
                 raise NameError('Epoch not callculated! Run function "Epoch" before it.')
 
-        if len(params)==0: params=self.params
+        if params is None: params=self.params
 
         if fig_size:
             fig=mpl.figure(figsize=fig_size)
@@ -2497,7 +2499,7 @@ class OCFit(ComplexFit):
 
         #set weight
         set_w=False
-        if len(weight)>0:
+        if weight is not None:
             weight=np.array(weight)[self._order]
             if trans_weight:
                 w_min=min(weight)
@@ -2578,7 +2580,7 @@ class OCFit(ComplexFit):
             
             
 
-    def SaveModel(self,name,E_min=None,E_max=None,n=1000,params={},t0=None,P=None):
+    def SaveModel(self,name,E_min=None,E_max=None,n=1000,params=None,t0=None,P=None):
         '''save model curve of O-C to file
         name - name of output file
         E_min - minimal value of epoch
@@ -2589,7 +2591,7 @@ class OCFit(ComplexFit):
         P - period (necessary if not given in model or epoch not calculated)
         '''
 
-        if len(params)==0: params=self.params
+        if params is None: params=self.params
         
         #get linear ephemeris
         if 't0' in params: t0=params['t0']
@@ -2624,7 +2626,7 @@ class OCFit(ComplexFit):
         self.epoch=old_epoch
 
 
-    def SaveRes(self,name,params={},t0=None,P=None,weight=[]):
+    def SaveRes(self,name,params=None,t0=None,P=None,weight=None):
         '''save residue to file
         name - name of output file
         params - parameters of model (if not given, used "params" from class)
@@ -2636,7 +2638,7 @@ class OCFit(ComplexFit):
         '''
         
 
-        if len(params)==0: params=self.params
+        if params is None: params=self.params
         
         #get linear ephemeris
         if 't0' in params: t0=params['t0']
@@ -2661,7 +2663,7 @@ class OCFit(ComplexFit):
                        fmt=["%14.7f",'%10.3f',"%+12.10f","%.10f"],delimiter="    ",
                        header='Obs. Time'.ljust(14,' ')+'    '+'Epoch'.ljust(10,' ')
                        +'    '+'new O-C'.ljust(10,' ')+'    Error')
-        elif len(weight)>0:
+        elif weight is not None:
             np.savetxt(f,np.column_stack((self.t,self.epoch,self.res,np.array(weight)[self._order])),
                        fmt=["%14.7f",'%10.3f',"%+12.10f","%.10f"],delimiter="    ",
                        header='Obs. Time'.ljust(14,' ')+'    '+'Epoch'.ljust(10,' ')
