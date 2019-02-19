@@ -8,7 +8,7 @@ py_version = sys.version_info[:2]
 if not py_version==(2,7): raise RuntimeError('Python 2.7 is required!	')
 
 dist=setup(name="OCFit",
-      version="0.1.2",
+      version="0.1.3",
       description="Fitting O-C diagrams",
       author="Pavol Gajdos",
       classifiers=[
