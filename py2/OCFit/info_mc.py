@@ -116,8 +116,8 @@ class InfoMC():
         mpl.close('all')
         
         gc.collect() #cleaning RAM...
-        
-    
+
+
     def ConfidInt(self,nbins=20,points=True,levels=[0.6827,0.9545],params=[]):
         '''plot of Confidence Regions for 1 sigma=0.6827 and 2 sigma = 0.9545 (or 3 sigma = 0.9973)'''
         if len(params)==0: params=self.ta.availableParameters()
