@@ -34,7 +34,7 @@ class InfoMC():
         self.pars=self.ta.availableParameters()
     
     def AllParams(self,eps=False):
-        '''statistics about MCMC fitting for all params'''      
+        '''statistics about MCMC fitting for all params'''
         #summary plots
         if len(self.pars)>1:
             try: self.ta.plotCorr(point=True)
@@ -164,4 +164,3 @@ class InfoMC():
                     mpl.plot(x_s,y_s,'r.',ms=10)
                 if not i==j: k+=1
                 gc.collect() #cleaning RAM...
-                
