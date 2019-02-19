@@ -85,8 +85,8 @@ class InfoMC():
             mpl.close('all')
         del db
         gc.collect()  #cleaning RAM...
-           
-    
+
+
     def OneParam(self,name,eps=False):
         '''plots and info-files for one parameter from MCMC fitting'''
         f=open(self.path+name+'.stat','w')
