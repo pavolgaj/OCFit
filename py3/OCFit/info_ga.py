@@ -20,7 +20,7 @@ except:
 class InfoGA():
     '''statistics about GA fitting from db file'''
     def __init__(self,dbfile):
-        '''load db file from GA'''    
+        '''load db file from GA'''
         f=open(dbfile,'rb')
         self.trace=load(f)
         f.close()
@@ -72,7 +72,7 @@ class InfoGA():
             for gen in range(self.info['gen']):
                 mean=np.mean(self.chi2[gen,:])
                 temp.append(mean)
-            plot.append(['Mean value',temp])            
+            plot.append(['Mean value',temp])
                         
         if besti:
             temp=[]
@@ -109,7 +109,7 @@ class InfoGA():
             x=np.arange(1,self.info['gen']+1,1)
             mpl.figure()
             mpl.xlabel('Number of generations')
-            mpl.ylabel(r'$\chi^2$ error')            
+            mpl.ylabel(r'$\chi^2$ error')
             for pl in plot: 
                 if log:  mpl.semilogy(x,pl[1],label=pl[0])
                 else: mpl.plot(x,pl[1],label=pl[0])
@@ -130,7 +130,7 @@ class InfoGA():
                 for p in par: val[p]+=list(self.trace[p][gen,:])
         else:
             dev+=list(self.chi2[i,:])
-            for p in par: val[p]+=list(self.trace[p][i,:])                   
+            for p in par: val[p]+=list(self.trace[p][i,:])
         
         n=len(par)
         mpl.figure()
@@ -145,7 +145,7 @@ class InfoGA():
     def GlobHist(self,par=None):
         '''plot histogram for given parameters for all generations'''
         if par is None: par=self.availableTrace
-        if not type(par) is list: par=[par]        
+        if not type(par) is list: par=[par]
         
         val={}
         for p in par: val[p]=[]
@@ -186,7 +186,7 @@ class InfoGA():
             temp=[]
             for gen in range(self.info['gen']):
                 gen_min=np.argmin(self.chi2[gen,:])
-                if self.chi2[gen,gen_min]<chi_min: 
+                if self.chi2[gen,gen_min]<chi_min:
                     chi_min=self.chi2[gen,gen_min]
                     par_min=self.trace[par][gen,gen_min]
                 temp.append(par_min)
@@ -220,17 +220,15 @@ class InfoGA():
             plot=[]
             mpl.figure()
             mpl.xlabel('Number of generations')
-            mpl.ylabel(par) 
+            mpl.ylabel(par)
             mpl.plot(self.trace[par])
             
         if len(plot)>0:
             x=np.arange(1,self.info['gen']+1,1)
             mpl.figure()
             mpl.xlabel('Number of generations')
-            mpl.ylabel(par)            
-            for pl in plot: 
+            mpl.ylabel(par)
+            for pl in plot:
                 mpl.plot(x,pl[1],label=pl[0])
             mpl.legend()
             return plot
-            
-        
