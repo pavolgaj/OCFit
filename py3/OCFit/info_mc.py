@@ -73,8 +73,7 @@ class InfoMC():
             f.write("-" * len(head))
             f.close()
         gc.collect()  #cleaning RAM...
-            
-     
+
     def Geweke(self,eps=False):
         '''plot geweke diagnostics'''
         db=pymc.database.pickle.load(self.dbfile)
@@ -164,4 +163,3 @@ class InfoMC():
                     mpl.plot(x_s,y_s,'r.',ms=10)
                 if not i==j: k+=1
                 gc.collect() #cleaning RAM...
-                
