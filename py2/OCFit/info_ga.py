@@ -119,7 +119,7 @@ class InfoGA():
     def Deviance(self,i=None,par=None):
         '''plot deviance for given generation or for all, for given parameters'''
         if par is None: par=self.availableTrace
-        if not type(par) is list: par=[par]
+        if not isinstance(par,list): par=[par]
         
         val={}
         for p in par: val[p]=[]
@@ -145,7 +145,7 @@ class InfoGA():
     def GlobHist(self,par=None):
         '''plot histogram for given parameters for all generations'''
         if par is None: par=self.availableTrace
-        if not type(par) is list: par=[par]        
+        if not isinstance(par,list): par=[par]        
         
         val={}
         for p in par: val[p]=[]
@@ -164,7 +164,7 @@ class InfoGA():
     def Hist(self,i=-1,par=None):
         '''plot histogram for given generation for given parameters'''
         if par is None: par=self.availableTrace
-        if not type(par) is list: par=[par]
+        if not isinstance(par,list): par=[par]
         
         n=len(par)
         mpl.figure()
