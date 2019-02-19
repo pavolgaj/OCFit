@@ -114,7 +114,7 @@ class InfoMC():
         mpl.savefig(self.path+name+'_traceHist.png')
         if eps: mpl.savefig(self.path+name+'_traceHist.eps')
         mpl.close('all')
-        
+
         gc.collect() #cleaning RAM...
 
 
