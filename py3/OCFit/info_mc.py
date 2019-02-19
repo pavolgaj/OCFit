@@ -25,7 +25,7 @@ except:
 class InfoMC():
     '''statistics about MC fitting from db file'''
     def __init__(self,dbfile):
-        '''load db file''' 
+        '''load db file'''
         self.dbfile=dbfile
         self.ta=TraceAnalysis(dbfile)
         path=dbfile.replace('\\','/')
@@ -34,7 +34,7 @@ class InfoMC():
         self.pars=self.ta.availableParameters()
     
     def AllParams(self,eps=False):
-        '''statistics about MCMC fitting for all params'''      
+        '''statistics about MCMC fitting for all params'''
         #summary plots
         if len(self.pars)>1:
             try: self.ta.plotCorr(point=True)
@@ -79,7 +79,7 @@ class InfoMC():
         db=pymc.database.pickle.load(self.dbfile)
         for p in self.pars:
             exec('gw=pymc.geweke(db.%s())' %p)
-            if self.path=='': pymc.Matplot.geweke_plot(gw,p,suffix='_geweke')                   
+            if self.path=='': pymc.Matplot.geweke_plot(gw,p,suffix='_geweke')
             else: pymc.Matplot.geweke_plot(gw,p,path=self.path,suffix='_geweke')
             if eps: mpl.savefig(self.path+p+'_geweke.eps')
             mpl.close('all')
@@ -115,8 +115,8 @@ class InfoMC():
         mpl.close('all')
         
         gc.collect() #cleaning RAM...
-        
-    
+
+
     def ConfidInt(self,nbins=20,points=True,levels=[0.6827,0.9545],params=[]):
         '''plot of Confidence Regions for 1 sigma=0.6827 and 2 sigma = 0.9545 (or 3 sigma = 0.9973)'''
         if len(params)==0: params=self.ta.availableParameters()
