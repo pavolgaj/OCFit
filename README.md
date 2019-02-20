@@ -33,4 +33,4 @@ files and go to new-created folder. Running script ``setup.py`` the installation
 
 Or using pip:
 
-``python pip install OCFit``
+``pip install OCFit``
