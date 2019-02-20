@@ -2482,7 +2482,9 @@ class OCFit(ComplexFit):
         else:
             ax1.set_ylabel('Residue O - C (d)')
             k=1
-        if title is not None: fig.suptitle(title,fontsize=20)
+        if title is not None: 
+            if double_ax: fig.subplots_adjust(top=0.85)
+            fig.suptitle(title,fontsize=20)
 
         model=self.Model(self.t,params)
         self.res=self.oc-model
