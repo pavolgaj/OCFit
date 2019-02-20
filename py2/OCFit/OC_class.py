@@ -118,7 +118,7 @@ class SimpleFit():
             else: mpl.plot(f,oc,'.')
         return f,oc
    
-    def Summary(self,name=''):
+    def Summary(self,name=None):
         '''parameters summary, writting to file "name"'''
         params=self.params.keys()
         units={'t0':'JD','P':'d','Q':'d'}
@@ -138,7 +138,7 @@ class SimpleFit():
         text.append('AIC = '+str(self.chi+2*g))
         text.append('AICc = '+str(self.chi+2*g*n/(n-g-1)))
         text.append('BIC = '+str(self.chi+g*np.log(n)))
-        if name=='':
+        if name is None:
             print '------------------------------------'
             for t in text: print t
             print '------------------------------------'
@@ -254,8 +254,8 @@ class SimpleFit():
                        +'    new O-C')
         f.close()
 
-    def PlotRes(self,name='',no_plot=0,no_plot_err=0,eps=False,oc_min=True,
-                time_type='JD',offset=2400000,trans=True,title='',epoch=False,
+    def PlotRes(self,name=None,no_plot=0,no_plot_err=0,eps=False,oc_min=True,
+                time_type='JD',offset=2400000,trans=True,title=None,epoch=False,
                 min_type=False,weight=None,trans_weight=False,bw=False,double_ax=False,
                 fig_size=None):
         '''plotting residue (new O-C)
@@ -305,7 +305,7 @@ class SimpleFit():
             ax1.set_ylabel('Residue O - C (d)')
             k=1
 
-        if not title=='': 
+        if title is not None: 
             if double_ax: fig.subplots_adjust(top=0.85)
             fig.suptitle(title,fontsize=20)
 
@@ -389,14 +389,14 @@ class SimpleFit():
             epoch=np.round((lims-self.t0)/self.P*2)/2.
             ax2.set_xlim(epoch)
         
-        if name=='': mpl.show()
+        if name is None: mpl.show()
         else:
             mpl.savefig(name+'.png')
             if eps: mpl.savefig(name+'.eps')
             mpl.close(fig)
 
-    def Plot(self,name='',no_plot=0,no_plot_err=0,eps=False,oc_min=True,
-             time_type='JD',offset=2400000,trans=True,title='',epoch=False,
+    def Plot(self,name=None,no_plot=0,no_plot_err=0,eps=False,oc_min=True,
+             time_type='JD',offset=2400000,trans=True,title=None,epoch=False,
              min_type=False,weight=None,trans_weight=False,bw=False,double_ax=False,
              fig_size=None):
         '''plotting original O-C with linear fit
@@ -446,7 +446,7 @@ class SimpleFit():
             ax1.set_ylabel('O - C (d)')
             k=1
             
-        if not title=='': 
+        if title is not None: 
             if double_ax: fig.subplots_adjust(top=0.85)
             fig.suptitle(title,fontsize=20)
 
@@ -563,7 +563,7 @@ class SimpleFit():
             ax2.set_xlim(epoch)
         
 
-        if name=='': mpl.show()
+        if name is None: mpl.show()
         else:
             mpl.savefig(name+'.png')
             if eps: mpl.savefig(name+'.eps')
@@ -621,7 +621,7 @@ class FitLinear(SimpleFit):
         self._mcmc=False
         return self.new_oc
         
-    def FitMCMC(self,n_iter,limits,steps,fit_params=None,burn=0,binn=1,visible=True,db=''):
+    def FitMCMC(self,n_iter,limits,steps,fit_params=None,burn=0,binn=1,visible=True,db=None):
         '''fitting with Markov chain Monte Carlo
         n_iter - number of MC iteration - should be at least 1e5
         limits - limits of parameters for fitting
@@ -676,7 +676,7 @@ class FitLinear(SimpleFit):
             Model.append(v)
 
         #create pymc object
-        if db=='': R=pymc.MCMC(Model)
+        if db is None: R=pymc.MCMC(Model)
         else:
             #saving MCMC fitting details
             path=db.replace('\\','/')   #change dirs in path (for Windows)
@@ -783,7 +783,7 @@ class FitQuad(SimpleFit):
         self._mcmc=False
         return self.new_oc
         
-    def FitMCMC(self,n_iter,limits,steps,fit_params=None,burn=0,binn=1,visible=True,db=''):
+    def FitMCMC(self,n_iter,limits,steps,fit_params=None,burn=0,binn=1,visible=True,db=None):
         '''fitting with Markov chain Monte Carlo
         n_iter - number of MC iteration - should be at least 1e5
         limits - limits of parameters for fitting
@@ -840,7 +840,7 @@ class FitQuad(SimpleFit):
             Model.append(v)
 
         #create pymc object
-        if db=='': R=pymc.MCMC(Model)
+        if db is None: R=pymc.MCMC(Model)
         else:
             #saving MCMC fitting details
             path=db.replace('\\','/')   #change dirs in path (for Windows)
@@ -1079,7 +1079,7 @@ class OCFit(ComplexFit):
         print 'Available Models:'
         for s in self.availableModels: print s
             
-    def ModelParams(self,model='',allModels=False):
+    def ModelParams(self,model=None,allModels=False):
         '''display parameters of model'''
         
         def Display(model):
@@ -1093,7 +1093,7 @@ class OCFit(ComplexFit):
             if 'Apsidal' in model: s+='t0, P, w0, dw, e, '
             print s[:-2]
             
-        if model=='': model=self.model
+        if model is None: model=self.model
         if allModels:
             for m in self.availableModels: Display(m)
         else: Display(model)
@@ -1377,7 +1377,7 @@ class OCFit(ComplexFit):
         return sum(((model-self.oc)/self.err)**2)
 
     def FitGA(self,generation,size,mut=0.5,SP=2,plot_graph=False,visible=True,
-              n_thread=1,db=''):
+              n_thread=1,db=None):
         '''fitting with Genetic Algorithms
         generation - number of generations - should be approx. 100-200 x number of free parameters
         size - number of individuals in one generation (size of population) - should be approx. 100-200 x number of free parameters
@@ -1406,7 +1406,7 @@ class OCFit(ComplexFit):
         objfun=[]   #values of Objective Function
         for i in range(size): objfun.append(0)
         
-        if not db=='':
+        if db is not None:
             #saving GA fitting details
             save_dat={}
             save_dat['chi2']=[]
@@ -1446,7 +1446,7 @@ class OCFit(ComplexFit):
                 graph.append(min0)
                 graph_mean.append(np.mean(np.array(objfun)))                
             
-            if not db=='':
+            if db is not None:
                 save_dat['chi2'].append(list(objfun)) 
                 for par in self.fit_params:
                     temp=[]
@@ -1471,7 +1471,7 @@ class OCFit(ComplexFit):
             mpl.plot(graph_mean,'--')
             mpl.legend(['Best solution',r'Mean $\chi^2$ in generation'])
 
-        if not db=='':
+        if db is not None:
             #saving GA fitting details to file
             for x in save_dat: save_dat[x]=np.array(save_dat[x])
             f=open(db,'wb')
@@ -1487,7 +1487,7 @@ class OCFit(ComplexFit):
         return self.params
 
 
-    def FitMCMC(self,n_iter,burn=0,binn=1,visible=True,db=''):
+    def FitMCMC(self,n_iter,burn=0,binn=1,visible=True,db=None):
         '''fitting with Markov chain Monte Carlo
         n_iter - number of MC iteration - should be at least 1e5
         burn - number of removed steps before equilibrium - should be approx. 0.1-1% of n_iter
@@ -1533,7 +1533,7 @@ class OCFit(ComplexFit):
             Model.append(v)
 
         #create pymc object
-        if db=='': R=pymc.MCMC(Model)
+        if db is None: R=pymc.MCMC(Model)
         else:
             #saving MCMC fitting details
             path=db.replace('\\','/')   #change dirs in path (for Windows)
@@ -1576,7 +1576,7 @@ class OCFit(ComplexFit):
         return self.params,self.params_err
 
 
-    def Summary(self,name=''):
+    def Summary(self,name=None):
         '''summary of parameters, output to file "name"'''
         params=[]
         unit=[]
@@ -1670,7 +1670,7 @@ class OCFit(ComplexFit):
         text.append('AIC = '+str(chi+2*g))
         text.append('AICc = '+str(chi+2*g*n/(n-g-1)))
         text.append('BIC = '+str(chi+g*np.log(n)))
-        if name=='':
+        if name is None:
             #output to screen
             print '------------------------------------'
             for t in text: print t
@@ -2155,8 +2155,8 @@ class OCFit(ComplexFit):
 
 
 
-    def Plot(self,name='',no_plot=0,no_plot_err=0,params=None,eps=False,oc_min=True,
-             time_type='JD',offset=2400000,trans=True,title='',epoch=False,
+    def Plot(self,name=None,no_plot=0,no_plot_err=0,params=None,eps=False,oc_min=True,
+             time_type='JD',offset=2400000,trans=True,title=None,epoch=False,
              min_type=False,weight=None,trans_weight=False,model2=False,with_res=False,
              bw=False,double_ax=False,legend=None,fig_size=None):
         '''plotting original O-C with model O-C based on current parameters set
@@ -2233,7 +2233,7 @@ class OCFit(ComplexFit):
             ax1.set_ylabel('O - C (d)')
             k=1
             
-        if not title=='': 
+        if title is not None: 
             if double_ax: fig.subplots_adjust(top=0.85)
             fig.suptitle(title,fontsize=20)                
             
@@ -2416,15 +2416,15 @@ class OCFit(ComplexFit):
             mpl.subplots_adjust(hspace=.07)
             mpl.setp(ax1.get_xticklabels(),visible=False)
 
-        if name=='': mpl.show()
+        if name is None: mpl.show()
         else:
             mpl.savefig(name+'.png')
             if eps: mpl.savefig(name+'.eps')
             mpl.close(fig)
 
 
-    def PlotRes(self,name='',no_plot=0,no_plot_err=0,params=None,eps=False,oc_min=True,
-                time_type='JD',offset=2400000,trans=True,title='',epoch=False,
+    def PlotRes(self,name=None,no_plot=0,no_plot_err=0,params=None,eps=False,oc_min=True,
+                time_type='JD',offset=2400000,trans=True,title=None,epoch=False,
                 min_type=False,weight=None,trans_weight=False,bw=False,double_ax=False,
                 fig_size=None):
         '''plotting residue (new O-C)
@@ -2482,7 +2482,7 @@ class OCFit(ComplexFit):
         else:
             ax1.set_ylabel('Residue O - C (d)')
             k=1
-        if not title=='': fig.suptitle(title,fontsize=20)
+        if title is not None: fig.suptitle(title,fontsize=20)
 
         model=self.Model(self.t,params)
         self.res=self.oc-model
@@ -2572,7 +2572,7 @@ class OCFit(ComplexFit):
             epoch=np.round((lims-self._t0P[0])/self._t0P[1]*2)/2.
             ax2.set_xlim(epoch)        
                     
-        if name=='': mpl.show()
+        if name is None: mpl.show()
         else:
             mpl.savefig(name+'.png')
             if eps: mpl.savefig(name+'.eps')
