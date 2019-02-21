@@ -2,8 +2,10 @@ List of manuals/documentations:
 
 - gui.pdf - short presentation about GUI (in English)
 
-- navod.pdf - in Slovak
+- gui-paper.pdf - our paper mainly about GUI ad also about OCFit class; will be published in OEJV (in English)
 
-- manual.pdf - in English
+- navod.pdf - documanentation of OCFit class (in Slovak)
 
-These manuals are without any language corrections. If you found mistakes in any of them, please let me know. 
+- manual.pdf - documanentation of OCFit class (in English)
+
+These manuals are with only minimal language corrections. If you found any mistake in any of them, please let me know. 
