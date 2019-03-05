@@ -3,7 +3,7 @@ from .OC_class import FitQuad
 from .OC_class import OCFit
 from .OC_class import OCFitLoad
 
-__version__='0.1.2'
+__version__='0.1.3'
 
 del ga
 del OC_class
