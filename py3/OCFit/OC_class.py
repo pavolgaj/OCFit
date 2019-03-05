@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 #main classes of OCFit package
-#version 0.1.2
+#version 0.1.3
 #update: 5.2.2019
 # (c) Pavol Gajdos, 2018-2019
 
