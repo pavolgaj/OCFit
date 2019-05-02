@@ -2,7 +2,7 @@ List of manuals/documentations:
 
 - gui.pdf - short presentation about GUI (in English)
 
-- gui-paper.pdf - our paper mainly about GUI ad also about OCFit class; will be published in OEJV (in English)
+- gui-paper.pdf - our paper mainly about GUI and also about OCFit class; published in [OEJV](http://var.astro.cz/oejv/issues/oejv0197.pdf), 2019, 197, 71
 
 - navod.pdf - documanentation of OCFit class (in Slovak)
 
