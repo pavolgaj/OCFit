@@ -23,7 +23,7 @@ For install it, download/clone this repository or download suitable binary file 
 * numpy
 * matplotlib
 * PyAstronomy
-* pymc
+* pymc (recommended)
 
 Installation is possible from source code or using build installation binary file (only for OS
 Windows). The following procedure is only for installation from the source code. Extract
