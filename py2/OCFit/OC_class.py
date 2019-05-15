@@ -2,7 +2,7 @@
 
 #main classes of OCFit package
 #version 0.1.3
-#update: 5.2.2019
+#update: 15.5.2019
 # (c) Pavol Gajdos, 2018-2019
 
 from time import time
@@ -123,9 +123,9 @@ class SimpleFit():
         params=self.params.keys()
         units={'t0':'JD','P':'d','Q':'d'}
 
-        text=['parameter'.ljust(15,' ')+'unit'.ljust(10,' ')+'value'.ljust(20,' ')+'error']
+        text=['parameter'.ljust(15,' ')+'unit'.ljust(10,' ')+'value'.ljust(30,' ')+'error']
         for p in sorted(params):
-            text.append(p.ljust(15,' ')+units[p].ljust(10,' ')+str(self.params[p]).ljust(20,' ')
+            text.append(p.ljust(15,' ')+units[p].ljust(10,' ')+str(self.params[p]).ljust(30,' ')
                         +str(self.params_err[p]).ljust(20,' '))
         text.append('')
         if self._robust: text.append('Fitting method: Robust regression')
@@ -1654,9 +1654,9 @@ class OCFit(ComplexFit):
                 unit.append('m')
         
         #generate text output
-        text=['parameter'.ljust(15,' ')+'unit'.ljust(10,' ')+'value'.ljust(20,' ')+'error']
+        text=['parameter'.ljust(15,' ')+'unit'.ljust(10,' ')+'value'.ljust(30,' ')+'error']
         for i in range(len(params)):
-            text.append(params[i].ljust(15,' ')+unit[i].ljust(10,' ')+vals[i].ljust(20,' ')+err[i].ljust(20,' '))
+            text.append(params[i].ljust(15,' ')+unit[i].ljust(10,' ')+vals[i].ljust(30,' ')+err[i].ljust(20,' '))
         text.append('')
         text.append('Model: '+self.model)
         if len(self.params_err)==0: text.append('Fitting method: GA')
