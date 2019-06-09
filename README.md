@@ -13,8 +13,8 @@
 
 Python package OCFit includes 4 classes for analysis and fitting of O-C diagrams of Eclipsing binaries
 
-In a case of using this package for scientific purposes, please, cite our paper Gajdoš &
-Parimucha (2019) in [OEJV](http://var.astro.cz/oejv/issues/oejv0197.pdf) where you can also find more detail description about fitting functions
+In a case of using this package for scientific purposes, please, cite our paper [Gajdoš &
+Parimucha (2019)](https://ui.adsabs.harvard.edu/abs/2019OEJV..197...71G/abstract) in [OEJV](http://var.astro.cz/oejv/issues/oejv0197.pdf) where you can also find more detail description about fitting functions
 and used models.
 
 For install it, download/clone this repository or download suitable binary file from releases.
