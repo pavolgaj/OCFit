@@ -2713,6 +2713,8 @@ def saveR(f=None):
 def saveAll():
     #run all saving functions
     f=tkFileDialog.asksaveasfilename(parent=master,title='Save all to file',filetypes=[('All files','*.*')])
+    if len(f)==0: return
+
     if '.' in f[-5:]: f=f[:f.rfind('.')]
     
     saveM(f+'_model.dat')
