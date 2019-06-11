@@ -2,7 +2,7 @@
 
 #main classes of OCFit package
 #version 0.1.3
-#update: 15.5.2019
+#update: 5.2.2019
 # (c) Pavol Gajdos, 2018-2019
 
 from time import time
@@ -2182,7 +2182,8 @@ class OCFit(ComplexFit):
         fig_size - custom figure size - e.g. (12,6)
         
         warning: weights have to be in same order as input data!
-        '''
+        '''            
+        
         if epoch:
             if not len(self.epoch)==len(self.t):
                 raise NameError('Epoch not callculated! Run function "Epoch" before it.')
