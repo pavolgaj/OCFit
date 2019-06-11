@@ -2607,8 +2607,6 @@ def plot(f=None):
     
     if f is not None:
         #solving problem with closing GUI when "f" is given
-        import matplotlib
-        old=matplotlib.get_backend()
         try: mpl.switch_backend('Agg')
         except: pass #old version of matplotlib
     
@@ -2624,7 +2622,7 @@ def plot(f=None):
         
     if f is not None:
         #solving problem with closing GUI when "f" is given -> change to default backend
-        try: mpl.switch_backend(old)
+        try: mpl.switch_backend('TkAgg')
         except: pass #old version of matplotlib
     
 def plotR(f=None):
@@ -2634,8 +2632,6 @@ def plotR(f=None):
     
     if f is not None:
         #solving problem with closing GUI when "f" is given
-        import matplotlib
-        old=matplotlib.get_backend()
         try: mpl.switch_backend('Agg')
         except: pass #old version of matplotlib
     
@@ -2651,7 +2647,7 @@ def plotR(f=None):
         
     if f is not None:
         #solving problem with closing GUI when "f" is given -> change to default backend
-        try: mpl.switch_backend(old)
+        try: mpl.switch_backend('TkAgg')
         except: pass #old version of matplotlib
 
 def runBG():
