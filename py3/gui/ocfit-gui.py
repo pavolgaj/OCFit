@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 #main file for GUI for OCFit class
-#update: 31.1.2019
+#update: 11.6.2019
 # (c) Pavol Gajdos, 2018-2019
 
 import tkinter as tk
@@ -685,10 +685,12 @@ def initC():
     bSaveM.config(state=tk.DISABLED)
     bSaveR.config(state=tk.DISABLED)
     bSum.config(state=tk.DISABLED)
+    bSaveAll.config(state=tk.DISABLED)
 
-def saveC():
+def saveC(f=None):
     #save class to file
-    f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save class to file',filetypes=[('OCFit files','*.ocf'),('All files','*.*')],defaultextension='.ocf')    
+    if f is None:
+        f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save class to file',filetypes=[('OCFit files','*.ocf'),('All files','*.*')],defaultextension='.ocf')    
     if len(f)==0: return
     ocf.Save(f)    
     return f
@@ -710,6 +712,7 @@ def loadC():
     bSaveM.config(state=tk.NORMAL)
     bSaveR.config(state=tk.NORMAL)
     bSum.config(state=tk.NORMAL)
+    bSaveAll.config(state=tk.NORMAL)
 
 def fitGA():
     #fitting using genetic algorithms
@@ -733,6 +736,7 @@ def fitGA():
     bSaveM.config(state=tk.NORMAL)
     bSaveR.config(state=tk.NORMAL)
     bSum.config(state=tk.NORMAL)
+    bSaveAll.config(state=tk.NORMAL)
 
 def fitMC():
     #fitting using Monte Carlo method
@@ -761,6 +765,7 @@ def fitMC():
     bSaveM.config(state=tk.NORMAL)
     bSaveR.config(state=tk.NORMAL)
     bSum.config(state=tk.NORMAL)
+    bSaveAll.config(state=tk.NORMAL)
 
 def fitParams():
     #setting parameters of GA and MC fitting
@@ -2595,35 +2600,59 @@ def params():
     init_vars() 
 
 
-def plot():
+def plot(f=None):
     #plot O-Cs together with model
     if ocf.t[0]<2e6: trans=False
     else: trans=True
     
+    if f is not None:
+        #solving problem with closing GUI when "f" is given
+        import matplotlib
+        old=matplotlib.get_backend()
+        try: mpl.switch_backend('Agg')
+        except: pass #old version of matplotlib
+    
     try:
         if not ocf._set_err:
             w=1./ocf.err
-            if min(w)==max(w): ocf.Plot(trans=trans,weight=w,min_type=True)
-            else: ocf.Plot(trans=trans,weight=w,trans_weight=True,min_type=True)
-        else: ocf.Plot(trans=trans,min_type=True)
+            if min(w)==max(w): ocf.Plot(name=f,trans=trans,weight=w,min_type=True)
+            else: ocf.Plot(name=f,trans=trans,weight=w,trans_weight=True,min_type=True)
+        else: ocf.Plot(name=f,trans=trans,min_type=True)
     except:   
         mpl.close()
         tkinter.messagebox.showerror('Plot O-C','Fit the model!') 
+        
+    if f is not None:
+        #solving problem with closing GUI when "f" is given -> change to default backend
+        try: mpl.switch_backend(old)
+        except: pass #old version of matplotlib
     
-def plotR():
+def plotR(f=None):
     #plot residual O-Cs
     if ocf.t[0]<2e6: trans=False
     else: trans=True
     
+    if f is not None:
+        #solving problem with closing GUI when "f" is given
+        import matplotlib
+        old=matplotlib.get_backend()
+        try: mpl.switch_backend('Agg')
+        except: pass #old version of matplotlib
+    
     try:
         if not ocf._set_err:
             w=1./ocf.err
-            if min(w)==max(w): ocf.PlotRes(trans=trans,weight=w,min_type=True)
-            else: ocf.PlotRes(trans=trans,weight=w,trans_weight=True,min_type=True)
-        else: ocf.PlotRes(trans=trans,min_type=True)
+            if min(w)==max(w): ocf.PlotRes(name=f,trans=trans,weight=w,min_type=True)
+            else: ocf.PlotRes(name=f,trans=trans,weight=w,trans_weight=True,min_type=True)
+        else: ocf.PlotRes(name=f,trans=trans,min_type=True)
     except: 
         mpl.close()
         tkinter.messagebox.showerror('Plot new O-C','Fit the model!') 
+        
+    if f is not None:
+        #solving problem with closing GUI when "f" is given -> change to default backend
+        try: mpl.switch_backend(old)
+        except: pass #old version of matplotlib
 
 def runBG():
     #run fitting on background
@@ -2658,17 +2687,19 @@ def runBG():
         else: cmd+=' &'
         subprocess.Popen(cmd,shell=True)
 
-def saveM():
+def saveM(f=None):
     #save model O-Cs
-    f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save model O-C to file',filetypes=[('Data files','*.dat *.txt'),('All files','*.*')],defaultextension='.dat')
+    if f is None:
+        f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save model O-C to file',filetypes=[('Data files','*.dat *.txt'),('All files','*.*')],defaultextension='.dat')
     if len(f)==0: return
     
     try: ocf.SaveModel(f)
     except: tkinter.messagebox.showerror('Save model','Fit the model!')     
 
-def saveR():
+def saveR(f=None):
     #save residual O-Cs
-    f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save new O-C to file',filetypes=[('Data files','*.dat *.txt'),('All files','*.*')],defaultextension='.dat')
+    if f is None:
+        f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save new O-C to file',filetypes=[('Data files','*.dat *.txt'),('All files','*.*')],defaultextension='.dat')
     if len(f)==0: return
         
     try:
@@ -2676,8 +2707,28 @@ def saveR():
         else: ocf.SaveRes(f) 
     except: tkinter.messagebox.showerror('Save new O-C','Fit the model!') 
 
-def summary():
+def saveAll():
+    #run all saving functions
+    f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save all to file',filetypes=[('All files','*.*')])
+    if len(f)==0: return
+
+    if '.' in f[-5:]: f=f[:f.rfind('.')]
+    
+    saveM(f+'_model.dat')
+    saveR(f+'_res.dat')
+    saveC(f+'.ocf')
+    summary(f+'_summary.txt')
+    plot(f)
+    plotR(f+'_res')
+
+def summary(f=None):
     #show summary for fitting
+    
+    if f is not None:
+        try: ocf.Summary(f)
+        except: tkMessageBox.showerror('Summary','Fit the model!') 
+        return
+        
     
     #create new window
     sumW=tk.Toplevel(master)
@@ -2916,15 +2967,22 @@ bSaveC.configure(text='Save class')
 
 #button - fitting on background
 bRunBG=tk.Button(Frame3)
-bRunBG.place(relx=0.25,rely=0.81,height=26,width=140)
+bRunBG.place(relx=0.02,rely=0.81,height=26,width=135)
 bRunBG.configure(command=runBG)
 bRunBG.configure(state=tk.DISABLED)
 bRunBG.configure(text='Fit on Background')
 
+#buttom - save all
+bSaveAll=tk.Button(Frame3)
+bSaveAll.place(relx=0.53, rely=0.81, height=26, width=135)
+bSaveAll.configure(command=saveAll)
+bSaveAll.configure(state=tk.DISABLED)
+bSaveAll.configure(text='Save All')
+
 #label
 Label3=tk.Label(master)
 Label3.place(relx=0.09,rely=0.95,height=18,width=276)
-Label3.configure(text='(c) Pavol Gajdos, 2018')
+Label3.configure(text='(c) Pavol Gajdos, 2018 - 2019')
 Label3.configure(font=('None',9))
 
 tk.mainloop()
