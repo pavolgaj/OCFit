@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 #main classes of OCFit package
-#version 0.1.3
-#update: 11.6.2019
-# (c) Pavol Gajdos, 2018-2019
+#version 0.1.4
+#update: 3.4.2020
+# (c) Pavol Gajdos, 2018-2020
 
 from time import time
 import sys
@@ -373,10 +373,10 @@ class SimpleFit():
                 prim=np.delete(prim,np.where(np.in1d(prim,errors)))
                 sec=np.delete(sec,np.where(np.in1d(sec,errors)))
                 if not len(prim)==0:
-                    ax1.plot(x[prim],(self.new_oc*k)[prim],color+'o')
+                    ax1.plot(x[prim],(self.new_oc*k)[prim],color+'o',zorder=2)
                 if not len(sec)==0:
                     ax1.plot(x[sec],(self.new_oc*k)[sec],color+'o',
-                             mfc='none',markeredgewidth=1,markeredgecolor=color)
+                             mfc='none',markeredgewidth=1,markeredgecolor=color,zorder=2)
         
         if double_ax:
             #setting secound axis                        
@@ -491,12 +491,12 @@ class SimpleFit():
             if not len(prim)==0:
                 for i in range(len(w)):
                     ax1.plot(x[prim[np.where(np.in1d(prim,w[i]))]],
-                             (self.oc*k)[prim[np.where(np.in1d(prim,w[i]))]],color+'o',markersize=size[i])
+                             (self.oc*k)[prim[np.where(np.in1d(prim,w[i]))]],color+'o',markersize=size[i],zorder=1)
             if not len(sec)==0:
                 for i in range(len(w)):
                     ax1.plot(x[sec[np.where(np.in1d(sec,w[i]))]],
                              (self.oc*k)[sec[np.where(np.in1d(sec,w[i]))]],color+'o',markersize=size[i],
-                             fillstyle='none',markeredgewidth=1,markeredgecolor=color)
+                             fillstyle='none',markeredgewidth=1,markeredgecolor=color,zorder=1)
 
         else:
             #without weight
@@ -508,20 +508,20 @@ class SimpleFit():
                 prim=np.delete(prim,np.where(np.in1d(prim,errors)))
                 sec=np.delete(sec,np.where(np.in1d(sec,errors)))
                 if not len(prim)==0:
-                    ax1.errorbar(x[prim],(self.oc*k)[prim],yerr=(err*k)[prim],fmt=color+'o',markersize=5)
+                    ax1.errorbar(x[prim],(self.oc*k)[prim],yerr=(err*k)[prim],fmt=color+'o',markersize=5,zorder=1)
                 if not len(sec)==0:
                     ax1.errorbar(x[sec],(self.oc*k)[sec],yerr=(err*k)[sec],fmt=color+'o',markersize=5,
-                                 fillstyle='none',markeredgewidth=1,markeredgecolor=color)
+                                 fillstyle='none',markeredgewidth=1,markeredgecolor=color,zorder=1)
 
             else:
                 #without errors
                 prim=np.delete(prim,np.where(np.in1d(prim,errors)))
                 sec=np.delete(sec,np.where(np.in1d(sec,errors)))
                 if not len(prim)==0:
-                    ax1.plot(x[prim],(self.oc*k)[prim],color+'o')
+                    ax1.plot(x[prim],(self.oc*k)[prim],color+'o',zorder=1)
                 if not len(sec)==0:
                     ax1.plot(x[sec],(self.oc*k)[sec],color+'o',
-                             mfc='none',markeredgewidth=1,markeredgecolor=color)
+                             mfc='none',markeredgewidth=1,markeredgecolor=color,zorder=1)
 
         #plot linear model
         if bw: 
@@ -554,8 +554,8 @@ class SimpleFit():
             #setting secound axis
             ax2=ax1.twiny() 
             #generate plot to obtain correct axis in epoch
-            if len(self.model)==len(self.t): l=ax2.plot(E,new*k)
-            else: l=ax2.plot(self.epoch,self.oc*k)
+            if len(self.model)==len(self.t): l=ax2.plot(E,new*k,zorder=2)
+            else: l=ax2.plot(self.epoch,self.oc*k,zorder=2)
             ax2.set_xlabel('Epoch')
             l.pop(0).remove()
             lims=np.array(ax1.get_xlim())
@@ -1349,8 +1349,8 @@ class OCFit(ComplexFit):
         oc2=P/np.pi*sum2
         
         dt=np.zeros(t.shape)
-        dt[np.where(min_type==0)]=oc1[np.where(min_type==0)]  #primary
-        dt[np.where(min_type==1)]=oc2[np.where(min_type==1)]  #secondary
+        dt[np.where(min_type==0)[0]]=oc1[np.where(min_type==0)[0]]  #primary
+        dt[np.where(min_type==1)[0]]=oc2[np.where(min_type==1)[0]]  #secondary
                 
         return dt+(t0+P*self.epoch)-(self._t0P[0]+self._t0P[1]*self.epoch)
         
@@ -2280,12 +2280,12 @@ class OCFit(ComplexFit):
             if not len(prim)==0:
                 for i in range(len(w)):
                     ax1.plot(x[prim[np.where(np.in1d(prim,w[i]))]],
-                             (self.oc*k)[prim[np.where(np.in1d(prim,w[i]))]],color+'o',markersize=size[i],label=legend[0])
+                             (self.oc*k)[prim[np.where(np.in1d(prim,w[i]))]],color+'o',markersize=size[i],label=legend[0],zorder=1)
             if not len(sec)==0:
                 for i in range(len(w)):
                     ax1.plot(x[sec[np.where(np.in1d(sec,w[i]))]],
                              (self.oc*k)[sec[np.where(np.in1d(sec,w[i]))]],color+'o',markersize=size[i],
-                             fillstyle='none',markeredgewidth=1,markeredgecolor=color,label=legend[0])
+                             fillstyle='none',markeredgewidth=1,markeredgecolor=color,label=legend[0],zorder=1)
 
         else:
             #without weight
@@ -2297,20 +2297,20 @@ class OCFit(ComplexFit):
                 prim=np.delete(prim,np.where(np.in1d(prim,errors)))
                 sec=np.delete(sec,np.where(np.in1d(sec,errors)))
                 if not len(prim)==0:
-                    ax1.errorbar(x[prim],(self.oc*k)[prim],yerr=(err*k)[prim],fmt=color+'o',markersize=5,label=legend[0])
+                    ax1.errorbar(x[prim],(self.oc*k)[prim],yerr=(err*k)[prim],fmt=color+'o',markersize=5,label=legend[0],zorder=1)
                 if not len(sec)==0:
                     ax1.errorbar(x[sec],(self.oc*k)[sec],yerr=(err*k)[sec],fmt=color+'o',markersize=5,
-                                 fillstyle='none',markeredgewidth=1,markeredgecolor=color,label=legend[0])
+                                 fillstyle='none',markeredgewidth=1,markeredgecolor=color,label=legend[0],zorder=1)
 
             else:
                 #without errors
                 prim=np.delete(prim,np.where(np.in1d(prim,errors)))
                 sec=np.delete(sec,np.where(np.in1d(sec,errors)))
                 if not len(prim)==0:
-                    ax1.plot(x[prim],(self.oc*k)[prim],color+'o',label=legend[0])
+                    ax1.plot(x[prim],(self.oc*k)[prim],color+'o',label=legend[0],zorder=1)
                 if not len(sec)==0:
                     ax1.plot(x[sec],(self.oc*k)[sec],color+'o',label=legend[0],
-                             mfc='none',markeredgewidth=1,markeredgecolor=color)
+                             mfc='none',markeredgewidth=1,markeredgecolor=color,zorder=1)
 
         #expand time interval for model O-C
         if len(self.t)<1000:
@@ -2353,16 +2353,16 @@ class OCFit(ComplexFit):
         if self.model=='Apsidal':
             #primary
             model_long=self.Model(t1,params,min_type=np.zeros(t1.shape))
-            if epoch and not double_ax: ax1.plot(E,model_long*k,color,linewidth=lw,label=legend[1])
-            else: ax1.plot(t1-offset,model_long*k,color,linewidth=lw,label=legend[1])
+            if epoch and not double_ax: ax1.plot(E,model_long*k,color,linewidth=lw,label=legend[1],zorder=2)
+            else: ax1.plot(t1-offset,model_long*k,color,linewidth=lw,label=legend[1],zorder=2)
             #secondary
             model_long=self.Model(t1,params,min_type=np.ones(t1.shape))
-            if epoch and not double_ax: ax1.plot(E,model_long*k,color,linewidth=lw,label=legend[1])
-            else: ax1.plot(t1-offset,model_long*k,color,linewidth=lw,label=legend[1])
+            if epoch and not double_ax: ax1.plot(E,model_long*k,color,linewidth=lw,label=legend[1],zorder=2)
+            else: ax1.plot(t1-offset,model_long*k,color,linewidth=lw,label=legend[1],zorder=2)
         else:
             model_long=self.Model(t1,params)            
-            if epoch and not double_ax: ax1.plot(E,model_long*k,color,linewidth=lw,label=legend[1])
-            else: ax1.plot(t1-offset,model_long*k,color,linewidth=lw,label=legend[1])
+            if epoch and not double_ax: ax1.plot(E,model_long*k,color,linewidth=lw,label=legend[1],zorder=2)
+            else: ax1.plot(t1-offset,model_long*k,color,linewidth=lw,label=legend[1],zorder=2)
         
         if model2:
             #plot second model
@@ -2373,8 +2373,8 @@ class OCFit(ComplexFit):
                 color='g'
                 lt='-'
             model_set=self.Model(t1,params_model)
-            if epoch and not double_ax: ax1.plot(E,model_set*k,color+lt,linewidth=lw,label=legend[2])
-            else: ax1.plot(t1-offset,model_set*k,color+lt,linewidth=lw,label=legend[2])
+            if epoch and not double_ax: ax1.plot(E,model_set*k,color+lt,linewidth=lw,label=legend[2],zorder=3)
+            else: ax1.plot(t1-offset,model_set*k,color+lt,linewidth=lw,label=legend[2],zorder=3)
         
         if show_legend: ax1.legend() 
         
@@ -2617,14 +2617,29 @@ class OCFit(ComplexFit):
             
         self.epoch=np.linspace(E_min,E_max,n)
         t=t0+P*self.epoch
+        
+        if self.model=='Apsidal':            
+            typeA=np.append(np.zeros(t.shape),np.ones(t.shape))
+            t=np.append(t,t)
+            self.epoch=np.append(self.epoch,self.epoch)
+            i=np.argsort(np.append(np.arange(0,len(t),2),np.arange(1,len(t),2)))
+            t=t[i]
+            typeA=typeA[i]
+            self.epoch=self.epoch[i]
+            model=self.Model(t,params,min_type=typeA)            
+            
+            f=open(name,'w')
+            np.savetxt(f,np.column_stack((t+model,self.epoch,model,typeA)), fmt=["%14.7f",'%10.3f',"%+12.10f","%1d"]
+                       ,delimiter='    ',header='Obs. Time'.ljust(14,' ')+'    '+'Epoch'.ljust(10,' ')+'    model O-C'.ljust(13,' ')+'    type')
+            f.close()
+        else: 
+            model=self.Model(t,params)
 
-        model=self.Model(t,params)
-
-        f=open(name,'w')
-        np.savetxt(f,np.column_stack((t+model,self.epoch,model)),fmt=["%14.7f",'%10.3f',"%+12.10f"]
-                   ,delimiter='    ',header='Obs. Time'.ljust(14,' ')+'    '+'Epoch'.ljust(10,' ')
-                   +'    model O-C')
-        f.close()
+            f=open(name,'w')
+            np.savetxt(f,np.column_stack((t+model,self.epoch,model)),fmt=["%14.7f",'%10.3f',"%+12.10f"]
+                       ,delimiter='    ',header='Obs. Time'.ljust(14,' ')+'    '+'Epoch'.ljust(10,' ')
+                       +'    model O-C')
+            f.close()
 
         self.epoch=old_epoch
 
