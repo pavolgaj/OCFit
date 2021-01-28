@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 #main classes of OCFit package
-#version 0.1.4
-#update: 3.4.2020
-# (c) Pavol Gajdos, 2018-2020
+#version 0.1.5
+#update: 28.1.2021
+# (c) Pavol Gajdos, 2018-2021
 
 from time import time
 import sys
@@ -134,9 +134,11 @@ class SimpleFit():
         g=len(params)
         n=len(self.t)
         text.append('chi2 = '+str(self.chi))
-        text.append('chi2_r = '+str(self.chi/(n-g)))
+        if n-g>0: text.append('chi2_r = '+str(self.chi/(n-g)))
+        else: text.append('chi2_r = NA')
         text.append('AIC = '+str(self.chi+2*g))
-        text.append('AICc = '+str(self.chi+2*g*n/(n-g-1)))
+        if n-g-1>0: text.append('AICc = '+str(self.chi+2*g*n/(n-g-1)))
+        else: text.append('AICc = NA')
         text.append('BIC = '+str(self.chi+g*np.log(n)))
         if name is None:
             print '------------------------------------'
@@ -1666,9 +1668,11 @@ class OCFit(ComplexFit):
         g=len(self.fit_params)
         #calculate some stats
         text.append('chi2 = '+str(chi))
-        text.append('chi2_r = '+str(chi/(n-g)))
+        if n-g>0: text.append('chi2_r = '+str(chi/(n-g)))
+        else: text.append('chi2_r = NA')
         text.append('AIC = '+str(chi+2*g))
-        text.append('AICc = '+str(chi+2*g*n/(n-g-1)))
+        if n-g-1>0: text.append('AICc = '+str(chi+2*g*n/(n-g-1)))
+        else: text.append('AICc = NA')
         text.append('BIC = '+str(chi+g*np.log(n)))
         if name is None:
             #output to screen

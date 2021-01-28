@@ -8,7 +8,7 @@ py_version = sys.version_info[0]
 if not py_version==(3):	raise RuntimeError('Python 3 is required!	')
 
 dist=setup(name="OCFit",
-      version="0.1.3",
+      version="0.1.5",
       description="Fitting O-C diagrams",
       author="Pavol Gajdos",
       classifiers=[
