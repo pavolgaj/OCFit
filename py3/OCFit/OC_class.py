@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 #main classes of OCFit package
-#version 0.1.5
-#update: 28.1.2021
+#version 0.1.6
+#update: 7.10.2021
 # (c) Pavol Gajdos, 2018-2021
 
 from time import time
@@ -539,7 +539,7 @@ class SimpleFit():
                 E=np.linspace(self.epoch[0]-50*dE,self.epoch[-1]+50*dE,1100)
             else:
                 dE=(self.epoch[-1]-self.epoch[0])/len(self.epoch)
-                E=np.linspace(self.epoch[0]-0.05*len(self.epoch)*dE,self.epoch[-1]+0.05*len(self.epoch)*dE,1.1*len(self.epoch))
+                E=np.linspace(self.epoch[0]-0.05*len(self.epoch)*dE,self.epoch[-1]+0.05*len(self.epoch)*dE,int(1.1*len(self.epoch)))
             tC=self._t0P[0]+self._t0P[1]*E
             p=[]
             if 'Q' in self.params:
@@ -2327,16 +2327,16 @@ class OCFit(ComplexFit):
             if 't0' in params:
                 old_epoch=self.epoch
                 dE=(self.epoch[-1]-self.epoch[0])/len(self.epoch)
-                E=np.linspace(self.epoch[0]-0.05*len(self.epoch)*dE,self.epoch[-1]+0.05*len(self.epoch)*dE,1.1*len(self.epoch))
+                E=np.linspace(self.epoch[0]-0.05*len(self.epoch)*dE,self.epoch[-1]+0.05*len(self.epoch)*dE,int(1.1*len(self.epoch)))
                 t1=params['t0']+params['P']*E
                 self.epoch=E
             elif epoch:
                 dE=(self.epoch[-1]-self.epoch[0])/len(self.epoch)
-                E=np.linspace(self.epoch[0]-0.05*len(self.epoch)*dE,self.epoch[-1]+0.05*len(self.epoch)*dE,1.1*len(self.epoch))
+                E=np.linspace(self.epoch[0]-0.05*len(self.epoch)*dE,self.epoch[-1]+0.05*len(self.epoch)*dE,int(1.1*len(self.epoch)))
                 t1=self._t0P[0]+self._t0P[1]*E
             else:
                 dt=(self.t[-1]-self.t[0])/len(self.t)
-                t1=np.linspace(self.t[0]-0.05*len(self.t)*dt,self.t[-1]+0.05*len(self.t)*dt,1.1*len(self.t))
+                t1=np.linspace(self.t[0]-0.05*len(self.t)*dt,self.t[-1]+0.05*len(self.t)*dt,int(1.1*len(self.t)))
 
 
         if bw:
@@ -2388,7 +2388,7 @@ class OCFit(ComplexFit):
                 E=np.linspace(self.epoch[0]-50*dE,self.epoch[-1]+50*dE,1100)
             else:
                 dE=(self.epoch[-1]-self.epoch[0])/len(self.epoch)
-                E=np.linspace(self.epoch[0]-0.05*len(self.epoch)*dE,self.epoch[-1]+0.05*len(self.epoch)*dE,1.1*len(self.epoch))
+                E=np.linspace(self.epoch[0]-0.05*len(self.epoch)*dE,self.epoch[-1]+0.05*len(self.epoch)*dE,int(1.1*len(self.epoch)))
             l=ax3.plot(E,model_long*k)
             ax3.set_xlabel('Epoch')
             l.pop(0).remove()
