@@ -1,12 +1,12 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 
 #main file for GUI for OCFit class
-#update: 11.6.2019 
-# (c) Pavol Gajdos, 2018-2019
+#update: 2021...
+# (c) Pavol Gajdos, 2018-2021
 
-import Tkinter as tk
-import ttk
-import tkFileDialog,tkMessageBox
+import tkinter as tk
+import tkinter.ttk
+import tkinter.filedialog,tkinter.messagebox
 
 import matplotlib
 matplotlib.use('TkAgg')
@@ -19,23 +19,23 @@ import subprocess
 import os,sys
 
 import OCFit
-     
+
 
 def load():
     #loading data from file
-    
+
     global data
-    
+
     def openFile():
         #create OpenFile dialog
         global path
-        
-        path=tkFileDialog.askopenfilename(parent=tLoad,filetypes=[('Data files','*.dat *.txt'),('All files','*.*')],title='Open file')
-        path=path.replace('\\','/')        
+
+        path=tkinter.filedialog.askopenfilename(parent=tLoad,filetypes=[('Data files','*.dat *.txt'),('All files','*.*')],title='Open file')
+        path=path.replace('\\','/')
         tFName.config(text=path[path.rfind('/')+1:])
-        
+
         if len(path)>0:
-            if os.path.isfile(path): 
+            if os.path.isfile(path):
                 #test if file exists -> if yes, make buttons available
                 bProc.config(state=tk.NORMAL)
                 bPrev.config(state=tk.NORMAL)
@@ -46,98 +46,98 @@ def load():
             subprocess.call(['xdg-open',path])
         else:
             os.startfile(path)
-    
-        
+
+
     def procFile():
         #load and analyse data file
         global data
-        
+
         f=open(path,'r')
         lines=f.readlines()
         f.close()
-        
-        delimiter=delimVar.get().strip() 
-        
+
+        delimiter=delimVar.get().strip()
+
         #set header
         header=headVar.get()
         if len(header)==0: header=0
         else: header=int(header)
-        
+
         #set used columns and their meaning
-        cols={}        
+        cols={}
         if obsVarCh.get()==1 and len(obsVar.get())>0: cols['tO']=int(obsVar.get())
-        if calcVarCh.get()==1 and len(calcVar.get())>0: cols['tC']=int(calcVar.get())        
+        if calcVarCh.get()==1 and len(calcVar.get())>0: cols['tC']=int(calcVar.get())
         if epVarCh.get()==1 and len(epVar.get())>0: cols['E']=int(epVar.get())
         if ocVarCh.get()==1 and len(ocVar.get())>0: cols['oc']=int(ocVar.get())
         if errVarCh.get()==1 and len(errVar.get())>0: cols['err']=int(errVar.get())
-        if wVarCh.get()==1 and len(wVar.get())>0: cols['w']=int(wVar.get()) 
-        if metVarCh.get()==1 and len(metVar.get())>0 and errVarCh.get()==0 and wVarCh.get()==0: 
-            cols['met']=int(metVar.get())             
-        
+        if wVarCh.get()==1 and len(wVar.get())>0: cols['w']=int(wVar.get())
+        if metVarCh.get()==1 and len(metVar.get())>0 and errVarCh.get()==0 and wVarCh.get()==0:
+            cols['met']=int(metVar.get())
+
         data={}
         method=[]
         for c in cols: data[c]=[]
-        
+
         #reading data
         for l in lines[header:]:
             #remove blank lines or comments
             if len(l)==0: continue
             if l[0]=='#': continue
-                
+
             if len(delimiter)==0: tmp=[x.strip() for x in l.split()]
             else: tmp=[x.strip() for x in l.split(delimiter)]
-            
-            for c in cols: 
+
+            for c in cols:
                 #add data to columns
-                if c=='met': 
+                if c=='met':
                     #observing methods
                     if not tmp[cols[c]].strip() in method: method.append(tmp[cols[c]].strip())
                     data[c].append(tmp[cols[c]].strip())
                 else: data[c].append(float(tmp[cols[c]]))
-        
+
         if 'met' in cols:
             #transform observing methods to errors / weights
             metFile=path[:path.rfind('.')]+'-methods.txt'
             metDic={}
-            
+
             def gen():
                 #create text file with used methods
                 f=open(metFile,'w')
                 f.write('# Write errors / weights for each used method to next column!\n')
                 for m in method: f.write(m+'     \n')
                 f.close()
-                
+
                 #open this file in default text editor
                 if sys.platform=='linux' or sys.platform=='linux2':
                     subprocess.call(['xdg-open',metFile])
                 else:
                     os.startfile(metFile)
-            
+
             def loadM():
                 #load file with errors / weights of methods
-                tmp=metFile.replace('\\','/')      
+                tmp=metFile.replace('\\','/')
                 #loading from generated file or open another file (e.g. created before)
-                result=tkMessageBox.askquestion('Load file','Use file "'+tmp[tmp.rfind('/')+1:]+'"?',parent=tMet,icon='question')
+                result=tkinter.messagebox.askquestion('Load file','Use file "'+tmp[tmp.rfind('/')+1:]+'"?',parent=tMet,icon='question')
                 if result=='yes': name=metFile
-                else: name=tkFileDialog.askopenfilename(parent=tMet,filetypes=[('Text files','*.lst *.txt'),('All files','*.*')],title='Open file')
-                
+                else: name=tkinter.filedialog.askopenfilename(parent=tMet,filetypes=[('Text files','*.lst *.txt'),('All files','*.*')],title='Open file')
+
                 if len(name)==0: return
-                
-                f=open(name,'r')                
+
+                f=open(name,'r')
                 for l in f:
                     if not l[0]=='#' and len(l.strip())>0:
                         tmp=l.split()
                         metDic[tmp[0].strip()]=float(tmp[1])
                 f.close()
                 Button1.config(state=tk.NORMAL)
-            
+
             def setM():
                 #transform observing methods to errors / weights
-                if valType.get()==0: c='err'  
+                if valType.get()==0: c='err'
                 else: c='w'
                 data[c]=[]
                 for i in range(len(data['met'])): data[c].append(metDic[data['met'][i]])
-                    
+
                 tMet.destroy()
                 tLoad.destroy()
                 bPlot0.config(state=tk.NORMAL)
@@ -145,26 +145,26 @@ def load():
                 bInit.config(state=tk.NORMAL)
                 bLin.config(state=tk.NORMAL)
                 bQuad.config(state=tk.NORMAL)
-            
+
             #create window
             tMet=tk.Toplevel(tLoad)
             tMet.geometry('258x150')
             tMet.title('Methods')
-            
+
             valType=tk.IntVar(tMet,value=0)   #variable for radiobuttons errors / weights
-            
+
             #button - generate file
             bGen=tk.Button(tMet)
             bGen.place(relx=0.08,rely=0.09,height=26,width=100)
             bGen.configure(command=gen)
             bGen.configure(text='Generate file')
-            
+
             #button - load file
             bLoadM=tk.Button(tMet)
             bLoadM.place(relx=0.54,rely=0.09,height=26,width=100)
             bLoadM.configure(command=loadM)
             bLoadM.configure(text='Load file')
-            
+
             #radiobutton - given values are errors
             Radiobutton1=tk.Radiobutton(tMet)
             Radiobutton1.place(relx=0.16,rely=0.56,relheight=0.18,relwidth=0.24)
@@ -173,30 +173,30 @@ def load():
             Radiobutton1.configure(variable=valType)
             Radiobutton1.configure(value=0)
             Radiobutton1.configure(font=('None',9))
-            
+
             #radiobutton - given values are weights
             Radiobutton2=tk.Radiobutton(tMet)
             Radiobutton2.place(relx=0.5,rely=0.56,relheight=0.18,relwidth=0.29)
             Radiobutton2.configure(justify=tk.LEFT)
             Radiobutton2.configure(text='weights')
-            Radiobutton2.configure(variable=valType) 
+            Radiobutton2.configure(variable=valType)
             Radiobutton2.configure(value=1)
             Radiobutton2.configure(font=('None',9))
-            
+
             #label
             Label1=tk.Label(tMet)
             Label1.place(relx=0.08,rely=0.39,height=18,width=184)
             Label1.configure(text='Given values for methods are:')
             Label1.configure(font=('None',9))
-            
+
             #button - process file and set errors / weights for all methods
             Button1=tk.Button(tMet)
             Button1.place(relx=0.35,rely=0.73,height=26,width=80)
             Button1.configure(command=setM)
             Button1.configure(text='OK')
             Button1.config(state=tk.DISABLED)
-            
-        else:      
+
+        else:
             #close window and make some buttons on main window available
             tLoad.destroy()
             bPlot0.config(state=tk.NORMAL)
@@ -204,17 +204,17 @@ def load():
             bInit.config(state=tk.NORMAL)
             bLin.config(state=tk.NORMAL)
             bQuad.config(state=tk.NORMAL)
-        
-    
+
+
     #create window
-    tLoad=tk.Toplevel(master)   
+    tLoad=tk.Toplevel(master)
     tLoad.geometry('297x406')
     tLoad.title('Load Data')
-    
+
     #variables for delimiter and header
-    delimVar=tk.StringVar(tLoad)        
+    delimVar=tk.StringVar(tLoad)
     headVar=tk.StringVar(tLoad,value='0')
-    
+
     #variables for number of column with values
     obsVar=tk.StringVar(tLoad,value='0')
     calcVar=tk.StringVar(tLoad)
@@ -223,7 +223,7 @@ def load():
     errVar=tk.StringVar(tLoad,value='1')
     wVar=tk.StringVar(tLoad)
     metVar=tk.StringVar(tLoad)
-    
+
     #variables for using the types of data (if is available in file)
     obsVarCh=tk.IntVar(tLoad,value=1)
     calcVarCh=tk.IntVar(tLoad)
@@ -232,7 +232,7 @@ def load():
     errVarCh=tk.IntVar(tLoad,value=1)
     wVarCh=tk.IntVar(tLoad)
     metVarCh=tk.IntVar(tLoad)
-    
+
     #button load file
     bOpen=tk.Button(tLoad)
     bOpen.place(relx=0.2,rely=0.02,height=26,width=79)
@@ -245,7 +245,7 @@ def load():
     bPrev.configure(command=preview)
     bPrev.configure(state=tk.DISABLED)
     bPrev.configure(text='Preview')
-    
+
     #label with name of file
     tFName=tk.Label(tLoad)
     tFName.place(relx=0.07,rely=0.11,height=18,width=256)
@@ -267,7 +267,7 @@ def load():
     Label3.configure(text='Delimiter')
     Label3.configure(width=86)
     Label3.configure(font=('None',9))
-    
+
     #label
     Label4=tk.Label(Frame1)
     Label4.place(relx=0.04,rely=0.54,height=18,width=86)
@@ -275,18 +275,18 @@ def load():
     Label4.configure(text='Header')
     Label4.configure(width=66)
     Label4.configure(font=('None',9))
-    
+
     #input - delimiter
     delim=tk.Entry(Frame1)
     delim.place(relx=0.32,rely=0.08,height=25,relwidth=0.64)
     delim.configure(textvariable=delimVar)
     delim.configure(width=170)
-    
+
     #input - header
     header=tk.Entry(Frame1)
     header.place(relx=0.32,rely=0.46,height=25,relwidth=0.64)
     header.configure(textvariable=headVar)
-    
+
     #frame with columns
     Frame2=tk.Frame(tLoad)
     Frame2.place(relx=0.07,rely=0.34,relheight=0.55,relwidth=0.89)
@@ -344,8 +344,8 @@ def load():
     Label11.configure(anchor=tk.W)
     Label11.configure(text='Method')
     Label11.configure(font=('None',9))
-    
-    #input - column observed times 
+
+    #input - column observed times
     obs=tk.Entry(Frame2)
     obs.place(relx=0.3,rely=0.13,height=25,relwidth=0.57)
     obs.configure(textvariable=obsVar)
@@ -354,7 +354,7 @@ def load():
     calc=tk.Entry(Frame2)
     calc.place(relx=0.3,rely=0.23,height=25,relwidth=0.57)
     calc.configure(textvariable=calcVar)
-    
+
     #input - column epochs
     ep=tk.Entry(Frame2)
     ep.place(relx=0.3,rely=0.33,height=25,relwidth=0.57)
@@ -369,7 +369,7 @@ def load():
     err=tk.Entry(Frame2)
     err.place(relx=0.3,rely=0.53,height=25,relwidth=0.57)
     err.configure(textvariable=errVar)
-    
+
     #input - column weights
     w=tk.Entry(Frame2)
     w.place(relx=0.3,rely=0.63,height=25,relwidth=0.57)
@@ -427,91 +427,23 @@ def load():
     bProc.place(relx=0.35,rely=0.92,height=26,width=92)
     bProc.configure(command=procFile)
     bProc.configure(state=tk.DISABLED)
-    bProc.configure(text='Process file')    
+    bProc.configure(text='Process file')
 
 def plot0():
     #plot O-Cs calculated according to initial ephemeris
     global data,weight
-    
+
     if len(t0Var.get())*len(pVar.get())==0:
-        tkMessageBox.showerror('Fit Linear','Set linear ephemeris (T0, P)!')
+        tkinter.messagebox.showerror('Fit Linear','Set linear ephemeris (T0, P)!')
         return
-    
+
     if not 'tO' in data: data['tO']=[data['tC'][i]+data['oc'][i] for i in range(len(data['oc']))]
-    
-    t0=float(t0Var.get())    
-    P=float(pVar.get())
-    
-    #setting errors
-    if not 'err' in data and 'w' in data: 
-        weight=True
-        err=[1./x for x in data['w']]
-    elif 'err' in data:
-        weight=False
-        err=data['err']
-    else:
-        weight=True
-        err=[1 for x in range(len(data['tO']))]    
 
-    oc=OCFit.FitLinear(data['tO'],t0,P,err=err)
-    if weight: oc._set_err=False
-    
-    if data['tO'][0]<2e6: trans=False
-    else: trans=True
-    
-    if not 'err' in data and 'w' in data: oc.Plot(trans=trans,weight=data['w'],min_type=True)
-    else: oc.Plot(trans=trans,min_type=True)
-
-def save0():
-    #save O-Cs calculated according to initial ephemeris
-    global data,weight
-    
-    if len(t0Var.get())*len(pVar.get())==0:
-        tkMessageBox.showerror('Fit Linear','Set linear ephemeris (T0, P)!')
-        return
-    
-    if not 'tO' in data: data['tO']=[data['tC'][i]+data['oc'][i] for i in range(len(data['oc']))]
-    
-    t0=float(t0Var.get())    
+    t0=float(t0Var.get())
     P=float(pVar.get())
-    
-    #setting errors
-    if not 'err' in data and 'w' in data: 
-        weight=True
-        err=[1./x for x in data['w']]
-    elif 'err' in data:
-        weight=False
-        err=data['err']
-    else:
-        weight=True
-        err=[1 for x in range(len(data['tO']))]    
 
-    oc=OCFit.FitLinear(data['tO'],t0,P,err=err)
-    if weight: oc._set_err=False
-    
-    for x in data: data[x]=np.array(data[x])[oc._order]   #save sorted values
-    
-    f=tkFileDialog.asksaveasfilename(parent=master,title='Save O-C to file',filetypes=[('Data files','*.dat *.txt'),('All files','*.*')],defaultextension='.dat')
-    if len(f)==0: return
-    
-    if not 'err' in data and 'w' in data: oc.SaveOC(f,weight=data['w'])
-    else: oc.SaveOC(f)
- 
-def lin():
-    #fitting O-Cs with a linear function
-    global data,simple,weight
-    
-    if len(t0Var.get())*len(pVar.get())==0:
-        tkMessageBox.showerror('Fit Linear','Set linear ephemeris (T0, P)!')
-        return
-    
-    if not 'tO' in data: data['tO']=[data['tC'][i]+data['oc'][i] for i in range(len(data['oc']))] 
-    
-    t0=float(t0Var.get())    
-    P=float(pVar.get())
-    
     #setting errors
-    if not 'err' in data and 'w' in data: 
+    if not 'err' in data and 'w' in data:
         weight=True
         err=[1./x for x in data['w']]
     elif 'err' in data:
@@ -520,22 +452,89 @@ def lin():
     else:
         weight=True
         err=[1 for x in range(len(data['tO']))]
-    
+
+    oc=OCFit.FitLinear(data['tO'],t0,P,err=err)
+    if weight: oc._set_err=False
+
+    if data['tO'][0]<2e6: trans=False
+    else: trans=True
+
+    if not 'err' in data and 'w' in data: oc.Plot(trans=trans,weight=data['w'],min_type=True)
+    else: oc.Plot(trans=trans,min_type=True)
+
+def save0():
+    #save O-Cs calculated according to initial ephemeris
+    global data,weight
+
+    if len(t0Var.get())*len(pVar.get())==0:
+        tkinter.messagebox.showerror('Fit Linear','Set linear ephemeris (T0, P)!')
+        return
+
+    if not 'tO' in data: data['tO']=[data['tC'][i]+data['oc'][i] for i in range(len(data['oc']))]
+
+    t0=float(t0Var.get())
+    P=float(pVar.get())
+
+    #setting errors
+    if not 'err' in data and 'w' in data:
+        weight=True
+        err=[1./x for x in data['w']]
+    elif 'err' in data:
+        weight=False
+        err=data['err']
+    else:
+        weight=True
+        err=[1 for x in range(len(data['tO']))]
+
+    oc=OCFit.FitLinear(data['tO'],t0,P,err=err)
+    if weight: oc._set_err=False
+
+    for x in data: data[x]=np.array(data[x])[oc._order]   #save sorted values
+
+    f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save O-C to file',filetypes=[('Data files','*.dat *.txt'),('All files','*.*')],defaultextension='.dat')
+    if len(f)==0: return
+
+    if not 'err' in data and 'w' in data: oc.SaveOC(f,weight=data['w'])
+    else: oc.SaveOC(f)
+
+def lin():
+    #fitting O-Cs with a linear function
+    global data,simple,weight
+
+    if len(t0Var.get())*len(pVar.get())==0:
+        tkinter.messagebox.showerror('Fit Linear','Set linear ephemeris (T0, P)!')
+        return
+
+    if not 'tO' in data: data['tO']=[data['tC'][i]+data['oc'][i] for i in range(len(data['oc']))]
+
+    t0=float(t0Var.get())
+    P=float(pVar.get())
+
+    #setting errors
+    if not 'err' in data and 'w' in data:
+        weight=True
+        err=[1./x for x in data['w']]
+    elif 'err' in data:
+        weight=False
+        err=data['err']
+    else:
+        weight=True
+        err=[1 for x in range(len(data['tO']))]
+
 
     simple=OCFit.FitLinear(data['tO'],t0,P,err=err)
     if weight: simple._set_err=False
-        
+
     simple.FitLinear()
-    
+
     #save results
     for x in data: data[x]=np.array(data[x])[simple._order]   #save sorted values
-    
     data['oc']=simple.new_oc
     data['tC']=simple.tC
     t0Var.set(simple.t0)
     pVar.set(simple.P)
-    
-    #make some buttons available    
+
+    #make some buttons available
     bPlotS.config(state=tk.NORMAL)
     bPlotRS.config(state=tk.NORMAL)
     bSumS.config(state=tk.NORMAL)
@@ -544,18 +543,18 @@ def lin():
 def quad():
     #fitting O-Cs with a quadratic function
     global data,simple,weight
-    
+
     if len(t0Var.get())*len(pVar.get())==0:
-        tkMessageBox.showerror('Fit Linear','Set linear ephemeris (T0, P)!')
+        tkinter.messagebox.showerror('Fit Linear','Set linear ephemeris (T0, P)!')
         return
-    
-    if not 'tO' in data: data['tO']=[data['tC'][i]+data['oc'][i] for i in range(len(data['oc']))] 
-    
-    t0=float(t0Var.get())    
+
+    if not 'tO' in data: data['tO']=[data['tC'][i]+data['oc'][i] for i in range(len(data['oc']))]
+
+    t0=float(t0Var.get())
     P=float(pVar.get())
-    
+
     #setting errors
-    if not 'err' in data and 'w' in data: 
+    if not 'err' in data and 'w' in data:
         weight=True
         err=[1./x for x in data['w']]
     elif 'err' in data:
@@ -564,21 +563,20 @@ def quad():
     else:
         weight=True
         err=[1 for x in range(len(data['tO']))]
-        
+
     simple=OCFit.FitQuad(data['tO'],t0,P,err=err)
-    if weight: simple._set_err=False    
-    
+    if weight: simple._set_err=False
+
     simple.FitQuad()
-    
+
     #save results
     for x in data: data[x]=np.array(data[x])[simple._order]   #save sorted values
-    
     data['oc']=simple.new_oc
     data['tC']=simple.tC
     t0Var.set(simple.t0)
     pVar.set(simple.P)
-    
-    #make some buttons available   
+
+    #make some buttons available
     bPlotS.config(state=tk.NORMAL)
     bPlotRS.config(state=tk.NORMAL)
     bSumS.config(state=tk.NORMAL)
@@ -588,19 +586,19 @@ def plotS():
     #plot O-Cs together with linear / quadratic fit
     if data['tO'][0]<2e6: trans=False
     else: trans=True
-    
+
     if not 'err' in data and 'w' in data: simple.Plot(trans=trans,weight=data['w'],min_type=True)
     else: simple.Plot(trans=trans,min_type=True)
-    
+
 
 def plotRS():
     #plot residual O-Cs after linear / quadratic fit
     if data['tO'][0]<2e6: trans=False
     else: trans=True
-    
+
     if not 'err' in data and 'w' in data: simple.PlotRes(trans=trans,weight=data['w'],min_type=True)
     else: simple.PlotRes(trans=trans,min_type=True)
- 
+
 class IORedirector(object):
     '''A general class for redirecting I/O to this Text widget.'''
     def __init__(self,text_area):
@@ -611,71 +609,70 @@ class StdoutRedirector(IORedirector):
     def write(self,str):
         self.text_area.insert(tk.END,str)
 
-   
+
 def sumS():
     #summary for linear / quadratic fit
-    
+
     #create new window
     sumW=tk.Toplevel(master)
-    sumW.geometry('600x450')
+    sumW.geometry('750x450')
     sumW.title('Summary')
 
     #text field
     text=tk.Text(sumW)
     text.place(relx=0.02,rely=0.02,relheight=0.96,relwidth=0.96)
-    
+
     old=sys.stdout
     #redirect output to text field
-    sys.stdout=StdoutRedirector(text)    
+    sys.stdout=StdoutRedirector(text)
     simple.Summary()
-    
+
     sys.stdout=old
-    
+
 
 def saveRS():
     #save residual O-Cs to file
-    f=tkFileDialog.asksaveasfilename(parent=master,title='Save new O-C to file',filetypes=[('Data files','*.dat *.txt'),('All files','*.*')],defaultextension='.dat')
+    f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save new O-C to file',filetypes=[('Data files','*.dat *.txt'),('All files','*.*')],defaultextension='.dat')
     if len(f)==0: return
-    if not 'err' in data and 'w' in data: simple.SaveRes(f,weight=data['w'])    
-    else: simple.SaveRes(f) 
-    
+    if not 'err' in data and 'w' in data: simple.SaveRes(f,weight=data['w'])
+    else: simple.SaveRes(f)
+
 
 def initC():
     #main class (OCFit) initialization
     global ocf,weight
-    
+
     if len(t0Var.get())*len(pVar.get())==0:
-        tkMessageBox.showerror('O-C Fit','Set linear ephemeris (T0, P)!')
+        tkinter.messagebox.showerror('O-C Fit','Set linear ephemeris (T0, P)!')
         return
-    
+
     #calculationg O-Cs
     if not 'oc' in data:
-        t0=float(t0Var.get())    
+        t0=float(t0Var.get())
         P=float(pVar.get())
-    
-        lin=OCFit.FitLinear(data['tO'],t0,P) 
-        
+
+        lin=OCFit.FitLinear(data['tO'],t0,P)
         for x in data: data[x]=np.array(data[x])[lin._order]   #save sorted values
         data['oc']=lin.oc
-    
-    if not 'tO' in data: data['tO']=[data['tC'][i]+data['oc'][i] for i in range(len(data['oc']))]  
-    
+
+    if not 'tO' in data: data['tO']=[data['tC'][i]+data['oc'][i] for i in range(len(data['oc']))]
+
     #setting errors
     weight=False
-    if not 'err' in data and 'w' in data: 
+    if not 'err' in data and 'w' in data:
         weight=True
         err=[1./x for x in data['w']]
     elif not 'err' in data and not 'w' in data:
         weight=True
         err=[1 for x in range(len(data['tO']))]
     else: err=data['err']
-    
+
     ocf=OCFit.OCFit(data['tO'],data['oc'],err)
-    
+
     ocf.Epoch(float(t0Var.get()),float(pVar.get()))   #calculate epochs
-    
+
     if weight: ocf._set_err=False
-    
+
     #make some buttons (un)available
     bSaveC.config(state=tk.NORMAL)
     bRunBG.config(state=tk.DISABLED)
@@ -693,19 +690,19 @@ def initC():
 def saveC(f=None):
     #save class to file
     if f is None:
-        f=tkFileDialog.asksaveasfilename(parent=master,title='Save class to file',filetypes=[('OCFit files','*.ocf'),('All files','*.*')],defaultextension='.ocf')    
+        f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save class to file',filetypes=[('OCFit files','*.ocf'),('All files','*.*')],defaultextension='.ocf')
     if len(f)==0: return
-    ocf.Save(f)    
+    ocf.Save(f)
     return f
-    
+
 
 def loadC():
     #load class from file
     global ocf
-    f=tkFileDialog.askopenfilename(parent=master,title='Load class from file',filetypes=[('OCFit files','*.ocf'),('All files','*.*')])
+    f=tkinter.filedialog.askopenfilename(parent=master,title='Load class from file',filetypes=[('OCFit files','*.ocf'),('All files','*.*')])
     if len(f)==0: return
-    ocf=OCFit.OCFitLoad(f)  
-    
+    ocf=OCFit.OCFitLoad(f)
+
     #make some buttons available
     bSaveC.config(state=tk.NORMAL)
     bFitParams.config(state=tk.NORMAL)
@@ -721,18 +718,18 @@ def fitGA():
     #fitting using genetic algorithms
     for p in ocf.fit_params:
         if not p in ocf.limits:
-            tkMessageBox.showerror('Fit GA','Set limits of parameter "'+p+'"!')
+            tkinter.messagebox.showerror('Fit GA','Set limits of parameter "'+p+'"!')
             return
         if not p in ocf.steps:
-            tkMessageBox.showerror('Fit GA','Set step of parameter "'+p+'"!')
+            tkinter.messagebox.showerror('Fit GA','Set step of parameter "'+p+'"!')
             return
-    
+
     if save==1:
-        f=tkFileDialog.asksaveasfilename(parent=master,title='Save GA fitting to file',filetypes=[('Temp files','*.tmp'),('All files','*.*')],defaultextension='.tmp')
+        f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save GA fitting to file',filetypes=[('Temp files','*.tmp'),('All files','*.*')],defaultextension='.tmp')
         if len(f)==0: return
-        ocf.FitGA(ga['gen'],ga['size'],db=f) 
-    else: ocf.FitGA(ga['gen'],ga['size'])    
-    
+        ocf.FitGA(ga['gen'],ga['size'],db=f)
+    else: ocf.FitGA(ga['gen'],ga['size'])
+
     #make some buttons available
     bPlot.config(state=tk.NORMAL)
     bPlotR.config(state=tk.NORMAL)
@@ -745,22 +742,22 @@ def fitMC():
     #fitting using Monte Carlo method
     for p in ocf.fit_params:
         if not p in ocf.params:
-            tkMessageBox.showerror('Fit MCMC','Set value of parameter "'+p+'"!')
+            tkinter.messagebox.showerror('Fit MCMC','Set value of parameter "'+p+'"!')
             return
         if not p in ocf.limits:
-            tkMessageBox.showerror('Fit MCMC','Set limits of parameter "'+p+'"!')
+            tkinter.messagebox.showerror('Fit MCMC','Set limits of parameter "'+p+'"!')
             return
         if not p in ocf.steps:
-            tkMessageBox.showerror('Fit MCMC','Set step of parameter "'+p+'"!')
+            tkinter.messagebox.showerror('Fit MCMC','Set step of parameter "'+p+'"!')
             return
-            
+
     if not ocf._set_err: ocf.AddWeight(1./ocf.err) #adding weights
-    
+
     if save==1:
-        f=tkFileDialog.asksaveasfilename(parent=master,title='Save MCMC fitting to file',filetypes=[('Temp files','*.tmp'),('All files','*.*')],defaultextension='.tmp')
+        f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save MCMC fitting to file',filetypes=[('Temp files','*.tmp'),('All files','*.*')],defaultextension='.tmp')
         if len(f)==0: return
-        ocf.FitMCMC(mc['n'],mc['burn'],mc['binn'],db=f) 
-    else: ocf.FitMCMC(mc['n'],mc['burn'],mc['binn'])    
+        ocf.FitMCMC(mc['n'],mc['burn'],mc['binn'],db=f)
+    else: ocf.FitMCMC(mc['n'],mc['burn'],mc['binn'])
 
     #make some buttons available
     bPlot.config(state=tk.NORMAL)
@@ -773,33 +770,33 @@ def fitMC():
 def fitParams():
     #setting parameters of GA and MC fitting
     global ga,mc,save
-    
+
     def ok():
         #save values
         global ga,mc,save
 
         save=saveChVar.get()
 
-        ga['gen']=int(genVar.get())   
-        ga['size']=int(sizeVar.get()) 
-        
-        mc['n']=float(nVar.get())   
+        ga['gen']=int(genVar.get())
+        ga['size']=int(sizeVar.get())
+
+        mc['n']=float(nVar.get())
         mc['burn']=float(burnVar.get())
         mc['binn']=float(binnVar.get())
-        
+
         tFitPar.destroy()
-        
+
         #make some buttons available
         bRunBG.config(state=tk.NORMAL)
         bFitGA.config(state=tk.NORMAL)
         bFitMC.config(state=tk.NORMAL)
-        
-    
+
+
     #create new window
     tFitPar=tk.Toplevel(master)
     tFitPar.geometry('288x316')
     tFitPar.title('Parameters of Fitting')
-    
+
     #variables
     saveChVar=tk.IntVar(tFitPar)
     genVar=tk.StringVar(tFitPar,value='100')
@@ -825,7 +822,7 @@ def fitParams():
     saveCh.place(relx=0.45,rely=0.78,relheight=0.06,relwidth=0.09)
     saveCh.configure(justify=tk.LEFT)
     saveCh.configure(variable=saveChVar)
-    
+
     #frame for GA
     Labelframe1=tk.LabelFrame(tFitPar)
     Labelframe1.place(relx=0.07,rely=0.03,relheight=0.3,relwidth=0.87)
@@ -890,115 +887,115 @@ def fitParams():
     #input - binning size
     binn=tk.Entry(Labelframe2)
     binn.place(relx=0.4,rely=0.63,height=25,relwidth=0.56)
-    binn.configure(textvariable=binnVar)    
-    
+    binn.configure(textvariable=binnVar)
+
 
 def params():
     #setting model parameters
     def ok():
         #save parameters of model
-        result=tkMessageBox.askquestion('Saving parameters','It is necessary to set values of all fixed parameters and limits\
+        result=tkinter.messagebox.askquestion('Saving parameters','It is necessary to set values of all fixed parameters and limits\
          and steps of all fitted parameters. Do you want to continue?',icon='warning',parent=tParams)
-        if result=='no': return        
-        
+        if result=='no': return
+
         #save model
         model=modelVar.get()
         ocf.model=model
-        
+
         #clear vars with model params
-        ocf.fit_params=[]  
+        ocf.fit_params=[]
         ocf.params={}
         ocf.steps={}
         ocf.limits={}
-        
-        if 'LiTE' in model: 
+
+        if 'LiTE' in model:
             #models with LiTE (LiTE3, LiTE34, LiTE3Quad, LiTE34Quad)
-            
+
             #checking if params will be fitted
             if a3Fit.get()==1: ocf.fit_params.append('a_sin_i3')
             if e3Fit.get()==1: ocf.fit_params.append('e3')
             if w3Fit.get()==1: ocf.fit_params.append('w3')
             if t3Fit.get()==1: ocf.fit_params.append('t03')
             if P3Fit.get()==1: ocf.fit_params.append('P3')
-            
+
             #get values of params
-            if len(a3Val.get())>0: ocf.params['a_sin_i3']=float(a3Val.get())            
-            if len(e3Val.get())>0: ocf.params['e3']=float(e3Val.get())            
-            if len(w3Val.get())>0: ocf.params['w3']=float(w3Val.get())            
-            if len(t3Val.get())>0: ocf.params['t03']=float(t3Val.get())             
+            if len(a3Val.get())>0: ocf.params['a_sin_i3']=float(a3Val.get())
+            if len(e3Val.get())>0: ocf.params['e3']=float(e3Val.get())
+            if len(w3Val.get())>0: ocf.params['w3']=float(w3Val.get())
+            if len(t3Val.get())>0: ocf.params['t03']=float(t3Val.get())
             if len(P3Val.get())>0: ocf.params['P3']=float(P3Val.get())
-            
+
             #get params steps
-            if len(a3Step.get())>0: ocf.steps['a_sin_i3']=float(a3Step.get())            
-            if len(e3Step.get())>0: ocf.steps['e3']=float(e3Step.get())            
-            if len(w3Step.get())>0: ocf.steps['w3']=float(w3Step.get())            
-            if len(t3Step.get())>0: ocf.steps['t03']=float(t3Step.get())             
+            if len(a3Step.get())>0: ocf.steps['a_sin_i3']=float(a3Step.get())
+            if len(e3Step.get())>0: ocf.steps['e3']=float(e3Step.get())
+            if len(w3Step.get())>0: ocf.steps['w3']=float(w3Step.get())
+            if len(t3Step.get())>0: ocf.steps['t03']=float(t3Step.get())
             if len(P3Step.get())>0: ocf.steps['P3']=float(P3Step.get())
-            
+
             #get limits for params
-            if len(a3Min.get())*len(a3Max.get())>0: ocf.limits['a_sin_i3']=[float(a3Min.get()),float(a3Max.get())]            
-            if len(e3Min.get())*len(e3Max.get())>0: ocf.limits['e3']=[float(e3Min.get()),float(e3Max.get())]         
-            if len(w3Min.get())*len(w3Max.get())>0: ocf.limits['w3']=[float(w3Min.get()),float(w3Max.get())]             
-            if len(t3Min.get())*len(t3Max.get())>0: ocf.limits['t03']=[float(t3Min.get()),float(t3Max.get())]              
-            if len(P3Min.get())*len(P3Max.get())>0: ocf.limits['P3']=[float(P3Min.get()),float(P3Max.get())] 
-            
+            if len(a3Min.get())*len(a3Max.get())>0: ocf.limits['a_sin_i3']=[float(a3Min.get()),float(a3Max.get())]
+            if len(e3Min.get())*len(e3Max.get())>0: ocf.limits['e3']=[float(e3Min.get()),float(e3Max.get())]
+            if len(w3Min.get())*len(w3Max.get())>0: ocf.limits['w3']=[float(w3Min.get()),float(w3Max.get())]
+            if len(t3Min.get())*len(t3Max.get())>0: ocf.limits['t03']=[float(t3Min.get()),float(t3Max.get())]
+            if len(P3Min.get())*len(P3Max.get())>0: ocf.limits['P3']=[float(P3Min.get()),float(P3Max.get())]
+
             if 'Quad' in model:
                 #LiTE3Quad and LiTE34Quad models
-                
+
                 #checking if params will be fitted
-                if t0Fit.get()==1: ocf.fit_params.append('t0')                
+                if t0Fit.get()==1: ocf.fit_params.append('t0')
                 if PFit.get()==1: ocf.fit_params.append('P')
                 if QFit.get()==1: ocf.fit_params.append('Q')
-                
+
                 #get values of params
                 if len(t0Val.get())>0: ocf.params['t0']=float(t0Val.get())
                 if len(PVal.get())>0: ocf.params['P']=float(PVal.get())
                 if len(QVal.get())>0: ocf.params['Q']=float(QVal.get())
-                
+
                 #get params steps
                 if len(t0Step.get())>0: ocf.steps['t0']=float(t0Step.get())
                 if len(PStep.get())>0: ocf.steps['P']=float(PStep.get())
                 if len(QStep.get())>0: ocf.steps['Q']=float(QStep.get())
-                
+
                 #get limits for params
-                if len(t0Min.get())*len(t0Max.get())>0: ocf.limits['t0']=[float(t0Min.get()),float(t0Max.get())]             
-                if len(PMin.get())*len(PMax.get())>0: ocf.limits['P']=[float(PMin.get()),float(PMax.get())]              
-                if len(QMin.get())*len(QMax.get())>0: ocf.limits['Q']=[float(QMin.get()),float(QMax.get())] 
-                
+                if len(t0Min.get())*len(t0Max.get())>0: ocf.limits['t0']=[float(t0Min.get()),float(t0Max.get())]
+                if len(PMin.get())*len(PMax.get())>0: ocf.limits['P']=[float(PMin.get()),float(PMax.get())]
+                if len(QMin.get())*len(QMax.get())>0: ocf.limits['Q']=[float(QMin.get()),float(QMax.get())]
+
             if '4' in model:
                 #LiTE34 and LiTE34Quad models
-                
+
                 #checking if params will be fitted
                 if a4Fit.get()==1: ocf.fit_params.append('a_sin_i4')
                 if e4Fit.get()==1: ocf.fit_params.append('e4')
                 if w4Fit.get()==1: ocf.fit_params.append('w4')
                 if t4Fit.get()==1: ocf.fit_params.append('t04')
                 if P4Fit.get()==1: ocf.fit_params.append('P4')
-                
+
                 #get values of params
-                if len(a4Val.get())>0: ocf.params['a_sin_i4']=float(a4Val.get())                
-                if len(e4Val.get())>0: ocf.params['e4']=float(e4Val.get())                
-                if len(w4Val.get())>0: ocf.params['w4']=float(w4Val.get())                               
-                if len(t4Val.get())>0: ocf.params['t04']=float(t4Val.get())                       
+                if len(a4Val.get())>0: ocf.params['a_sin_i4']=float(a4Val.get())
+                if len(e4Val.get())>0: ocf.params['e4']=float(e4Val.get())
+                if len(w4Val.get())>0: ocf.params['w4']=float(w4Val.get())
+                if len(t4Val.get())>0: ocf.params['t04']=float(t4Val.get())
                 if len(P4Val.get())>0: ocf.params['P4']=float(P4Val.get())
-                
+
                 #get params steps
-                if len(a4Step.get())>0: ocf.steps['a_sin_i4']=float(a4Step.get())            
-                if len(e4Step.get())>0: ocf.steps['e4']=float(e4Step.get())            
-                if len(w4Step.get())>0: ocf.steps['w4']=float(w4Step.get())            
-                if len(t4Step.get())>0: ocf.steps['t04']=float(t4Step.get())             
+                if len(a4Step.get())>0: ocf.steps['a_sin_i4']=float(a4Step.get())
+                if len(e4Step.get())>0: ocf.steps['e4']=float(e4Step.get())
+                if len(w4Step.get())>0: ocf.steps['w4']=float(w4Step.get())
+                if len(t4Step.get())>0: ocf.steps['t04']=float(t4Step.get())
                 if len(P4Step.get())>0: ocf.steps['P4']=float(P4Step.get())
-                
+
                 #get limits for params
-                if len(a4Min.get())*len(a4Max.get())>0: ocf.limits['a_sin_i4']=[float(a4Min.get()),float(a4Max.get())]            
-                if len(e4Min.get())*len(e4Max.get())>0: ocf.limits['e4']=[float(e4Min.get()),float(e4Max.get())]         
-                if len(w4Min.get())*len(w4Max.get())>0: ocf.limits['w4']=[float(w4Min.get()),float(w4Max.get())]             
-                if len(t4Min.get())*len(t4Max.get())>0: ocf.limits['t04']=[float(t4Min.get()),float(t4Max.get())]              
-                if len(P4Min.get())*len(P4Max.get())>0: ocf.limits['P4']=[float(P4Min.get()),float(P4Max.get())] 
-        
-        if 'AgolIn' in model: 
+                if len(a4Min.get())*len(a4Max.get())>0: ocf.limits['a_sin_i4']=[float(a4Min.get()),float(a4Max.get())]
+                if len(e4Min.get())*len(e4Max.get())>0: ocf.limits['e4']=[float(e4Min.get()),float(e4Max.get())]
+                if len(w4Min.get())*len(w4Max.get())>0: ocf.limits['w4']=[float(w4Min.get()),float(w4Max.get())]
+                if len(t4Min.get())*len(t4Max.get())>0: ocf.limits['t04']=[float(t4Min.get()),float(t4Max.get())]
+                if len(P4Min.get())*len(P4Max.get())>0: ocf.limits['P4']=[float(P4Min.get()),float(P4Max.get())]
+
+        if 'AgolIn' in model:
             #models based on Agol et al. (2005, their eq. (12)) - AgolInPlanet, AgolInPlanetLin
-            
+
             #checking if params will be fitted
             if PFit.get()==1: ocf.fit_params.append('P')
             if aFit.get()==1: ocf.fit_params.append('a')
@@ -1009,127 +1006,127 @@ def params():
             if w3Fit.get()==1: ocf.fit_params.append('w3')
             if t3Fit.get()==1: ocf.fit_params.append('t03')
             if P3Fit.get()==1: ocf.fit_params.append('P3')
-            
+
             #get values of params
             if len(PVal.get())>0: ocf.params['P']=float(PVal.get())
-            if len(aVal.get())>0: ocf.params['a']=float(aVal.get())            
-            if len(wVal.get())>0: ocf.params['w']=float(wVal.get())            
-            if len(eVal.get())>0: ocf.params['e']=float(eVal.get())   
-            if len(mu3Val.get())>0: ocf.params['mu3']=float(mu3Val.get())            
-            if len(r3Val.get())>0: ocf.params['r3']=float(r3Val.get())            
-            if len(w3Val.get())>0: ocf.params['w3']=float(w3Val.get()) 
-            if len(t3Val.get())>0: ocf.params['t03']=float(t3Val.get())             
+            if len(aVal.get())>0: ocf.params['a']=float(aVal.get())
+            if len(wVal.get())>0: ocf.params['w']=float(wVal.get())
+            if len(eVal.get())>0: ocf.params['e']=float(eVal.get())
+            if len(mu3Val.get())>0: ocf.params['mu3']=float(mu3Val.get())
+            if len(r3Val.get())>0: ocf.params['r3']=float(r3Val.get())
+            if len(w3Val.get())>0: ocf.params['w3']=float(w3Val.get())
+            if len(t3Val.get())>0: ocf.params['t03']=float(t3Val.get())
             if len(P3Val.get())>0: ocf.params['P3']=float(P3Val.get())
-            
+
             #get params steps
             if len(PStep.get())>0: ocf.steps['P']=float(PStep.get())
-            if len(aStep.get())>0: ocf.steps['a']=float(aStep.get())            
-            if len(wStep.get())>0: ocf.steps['w']=float(wStep.get())            
-            if len(eStep.get())>0: ocf.steps['e']=float(eStep.get())  
-            if len(mu3Step.get())>0: ocf.steps['mu3']=float(mu3Step.get())            
-            if len(r3Step.get())>0: ocf.steps['r3']=float(r3Step.get())            
-            if len(w3Step.get())>0: ocf.steps['w3']=float(w3Step.get()) 
-            if len(t3Step.get())>0: ocf.steps['t03']=float(t3Step.get())             
+            if len(aStep.get())>0: ocf.steps['a']=float(aStep.get())
+            if len(wStep.get())>0: ocf.steps['w']=float(wStep.get())
+            if len(eStep.get())>0: ocf.steps['e']=float(eStep.get())
+            if len(mu3Step.get())>0: ocf.steps['mu3']=float(mu3Step.get())
+            if len(r3Step.get())>0: ocf.steps['r3']=float(r3Step.get())
+            if len(w3Step.get())>0: ocf.steps['w3']=float(w3Step.get())
+            if len(t3Step.get())>0: ocf.steps['t03']=float(t3Step.get())
             if len(P3Step.get())>0: ocf.steps['P3']=float(P3Step.get())
-            
+
             #get limits for params
-            if len(PMin.get())*len(PMax.get())>0: ocf.limits['P']=[float(PMin.get()),float(PMax.get())] 
-            if len(aMin.get())*len(aMax.get())>0: ocf.limits['a']=[float(aMin.get()),float(aMax.get())]            
-            if len(wMin.get())*len(wMax.get())>0: ocf.limits['w']=[float(wMin.get()),float(wMax.get())]         
-            if len(eMin.get())*len(eMax.get())>0: ocf.limits['e']=[float(eMin.get()),float(eMax.get())]   
-            if len(mu3Min.get())*len(mu3Max.get())>0: ocf.limits['mu3']=[float(mu3Min.get()),float(mu3Max.get())]            
-            if len(r3Min.get())*len(r3Max.get())>0: ocf.limits['r3']=[float(r3Min.get()),float(r3Max.get())]         
-            if len(w3Min.get())*len(w3Max.get())>0: ocf.limits['w3']=[float(w3Min.get()),float(w3Max.get())] 
-            if len(t3Min.get())*len(t3Max.get())>0: ocf.limits['t03']=[float(t3Min.get()),float(t3Max.get())]              
-            if len(P3Min.get())*len(P3Max.get())>0: ocf.limits['P3']=[float(P3Min.get()),float(P3Max.get())] 
-            
+            if len(PMin.get())*len(PMax.get())>0: ocf.limits['P']=[float(PMin.get()),float(PMax.get())]
+            if len(aMin.get())*len(aMax.get())>0: ocf.limits['a']=[float(aMin.get()),float(aMax.get())]
+            if len(wMin.get())*len(wMax.get())>0: ocf.limits['w']=[float(wMin.get()),float(wMax.get())]
+            if len(eMin.get())*len(eMax.get())>0: ocf.limits['e']=[float(eMin.get()),float(eMax.get())]
+            if len(mu3Min.get())*len(mu3Max.get())>0: ocf.limits['mu3']=[float(mu3Min.get()),float(mu3Max.get())]
+            if len(r3Min.get())*len(r3Max.get())>0: ocf.limits['r3']=[float(r3Min.get()),float(r3Max.get())]
+            if len(w3Min.get())*len(w3Max.get())>0: ocf.limits['w3']=[float(w3Min.get()),float(w3Max.get())]
+            if len(t3Min.get())*len(t3Max.get())>0: ocf.limits['t03']=[float(t3Min.get()),float(t3Max.get())]
+            if len(P3Min.get())*len(P3Max.get())>0: ocf.limits['P3']=[float(P3Min.get()),float(P3Max.get())]
+
             if 'Lin' in model:
                 #model AgolInPlanetLin
-                if t0Fit.get()==1: ocf.fit_params.append('t0') 
-                if len(t0Val.get())>0: ocf.params['t0']=float(t0Val.get())                 
-                if len(t0Step.get())>0: ocf.steps['t0']=float(t0Step.get())   
-                if len(t0Min.get())*len(t0Max.get())>0: ocf.limits['t0']=[float(t0Min.get()),float(t0Max.get())]             
-                             
+                if t0Fit.get()==1: ocf.fit_params.append('t0')
+                if len(t0Val.get())>0: ocf.params['t0']=float(t0Val.get())
+                if len(t0Step.get())>0: ocf.steps['t0']=float(t0Step.get())
+                if len(t0Min.get())*len(t0Max.get())>0: ocf.limits['t0']=[float(t0Min.get()),float(t0Max.get())]
 
-        if 'AgolEx' in model: 
+
+        if 'AgolEx' in model:
             #models based on Agol et al. (2005, their eq. (25)) - AgolExPlanet, AgolExPlanetLin
-            
+
             #checking if params will be fitted
             if PFit.get()==1: ocf.fit_params.append('P')
             if mu3Fit.get()==1: ocf.fit_params.append('mu3')
             if e3Fit.get()==1: ocf.fit_params.append('e3')
             if t3Fit.get()==1: ocf.fit_params.append('t03')
             if P3Fit.get()==1: ocf.fit_params.append('P3')
-            
+
             #get values of params
-            if len(PVal.get())>0: ocf.params['P']=float(PVal.get()) 
-            if len(mu3Val.get())>0: ocf.params['mu3']=float(mu3Val.get())            
-            if len(e3Val.get())>0: ocf.params['e3']=float(e3Val.get())            
-            if len(t3Val.get())>0: ocf.params['t03']=float(t3Val.get())             
+            if len(PVal.get())>0: ocf.params['P']=float(PVal.get())
+            if len(mu3Val.get())>0: ocf.params['mu3']=float(mu3Val.get())
+            if len(e3Val.get())>0: ocf.params['e3']=float(e3Val.get())
+            if len(t3Val.get())>0: ocf.params['t03']=float(t3Val.get())
             if len(P3Val.get())>0: ocf.params['P3']=float(P3Val.get())
-            
+
             #get params steps
-            if len(PStep.get())>0: ocf.steps['P']=float(PStep.get())  
-            if len(mu3Step.get())>0: ocf.steps['mu3']=float(mu3Step.get())            
-            if len(e3Step.get())>0: ocf.steps['e3']=float(e3Step.get())            
-            if len(t3Step.get())>0: ocf.steps['t03']=float(t3Step.get())             
+            if len(PStep.get())>0: ocf.steps['P']=float(PStep.get())
+            if len(mu3Step.get())>0: ocf.steps['mu3']=float(mu3Step.get())
+            if len(e3Step.get())>0: ocf.steps['e3']=float(e3Step.get())
+            if len(t3Step.get())>0: ocf.steps['t03']=float(t3Step.get())
             if len(P3Step.get())>0: ocf.steps['P3']=float(P3Step.get())
-            
+
             #get limits for params
-            if len(PMin.get())*len(PMax.get())>0: ocf.limits['P']=[float(PMin.get()),float(PMax.get())] 
-            if len(mu3Min.get())*len(mu3Max.get())>0: ocf.limits['mu3']=[float(mu3Min.get()),float(mu3Max.get())]            
-            if len(e3Min.get())*len(e3Max.get())>0: ocf.limits['e3']=[float(e3Min.get()),float(e3Max.get())]          
-            if len(t3Min.get())*len(t3Max.get())>0: ocf.limits['t03']=[float(t3Min.get()),float(t3Max.get())]              
+            if len(PMin.get())*len(PMax.get())>0: ocf.limits['P']=[float(PMin.get()),float(PMax.get())]
+            if len(mu3Min.get())*len(mu3Max.get())>0: ocf.limits['mu3']=[float(mu3Min.get()),float(mu3Max.get())]
+            if len(e3Min.get())*len(e3Max.get())>0: ocf.limits['e3']=[float(e3Min.get()),float(e3Max.get())]
+            if len(t3Min.get())*len(t3Max.get())>0: ocf.limits['t03']=[float(t3Min.get()),float(t3Max.get())]
             if len(P3Min.get())*len(P3Max.get())>0: ocf.limits['P3']=[float(P3Min.get()),float(P3Max.get())]
-            
+
             if 'Lin' in model:
                 #model AgolExPlanetLin
-                if t0Fit.get()==1: ocf.fit_params.append('t0') 
-                if len(t0Val.get())>0: ocf.params['t0']=float(t0Val.get())                 
-                if len(t0Step.get())>0: ocf.steps['t0']=float(t0Step.get())   
-                if len(t0Min.get())*len(t0Max.get())>0: ocf.limits['t0']=[float(t0Min.get()),float(t0Max.get())]   
-                    
-        elif 'Apsid' in model: 
+                if t0Fit.get()==1: ocf.fit_params.append('t0')
+                if len(t0Val.get())>0: ocf.params['t0']=float(t0Val.get())
+                if len(t0Step.get())>0: ocf.steps['t0']=float(t0Step.get())
+                if len(t0Min.get())*len(t0Max.get())>0: ocf.limits['t0']=[float(t0Min.get()),float(t0Max.get())]
+
+        elif 'Apsid' in model:
             #model of apsidal motion (Apsidal)
-            
+
             #checking if params will be fitted
-            if t0Fit.get()==1: ocf.fit_params.append('t0')                
+            if t0Fit.get()==1: ocf.fit_params.append('t0')
             if PFit.get()==1: ocf.fit_params.append('P')
-            if w0Fit.get()==1: ocf.fit_params.append('w0')    
-            if dwFit.get()==1: ocf.fit_params.append('dw')            
+            if w0Fit.get()==1: ocf.fit_params.append('w0')
+            if dwFit.get()==1: ocf.fit_params.append('dw')
             if eFit.get()==1: ocf.fit_params.append('e')
-            
+
             #get values of params
             if len(t0Val.get())>0: ocf.params['t0']=float(t0Val.get())
             if len(PVal.get())>0: ocf.params['P']=float(PVal.get())
             if len(w0Val.get())>0: ocf.params['w0']=float(w0Val.get())
-            if len(dwVal.get())>0: ocf.params['dw']=float(dwVal.get())            
-            if len(eVal.get())>0: ocf.params['e']=float(eVal.get())             
-            
+            if len(dwVal.get())>0: ocf.params['dw']=float(dwVal.get())
+            if len(eVal.get())>0: ocf.params['e']=float(eVal.get())
+
             #get params steps
             if len(t0Step.get())>0: ocf.steps['t0']=float(t0Step.get())
             if len(PStep.get())>0: ocf.steps['P']=float(PStep.get())
             if len(w0Step.get())>0: ocf.steps['w0']=float(w0Step.get())
             if len(dwStep.get())>0: ocf.steps['dw']=float(dwStep.get())
-            if len(eStep.get())>0: ocf.steps['e']=float(eStep.get())            
-            
+            if len(eStep.get())>0: ocf.steps['e']=float(eStep.get())
+
             #get limits for params
-            if len(t0Min.get())*len(t0Max.get())>0: ocf.limits['t0']=[float(t0Min.get()),float(t0Max.get())]             
-            if len(PMin.get())*len(PMax.get())>0: ocf.limits['P']=[float(PMin.get()),float(PMax.get())] 
-            if len(w0Min.get())*len(w0Max.get())>0: ocf.limits['w0']=[float(w0Min.get()),float(w0Max.get())]             
-            if len(dwMin.get())*len(dwMax.get())>0: ocf.limits['dw']=[float(dwMin.get()),float(dwMax.get())]             
-            if len(eMin.get())*len(eMax.get())>0: ocf.limits['e']=[float(eMin.get()),float(eMax.get())]            
-        
+            if len(t0Min.get())*len(t0Max.get())>0: ocf.limits['t0']=[float(t0Min.get()),float(t0Max.get())]
+            if len(PMin.get())*len(PMax.get())>0: ocf.limits['P']=[float(PMin.get()),float(PMax.get())]
+            if len(w0Min.get())*len(w0Max.get())>0: ocf.limits['w0']=[float(w0Min.get()),float(w0Max.get())]
+            if len(dwMin.get())*len(dwMax.get())>0: ocf.limits['dw']=[float(dwMin.get()),float(dwMax.get())]
+            if len(eMin.get())*len(eMax.get())>0: ocf.limits['e']=[float(eMin.get()),float(eMax.get())]
+
         #close window
         tParams.destroy()
-        bFitParams.config(state=tk.NORMAL)    
-    
+        bFitParams.config(state=tk.NORMAL)
+
     def change(event=None):
         #changing selected model
         model=modelVar.get()
-        
+
         #make inputbox (un)available according to selected model
-        if 'LiTE' in model: 
+        if 'LiTE' in model:
             #models with LiTE (LiTE3, LiTE34, LiTE3Quad, LiTE34Quad)
             tNTB.select(0)
             if 'Quad' in model:
@@ -1160,7 +1157,7 @@ def params():
                     w4[i].config(state=tk.DISABLED)
                     t4[i].config(state=tk.DISABLED)
                     P4[i].config(state=tk.DISABLED)
-        elif 'AgolIn' in model: 
+        elif 'AgolIn' in model:
             #models based on Agol et al. (2005, their eq. (12)) - AgolInPlanet, AgolInPlanetLin
             tNTB.select(1)
             if 'Lin' in model:
@@ -1169,7 +1166,7 @@ def params():
             else:
                 for i in range(5):
                     t0I[i].config(state=tk.DISABLED)
-        elif 'AgolEx' in model: 
+        elif 'AgolEx' in model:
             #models based on Agol et al. (2005, their eq. (25)) - AgolExPlanet, AgolExPlanetLin
             tNTB.select(2)
             if 'Lin' in model:
@@ -1178,172 +1175,172 @@ def params():
             else:
                 for i in range(5):
                     t0E[i].config(state=tk.DISABLED)
-        elif 'Apsid' in model: 
+        elif 'Apsid' in model:
             #model of apsidal motion (Apsidal)
             tNTB.select(3)
-     
-     
-    def init_vars(): 
+
+
+    def init_vars():
         #initialization of model parameters values from class
         modelVar.set(ocf.model)   #set model
         change()
-        
+
         #linear ephemeris
         if len(t0Var.get())>0: t0Val.set(t0Var.get())
         if len(pVar.get())>0: PVal.set(pVar.get())
-         
-        #setting selectbox for fitted params
-        if 't0' in ocf.fit_params: t0Fit.set(1)   
-        if 'P' in ocf.fit_params: PFit.set(1)                          
-        if 'Q' in ocf.fit_params: QFit.set(1)    
-                    
-        if 'a_sin_i3' in ocf.fit_params: a3Fit.set(1)                         
-        if 'e3' in ocf.fit_params: e3Fit.set(1)                           
-        if 'w3' in ocf.fit_params: w3Fit.set(1)                
-        if 't03' in ocf.fit_params: t3Fit.set(1)            
-        if 'P3' in ocf.fit_params: P3Fit.set(1)    
-        
-        if 'a_sin_i4' in ocf.fit_params: a4Fit.set(1)                        
-        if 'e4' in ocf.fit_params: e4Fit.set(1)                
-        if 'w4' in ocf.fit_params: w4Fit.set(1)            
-        if 't04' in ocf.fit_params: t4Fit.set(1)             
-        if 'P4' in ocf.fit_params: P4Fit.set(1)  
 
-        if 'a' in ocf.fit_params: aFit.set(1)   
-        if 'w' in ocf.fit_params: wFit.set(1)                     
-        if 'e' in ocf.fit_params: eFit.set(1)  
-        if 'mu3' in ocf.fit_params: mu3Fit.set(1)  
-        if 'r3' in ocf.fit_params: r3Fit.set(1)   
-        
-        if 'w0' in ocf.fit_params: w0Fit.set(1)   
-        if 'dw' in ocf.fit_params: dwFit.set(1) 
-        
+        #setting selectbox for fitted params
+        if 't0' in ocf.fit_params: t0Fit.set(1)
+        if 'P' in ocf.fit_params: PFit.set(1)
+        if 'Q' in ocf.fit_params: QFit.set(1)
+
+        if 'a_sin_i3' in ocf.fit_params: a3Fit.set(1)
+        if 'e3' in ocf.fit_params: e3Fit.set(1)
+        if 'w3' in ocf.fit_params: w3Fit.set(1)
+        if 't03' in ocf.fit_params: t3Fit.set(1)
+        if 'P3' in ocf.fit_params: P3Fit.set(1)
+
+        if 'a_sin_i4' in ocf.fit_params: a4Fit.set(1)
+        if 'e4' in ocf.fit_params: e4Fit.set(1)
+        if 'w4' in ocf.fit_params: w4Fit.set(1)
+        if 't04' in ocf.fit_params: t4Fit.set(1)
+        if 'P4' in ocf.fit_params: P4Fit.set(1)
+
+        if 'a' in ocf.fit_params: aFit.set(1)
+        if 'w' in ocf.fit_params: wFit.set(1)
+        if 'e' in ocf.fit_params: eFit.set(1)
+        if 'mu3' in ocf.fit_params: mu3Fit.set(1)
+        if 'r3' in ocf.fit_params: r3Fit.set(1)
+
+        if 'w0' in ocf.fit_params: w0Fit.set(1)
+        if 'dw' in ocf.fit_params: dwFit.set(1)
+
         #setting valus of params
-        if 't0' in ocf.params: t0Val.set(str(ocf.params['t0'])) 
+        if 't0' in ocf.params: t0Val.set(str(ocf.params['t0']))
         if 'P' in ocf.params: PVal.set(str(ocf.params['P']))
-        if 'Q' in ocf.params: QVal.set(str(ocf.params['Q'])) 
-        
+        if 'Q' in ocf.params: QVal.set(str(ocf.params['Q']))
+
         if 'a_sin_i3' in ocf.params: a3Val.set(str(ocf.params['a_sin_i3']))
-        if 'e3' in ocf.params: e3Val.set(str(ocf.params['e3'])) 
+        if 'e3' in ocf.params: e3Val.set(str(ocf.params['e3']))
         if 'w3' in ocf.params: w3Val.set(str(ocf.params['w3']))
         if 't03' in ocf.params: t3Val.set(str(ocf.params['t03']))
         if 'P3' in ocf.params: P3Val.set(str(ocf.params['P3']))
-        
+
         if 'a_sin_i4' in ocf.params: a4Val.set(str(ocf.params['a_sin_i4']))
         if 'e4' in ocf.params: e4Val.set(str(ocf.params['e4']))
         if 'w4' in ocf.params: w4Val.set(str(ocf.params['w4']))
         if 't04' in ocf.params: t4Val.set(str(ocf.params['t04']))
         if 'P4' in ocf.params: P4Val.set(str(ocf.params['P4']))
-            
-        if 'a' in ocf.params: aVal.set(str(ocf.params['a'])) 
+
+        if 'a' in ocf.params: aVal.set(str(ocf.params['a']))
         if 'w' in ocf.params: wVal.set(str(ocf.params['w']))
-        if 'e' in ocf.params: eVal.set(str(ocf.params['e']))  
-        if 'mu3' in ocf.params: mu3Val.set(str(ocf.params['mu3'])) 
+        if 'e' in ocf.params: eVal.set(str(ocf.params['e']))
+        if 'mu3' in ocf.params: mu3Val.set(str(ocf.params['mu3']))
         if 'r3' in ocf.params: r3Val.set(str(ocf.params['r3']))
-            
-        if 'w0' in ocf.params: w0Val.set(str(ocf.params['w0'])) 
+
+        if 'w0' in ocf.params: w0Val.set(str(ocf.params['w0']))
         if 'dw' in ocf.params: dwVal.set(str(ocf.params['dw']))
-        
+
         #setting steps for params
-        if 't0' in ocf.steps: t0Step.set(str(ocf.steps['t0'])) 
+        if 't0' in ocf.steps: t0Step.set(str(ocf.steps['t0']))
         if 'P' in ocf.steps: PStep.set(str(ocf.steps['P']))
-        if 'Q' in ocf.steps: QStep.set(str(ocf.steps['Q'])) 
-        
+        if 'Q' in ocf.steps: QStep.set(str(ocf.steps['Q']))
+
         if 'a_sin_i3' in ocf.steps: a3Step.set(str(ocf.steps['a_sin_i3']))
-        if 'e3' in ocf.steps: e3Step.set(str(ocf.steps['e3'])) 
+        if 'e3' in ocf.steps: e3Step.set(str(ocf.steps['e3']))
         if 'w3' in ocf.steps: w3Step.set(str(ocf.steps['w3']))
         if 't03' in ocf.steps: t3Step.set(str(ocf.steps['t03']))
         if 'P3' in ocf.steps: P3Step.set(str(ocf.steps['P3']))
-        
+
         if 'a_sin_i4' in ocf.steps: a4Step.set(str(ocf.steps['a_sin_i4']))
         if 'e4' in ocf.steps: e4Step.set(str(ocf.steps['e4']))
         if 'w4' in ocf.steps: w4Step.set(str(ocf.steps['w4']))
         if 't04' in ocf.steps: t4Step.set(str(ocf.steps['t04']))
         if 'P4' in ocf.steps: P4Step.set(str(ocf.steps['P4']))
-            
-        if 'a' in ocf.steps: aStep.set(str(ocf.steps['a'])) 
+
+        if 'a' in ocf.steps: aStep.set(str(ocf.steps['a']))
         if 'w' in ocf.steps: wStep.set(str(ocf.steps['w']))
-        if 'e' in ocf.steps: eStep.set(str(ocf.steps['e']))  
-        if 'mu3' in ocf.steps: mu3Step.set(str(ocf.steps['mu3'])) 
+        if 'e' in ocf.steps: eStep.set(str(ocf.steps['e']))
+        if 'mu3' in ocf.steps: mu3Step.set(str(ocf.steps['mu3']))
         if 'r3' in ocf.steps: r3Step.set(str(ocf.steps['r3']))
-            
-        if 'w0' in ocf.steps: w0Step.set(str(ocf.steps['w0'])) 
+
+        if 'w0' in ocf.steps: w0Step.set(str(ocf.steps['w0']))
         if 'dw' in ocf.steps: dwStep.set(str(ocf.steps['dw']))
-        
+
         #setting lower bound of params
-        if 't0' in ocf.limits: t0Min.set(str(ocf.limits['t0'][0])) 
+        if 't0' in ocf.limits: t0Min.set(str(ocf.limits['t0'][0]))
         if 'P' in ocf.limits: PMin.set(str(ocf.limits['P'][0]))
-        if 'Q' in ocf.limits: QMin.set(str(ocf.limits['Q'][0])) 
-        
+        if 'Q' in ocf.limits: QMin.set(str(ocf.limits['Q'][0]))
+
         if 'a_sin_i3' in ocf.limits: a3Min.set(str(ocf.limits['a_sin_i3'][0]))
-        if 'e3' in ocf.limits: e3Min.set(str(ocf.limits['e3'][0])) 
+        if 'e3' in ocf.limits: e3Min.set(str(ocf.limits['e3'][0]))
         if 'w3' in ocf.limits: w3Min.set(str(ocf.limits['w3'][0]))
         if 't03' in ocf.limits: t3Min.set(str(ocf.limits['t03'][0]))
         if 'P3' in ocf.limits: P3Min.set(str(ocf.limits['P3'][0]))
-        
+
         if 'a_sin_i4' in ocf.limits: a4Min.set(str(ocf.limits['a_sin_i4'][0]))
         if 'e4' in ocf.limits: e4Min.set(str(ocf.limits['e4'][0]))
         if 'w4' in ocf.limits: w4Min.set(str(ocf.limits['w4'][0]))
         if 't04' in ocf.limits: t4Min.set(str(ocf.limits['t04'][0]))
         if 'P4' in ocf.limits: P4Min.set(str(ocf.limits['P4'][0]))
-            
-        if 'a' in ocf.limits: aMin.set(str(ocf.limits['a'][0])) 
+
+        if 'a' in ocf.limits: aMin.set(str(ocf.limits['a'][0]))
         if 'w' in ocf.limits: wMin.set(str(ocf.limits['w'][0]))
         if 'e' in ocf.limits: eMin.set(str(ocf.limits['e'][0]))
-        if 'mu3' in ocf.limits: mu3Min.set(str(ocf.limits['mu3'][0])) 
+        if 'mu3' in ocf.limits: mu3Min.set(str(ocf.limits['mu3'][0]))
         if 'r3' in ocf.limits: r3Min.set(str(ocf.limits['r3'][0]))
-            
-        if 'w0' in ocf.limits: w0Min.set(str(ocf.limits['w0'][0])) 
+
+        if 'w0' in ocf.limits: w0Min.set(str(ocf.limits['w0'][0]))
         if 'dw' in ocf.limits: dwMin.set(str(ocf.limits['dw'][0]))
-        
+
         #setting upper bound of params
-        if 't0' in ocf.limits: t0Max.set(str(ocf.limits['t0'][1])) 
+        if 't0' in ocf.limits: t0Max.set(str(ocf.limits['t0'][1]))
         if 'P' in ocf.limits: PMax.set(str(ocf.limits['P'][1]))
-        if 'Q' in ocf.limits: QMax.set(str(ocf.limits['Q'][1])) 
-        
+        if 'Q' in ocf.limits: QMax.set(str(ocf.limits['Q'][1]))
+
         if 'a_sin_i3' in ocf.limits: a3Max.set(str(ocf.limits['a_sin_i3'][1]))
-        if 'e3' in ocf.limits: e3Max.set(str(ocf.limits['e3'][1])) 
+        if 'e3' in ocf.limits: e3Max.set(str(ocf.limits['e3'][1]))
         if 'w3' in ocf.limits: w3Max.set(str(ocf.limits['w3'][1]))
         if 't03' in ocf.limits: t3Max.set(str(ocf.limits['t03'][1]))
         if 'P3' in ocf.limits: P3Max.set(str(ocf.limits['P3'][1]))
-        
+
         if 'a_sin_i4' in ocf.limits: a4Max.set(str(ocf.limits['a_sin_i4'][1]))
         if 'e4' in ocf.limits: e4Max.set(str(ocf.limits['e4'][1]))
         if 'w4' in ocf.limits: w4Max.set(str(ocf.limits['w4'][1]))
         if 't04' in ocf.limits: t4Max.set(str(ocf.limits['t04'][1]))
         if 'P4' in ocf.limits: P4Max.set(str(ocf.limits['P4'][1]))
-        
-        if 'a' in ocf.limits: aMax.set(str(ocf.limits['a'][1])) 
-        if 'w' in ocf.limits: wMax.set(str(ocf.limits['w'][1]))            
+
+        if 'a' in ocf.limits: aMax.set(str(ocf.limits['a'][1]))
+        if 'w' in ocf.limits: wMax.set(str(ocf.limits['w'][1]))
         if 'e' in ocf.limits: eMax.set(str(ocf.limits['e'][1]))
-        if 'mu3' in ocf.limits: mu3Max.set(str(ocf.limits['mu3'][1])) 
+        if 'mu3' in ocf.limits: mu3Max.set(str(ocf.limits['mu3'][1]))
         if 'r3' in ocf.limits: r3Max.set(str(ocf.limits['r3'][1]))
-            
-        if 'w0' in ocf.limits: w0Max.set(str(ocf.limits['w0'][1])) 
+
+        if 'w0' in ocf.limits: w0Max.set(str(ocf.limits['w0'][1]))
         if 'dw' in ocf.limits: dwMax.set(str(ocf.limits['dw'][1]))
-    
+
     #create new window
     tParams=tk.Toplevel(master)
     tParams.geometry('595x500')
     tParams.title('Model Parameters')
-    
+
     #model
     modelVar=tk.StringVar(tParams)
-    
+
     #vars for t0
     t0Val=tk.StringVar(tParams)
     t0Min=tk.StringVar(tParams)
     t0Max=tk.StringVar(tParams)
     t0Step=tk.StringVar(tParams,value='0.001')
     t0Fit=tk.IntVar(tParams)
-    
+
     #vars for P
     PVal=tk.StringVar(tParams)
     PMin=tk.StringVar(tParams)
     PMax=tk.StringVar(tParams)
     PStep=tk.StringVar(tParams,value='0.0001')
     PFit=tk.IntVar(tParams)
-    
+
     #vars for Q
     QVal=tk.StringVar(tParams)
     QMin=tk.StringVar(tParams,value='-1e-11')
@@ -1360,20 +1357,20 @@ def params():
     P3Val=tk.StringVar(tParams)
     a4Val=tk.StringVar(tParams)
     e4Val=tk.StringVar(tParams)
-    w4Val=tk.StringVar(tParams)    
+    w4Val=tk.StringVar(tParams)
     t4Val=tk.StringVar(tParams)
     P4Val=tk.StringVar(tParams)
-    
+
     #+apsidal motion
-    w0Val=tk.StringVar(tParams)    
+    w0Val=tk.StringVar(tParams)
     dwVal=tk.StringVar(tParams)
     eVal=tk.StringVar(tParams)
-    
+
     #+Agol models
-    aVal=tk.StringVar(tParams)    
+    aVal=tk.StringVar(tParams)
     wVal=tk.StringVar(tParams)
     mu3Val=tk.StringVar(tParams)
-    r3Val=tk.StringVar(tParams)    
+    r3Val=tk.StringVar(tParams)
 
     #vars for steps of other params
     #LiTE models
@@ -1387,18 +1384,18 @@ def params():
     w4Step=tk.StringVar(tParams,value='0.01')
     t4Step=tk.StringVar(tParams,value='10')
     P4Step=tk.StringVar(tParams,value='10')
-    
+
     #+apsidal motion
     w0Step=tk.StringVar(tParams,value='0.01')
     dwStep=tk.StringVar(tParams,value='1e-5')
     eStep=tk.StringVar(tParams,value='0.01')
-    
+
     #+Agol models
-    aStep=tk.StringVar(tParams,value='0.01')    
+    aStep=tk.StringVar(tParams,value='0.01')
     wStep=tk.StringVar(tParams,value='0.01')
     mu3Step=tk.StringVar(tParams)
-    r3Step=tk.StringVar(tParams,value='0.01') 
-    
+    r3Step=tk.StringVar(tParams,value='0.01')
+
     #vars for lower bound of other params
     #LiTE models
     a3Min=tk.StringVar(tParams)
@@ -1407,22 +1404,22 @@ def params():
     t3Min=tk.StringVar(tParams)
     P3Min=tk.StringVar(tParams)
     a4Min=tk.StringVar(tParams)
-    e4Min=tk.StringVar(tParams,value='0')    
+    e4Min=tk.StringVar(tParams,value='0')
     w4Min=tk.StringVar(tParams,value='0')
     t4Min=tk.StringVar(tParams)
     P4Min=tk.StringVar(tParams)
-    
+
     #+apsidal motion
     w0Min=tk.StringVar(tParams,value='0')
     dwMin=tk.StringVar(tParams)
     eMin=tk.StringVar(tParams,value='0')
-    
+
     #+Agol models
-    aMin=tk.StringVar(tParams)    
+    aMin=tk.StringVar(tParams)
     wMin=tk.StringVar(tParams,value='0')
     mu3Min=tk.StringVar(tParams)
-    r3Min=tk.StringVar(tParams) 
-    
+    r3Min=tk.StringVar(tParams)
+
     #vars for upper bound of other params
     #LiTE models
     a3Max=tk.StringVar(tParams)
@@ -1435,18 +1432,18 @@ def params():
     w4Max=tk.StringVar(tParams,value='6.28')
     t4Max=tk.StringVar(tParams)
     P4Max=tk.StringVar(tParams)
-    
+
     #+apsidal motion
     w0Max=tk.StringVar(tParams,value='6.28')
     dwMax=tk.StringVar(tParams)
     eMax=tk.StringVar(tParams,value='1')
-    
+
     #+Agol models
-    aMax=tk.StringVar(tParams)    
+    aMax=tk.StringVar(tParams)
     wMax=tk.StringVar(tParams,value='6.28')
     mu3Max=tk.StringVar(tParams)
-    r3Max=tk.StringVar(tParams) 
-    
+    r3Max=tk.StringVar(tParams)
+
     #vars for selectbox of fitted params
     #LiTE models
     a3Fit=tk.IntVar(tParams)
@@ -1459,20 +1456,20 @@ def params():
     w4Fit=tk.IntVar(tParams)
     t4Fit=tk.IntVar(tParams)
     P4Fit=tk.IntVar(tParams)
-    
+
     #+apsidal motion
     w0Fit=tk.IntVar(tParams)
     dwFit=tk.IntVar(tParams)
     eFit=tk.IntVar(tParams)
-    
+
     #+Agol models
-    aFit=tk.IntVar(tParams)    
+    aFit=tk.IntVar(tParams)
     wFit=tk.IntVar(tParams)
     mu3Fit=tk.IntVar(tParams)
-    r3Fit=tk.IntVar(tParams) 
-    
+    r3Fit=tk.IntVar(tParams)
+
     #combobox with all available models
-    model=ttk.Combobox(tParams)
+    model=tkinter.ttk.Combobox(tParams)
     model.place(relx=0.15,rely=0.02,relheight=0.03,relwidth=0.3)
     model.configure(textvariable=modelVar)
     model.configure(state='readonly')
@@ -1485,18 +1482,21 @@ def params():
     Label1.place(relx=0.05,rely=0.02,height=18,width=39)
     Label1.configure(text='Model')
     Label1.configure(font=('None',9))
-    
+
     #create notebook with objects for params of all models
-    tNTB=ttk.Notebook(tParams)
+    style=tkinter.ttk.Style(tParams)
+    style.layout('TNotebook.Tab',[])
+
+    tNTB=tkinter.ttk.Notebook(tParams)
     tNTB.place(relx=0.02,rely=0.07,relheight=0.86,relwidth=0.96)
 
     ##########################################################################################
     #           LiTE                                                                         #
     ##########################################################################################
-    
+
     fLiTE=tk.Frame(tNTB)
     tNTB.add(fLiTE)
-    
+
     #labels
     Label15=tk.Label(fLiTE)
     Label15.place(relx=0.02,rely=0.03,height=18,width=47)
@@ -1525,9 +1525,9 @@ def params():
 
     Label20=tk.Label(fLiTE)
     Label20.place(relx=0.95,rely=0.03,height=18,width=16)
-    Label20.configure(text='fit')    
+    Label20.configure(text='fit')
     Label20.configure(font=('None',9))
-    
+
     Label2=tk.Label(fLiTE)
     Label2.place(relx=0.02,rely=0.10,height=18,width=17)
     Label2.configure(text='t0')
@@ -1539,7 +1539,7 @@ def params():
     Label3.configure(text='P')
     Label3.configure(anchor=tk.W)
     Label3.configure(font=('None',9))
-    
+
     Label14=tk.Label(fLiTE)
     Label14.place(relx=0.02,rely=0.24,height=18,width=13)
     Label14.configure(text='Q')
@@ -1627,7 +1627,7 @@ def params():
     t0[-1].place(relx=0.95,rely=0.09,relheight=0.06,relwidth=0.04)
     t0[-1].configure(justify=tk.LEFT)
     t0[-1].configure(variable=t0Fit)
-    
+
     #input objects for param P
     P=[tk.Entry(fLiTE)]
     P[-1].place(relx=0.15,rely=0.16,height=25,relwidth=0.19)
@@ -1649,7 +1649,7 @@ def params():
     P[-1].place(relx=0.95,rely=0.16,relheight=0.06,relwidth=0.04)
     P[-1].configure(justify=tk.LEFT)
     P[-1].configure(variable=PFit)
-    
+
     #input objects for param Q
     Q=[tk.Entry(fLiTE)]
     Q[-1].place(relx=0.15,rely=0.23,height=25,relwidth=0.19)
@@ -1683,7 +1683,7 @@ def params():
 
     a3.append(tk.Entry(fLiTE))
     a3[-1].place(relx=0.55,rely=0.30,height=25,relwidth=0.19)
-    a3[-1].configure(textvariable=a3Max)    
+    a3[-1].configure(textvariable=a3Max)
 
     a3.append(tk.Entry(fLiTE))
     a3[-1].place(relx=0.75,rely=0.30,height=25,relwidth=0.19)
@@ -1693,7 +1693,7 @@ def params():
     a3[-1].place(relx=0.95,rely=0.30,relheight=0.06,relwidth=0.04)
     a3[-1].configure(justify=tk.LEFT)
     a3[-1].configure(variable=a3Fit)
-    
+
     #input objects for param e3
     e3=[tk.Entry(fLiTE)]
     e3[-1].place(relx=0.15,rely=0.37,height=25,relwidth=0.19)
@@ -1706,7 +1706,7 @@ def params():
     e3.append(tk.Entry(fLiTE))
     e3[-1].place(relx=0.55,rely=0.37,height=25,relwidth=0.19)
     e3[-1].configure(textvariable=e3Max)
-    
+
     e3.append(tk.Entry(fLiTE))
     e3[-1].place(relx=0.75,rely=0.37,height=25,relwidth=0.19)
     e3[-1].configure(textvariable=e3Step)
@@ -1715,7 +1715,7 @@ def params():
     e3[-1].place(relx=0.95,rely=0.37,relheight=0.06,relwidth=0.04)
     e3[-1].configure(justify=tk.LEFT)
     e3[-1].configure(variable=e3Fit)
-    
+
     #input objects for param w3
     w3=[tk.Entry(fLiTE)]
     w3[-1].place(relx=0.15,rely=0.44,height=25,relwidth=0.19)
@@ -1723,8 +1723,8 @@ def params():
 
     w3.append(tk.Entry(fLiTE))
     w3[-1].place(relx=0.35,rely=0.44,height=25,relwidth=0.19)
-    w3[-1].configure(textvariable=w3Min)    
-    
+    w3[-1].configure(textvariable=w3Min)
+
     w3.append(tk.Entry(fLiTE))
     w3[-1].place(relx=0.55,rely=0.44,height=25,relwidth=0.19)
     w3[-1].configure(textvariable=w3Max)
@@ -1737,12 +1737,12 @@ def params():
     w3[-1].place(relx=0.95,rely=0.44,relheight=0.06,relwidth=0.04)
     w3[-1].configure(justify=tk.LEFT)
     w3[-1].configure(variable=w3Fit)
-    
+
     #input objects for param t03
     t3=[tk.Entry(fLiTE)]
     t3[-1].place(relx=0.15,rely=0.51,height=25,relwidth=0.19)
     t3[-1].configure(textvariable=t3Val)
-    
+
     t3.append(tk.Entry(fLiTE))
     t3[-1].place(relx=0.35,rely=0.51,height=25,relwidth=0.19)
     t3[-1].configure(textvariable=t3Min)
@@ -1759,7 +1759,7 @@ def params():
     t3[-1].place(relx=0.95,rely=0.51,relheight=0.06,relwidth=0.04)
     t3[-1].configure(justify=tk.LEFT)
     t3[-1].configure(variable=t3Fit)
-    
+
     #input objects for param P
     P3=[tk.Entry(fLiTE)]
     P3[-1].place(relx=0.15,rely=0.58,height=25,relwidth=0.19)
@@ -1781,7 +1781,7 @@ def params():
     P3[-1].place(relx=0.95,rely=0.58,relheight=0.06,relwidth=0.04)
     P3[-1].configure(justify=tk.LEFT)
     P3[-1].configure(variable=P3Fit)
-    
+
     #input objects for param a_sin_i4
     a4=[tk.Entry(fLiTE)]
     a4[-1].place(relx=0.15,rely=0.65,height=25,relwidth=0.19)
@@ -1802,8 +1802,8 @@ def params():
     a4.append(tk.Checkbutton(fLiTE))
     a4[-1].place(relx=0.95,rely=0.65,relheight=0.06,relwidth=0.04)
     a4[-1].configure(justify=tk.LEFT)
-    a4[-1].configure(variable=a4Fit)  
-    
+    a4[-1].configure(variable=a4Fit)
+
     #input objects for param e4
     e4=[tk.Entry(fLiTE)]
     e4[-1].place(relx=0.15,rely=0.72,height=25,relwidth=0.19)
@@ -1825,7 +1825,7 @@ def params():
     e4[-1].place(relx=0.95,rely=0.72,relheight=0.06,relwidth=0.04)
     e4[-1].configure(justify=tk.LEFT)
     e4[-1].configure(variable=e4Fit)
-    
+
     #input objects for param w4
     w4=[tk.Entry(fLiTE)]
     w4[-1].place(relx=0.15,rely=0.79,height=25,relwidth=0.19)
@@ -1834,7 +1834,7 @@ def params():
     w4.append(tk.Entry(fLiTE))
     w4[-1].place(relx=0.35,rely=0.79,height=25,relwidth=0.19)
     w4[-1].configure(textvariable=w4Min)
- 
+
     w4.append(tk.Entry(fLiTE))
     w4[-1].place(relx=0.55,rely=0.79,height=25,relwidth=0.19)
     w4[-1].configure(textvariable=w4Max)
@@ -1847,7 +1847,7 @@ def params():
     w4[-1].place(relx=0.95,rely=0.79,relheight=0.06,relwidth=0.04)
     w4[-1].configure(justify=tk.LEFT)
     w4[-1].configure(variable=w4Fit)
-    
+
     #input objects for param t04
     t4=[tk.Entry(fLiTE)]
     t4[-1].place(relx=0.15,rely=0.86,height=25,relwidth=0.19)
@@ -1869,7 +1869,7 @@ def params():
     t4[-1].place(relx=0.95,rely=0.86,relheight=0.06,relwidth=0.04)
     t4[-1].configure(justify=tk.LEFT)
     t4[-1].configure(variable=t4Fit)
-    
+
     #input objects for param P4
     P4=[tk.Entry(fLiTE)]
     P4[-1].place(relx=0.15,rely=0.93,height=25,relwidth=0.19)
@@ -1878,11 +1878,11 @@ def params():
     P4.append(tk.Entry(fLiTE))
     P4[-1].place(relx=0.35,rely=0.93,height=25,relwidth=0.19)
     P4[-1].configure(textvariable=P4Min)
-    
+
     P4.append(tk.Entry(fLiTE))
     P4[-1].place(relx=0.55,rely=0.93,height=25,relwidth=0.19)
     P4[-1].configure(textvariable=P4Max)
-    
+
     P4.append(tk.Entry(fLiTE))
     P4[-1].place(relx=0.75,rely=0.93,height=25,relwidth=0.19)
     P4[-1].configure(textvariable=P4Step)
@@ -1898,7 +1898,7 @@ def params():
 
     fIn=tk.Frame(tNTB)
     tNTB.add(fIn)
-    
+
     #labels
     Label15=tk.Label(fIn)
     Label15.place(relx=0.02,rely=0.03,height=18,width=47)
@@ -1927,9 +1927,9 @@ def params():
 
     Label20=tk.Label(fIn)
     Label20.place(relx=0.95,rely=0.03,height=18,width=16)
-    Label20.configure(text='fit')    
+    Label20.configure(text='fit')
     Label20.configure(font=('None',9))
-    
+
     Label2=tk.Label(fIn)
     Label2.place(relx=0.02,rely=0.10,height=18,width=17)
     Label2.configure(text='t0')
@@ -1941,7 +1941,7 @@ def params():
     Label3.configure(text='P')
     Label3.configure(anchor=tk.W)
     Label3.configure(font=('None',9))
-    
+
     Label14=tk.Label(fIn)
     Label14.place(relx=0.02,rely=0.24,height=18,width=11)
     Label14.configure(text='a')
@@ -1989,7 +1989,7 @@ def params():
     Label10.configure(text='P3')
     Label10.configure(anchor=tk.W)
     Label10.configure(font=('None',9))
-    
+
     #input objects for param t0
     t0I=[tk.Entry(fIn)]
     t0I[-1].place(relx=0.15,rely=0.09,height=25,relwidth=0.19)
@@ -2011,7 +2011,7 @@ def params():
     t0I[-1].place(relx=0.95,rely=0.09,relheight=0.06,relwidth=0.04)
     t0I[-1].configure(justify=tk.LEFT)
     t0I[-1].configure(variable=t0Fit)
-    
+
     #input objects for param P
     PI=[tk.Entry(fIn)]
     PI[-1].place(relx=0.15,rely=0.16,height=25,relwidth=0.19)
@@ -2067,7 +2067,7 @@ def params():
 
     wI.append(tk.Entry(fIn))
     wI[-1].place(relx=0.55,rely=0.30,height=25,relwidth=0.19)
-    wI[-1].configure(textvariable=wMax)    
+    wI[-1].configure(textvariable=wMax)
 
     wI.append(tk.Entry(fIn))
     wI[-1].place(relx=0.75,rely=0.30,height=25,relwidth=0.19)
@@ -2077,7 +2077,7 @@ def params():
     wI[-1].place(relx=0.95,rely=0.30,relheight=0.06,relwidth=0.04)
     wI[-1].configure(justify=tk.LEFT)
     wI[-1].configure(variable=wFit)
-    
+
     #input objects for param e
     eI=[tk.Entry(fIn)]
     eI[-1].place(relx=0.15,rely=0.37,height=25,relwidth=0.19)
@@ -2090,7 +2090,7 @@ def params():
     eI.append(tk.Entry(fIn))
     eI[-1].place(relx=0.55,rely=0.37,height=25,relwidth=0.19)
     eI[-1].configure(textvariable=eMax)
-    
+
     eI.append(tk.Entry(fIn))
     eI[-1].place(relx=0.75,rely=0.37,height=25,relwidth=0.19)
     eI[-1].configure(textvariable=eStep)
@@ -2099,7 +2099,7 @@ def params():
     eI[-1].place(relx=0.95,rely=0.37,relheight=0.06,relwidth=0.04)
     eI[-1].configure(justify=tk.LEFT)
     eI[-1].configure(variable=eFit)
-   
+
     #input objects for param mu3
     mu3I=[tk.Entry(fIn)]
     mu3I[-1].place(relx=0.15,rely=0.44,height=25,relwidth=0.19)
@@ -2107,8 +2107,8 @@ def params():
 
     mu3I.append(tk.Entry(fIn))
     mu3I[-1].place(relx=0.35,rely=0.44,height=25,relwidth=0.19)
-    mu3I[-1].configure(textvariable=mu3Min)    
-    
+    mu3I[-1].configure(textvariable=mu3Min)
+
     mu3I.append(tk.Entry(fIn))
     mu3I[-1].place(relx=0.55,rely=0.44,height=25,relwidth=0.19)
     mu3I[-1].configure(textvariable=mu3Max)
@@ -2121,12 +2121,12 @@ def params():
     mu3I[-1].place(relx=0.95,rely=0.44,relheight=0.06,relwidth=0.04)
     mu3I[-1].configure(justify=tk.LEFT)
     mu3I[-1].configure(variable=mu3Fit)
-    
+
     #input objects for param r3
     r3I=[tk.Entry(fIn)]
     r3I[-1].place(relx=0.15,rely=0.51,height=25,relwidth=0.19)
     r3I[-1].configure(textvariable=r3Val)
-    
+
     r3I.append(tk.Entry(fIn))
     r3I[-1].place(relx=0.35,rely=0.51,height=25,relwidth=0.19)
     r3I[-1].configure(textvariable=r3Min)
@@ -2143,7 +2143,7 @@ def params():
     r3I[-1].place(relx=0.95,rely=0.51,relheight=0.06,relwidth=0.04)
     r3I[-1].configure(justify=tk.LEFT)
     r3I[-1].configure(variable=r3Fit)
-    
+
     #input objects for param w3
     w3I=[tk.Entry(fIn)]
     w3I[-1].place(relx=0.15,rely=0.58,height=25,relwidth=0.19)
@@ -2165,7 +2165,7 @@ def params():
     w3I[-1].place(relx=0.95,rely=0.58,relheight=0.06,relwidth=0.04)
     w3I[-1].configure(justify=tk.LEFT)
     w3I[-1].configure(variable=w3Fit)
-    
+
     #input objects for param t03
     t3I=[tk.Entry(fIn)]
     t3I[-1].place(relx=0.15,rely=0.65,height=25,relwidth=0.19)
@@ -2186,8 +2186,8 @@ def params():
     t3I.append(tk.Checkbutton(fIn))
     t3I[-1].place(relx=0.95,rely=0.65,relheight=0.06,relwidth=0.04)
     t3I[-1].configure(justify=tk.LEFT)
-    t3I[-1].configure(variable=t3Fit)  
-    
+    t3I[-1].configure(variable=t3Fit)
+
     #input objects for param P3
     P3I=[tk.Entry(fIn)]
     P3I[-1].place(relx=0.15,rely=0.72,height=25,relwidth=0.19)
@@ -2209,14 +2209,14 @@ def params():
     P3I[-1].place(relx=0.95,rely=0.72,relheight=0.06,relwidth=0.04)
     P3I[-1].configure(justify=tk.LEFT)
     P3I[-1].configure(variable=P3Fit)
-    
+
     ##########################################################################################
     #           AgolExPlanet                                                                 #
     ##########################################################################################
 
     fEx=tk.Frame(tNTB)
     tNTB.add(fEx)
-    
+
     #labels
     Label15=tk.Label(fEx)
     Label15.place(relx=0.02,rely=0.03,height=18,width=47)
@@ -2245,9 +2245,9 @@ def params():
 
     Label20=tk.Label(fEx)
     Label20.place(relx=0.95,rely=0.03,height=18,width=16)
-    Label20.configure(text='fit')   
+    Label20.configure(text='fit')
     Label20.configure(font=('None',9))
-    
+
     Label2=tk.Label(fEx)
     Label2.place(relx=0.02,rely=0.10,height=18,width=17)
     Label2.configure(text='t0')
@@ -2258,7 +2258,7 @@ def params():
     Label3.configure(text='P')
     Label3.configure(anchor=tk.W)
     Label3.configure(font=('None',9))
-    
+
     Label14=tk.Label(fEx)
     Label14.place(relx=0.02,rely=0.24,height=18,width=30)
     Label14.configure(text='mu3')
@@ -2360,7 +2360,7 @@ def params():
 
     e3E.append(tk.Entry(fEx))
     e3E[-1].place(relx=0.55,rely=0.30,height=25,relwidth=0.19)
-    e3E[-1].configure(textvariable=e3Max)    
+    e3E[-1].configure(textvariable=e3Max)
 
     e3E.append(tk.Entry(fEx))
     e3E[-1].place(relx=0.75,rely=0.30,height=25,relwidth=0.19)
@@ -2383,7 +2383,7 @@ def params():
     t3E.append(tk.Entry(fEx))
     t3E[-1].place(relx=0.55,rely=0.37,height=25,relwidth=0.19)
     t3E[-1].configure(textvariable=t3Max)
-    
+
     t3E.append(tk.Entry(fEx))
     t3E[-1].place(relx=0.75,rely=0.37,height=25,relwidth=0.19)
     t3E[-1].configure(textvariable=t3Step)
@@ -2400,8 +2400,8 @@ def params():
 
     P3E.append(tk.Entry(fEx))
     P3E[-1].place(relx=0.35,rely=0.44,height=25,relwidth=0.19)
-    P3E[-1].configure(textvariable=P3Min)    
-    
+    P3E[-1].configure(textvariable=P3Min)
+
     P3E.append(tk.Entry(fEx))
     P3E[-1].place(relx=0.55,rely=0.44,height=25,relwidth=0.19)
     P3E[-1].configure(textvariable=P3Max)
@@ -2414,14 +2414,14 @@ def params():
     P3E[-1].place(relx=0.95,rely=0.44,relheight=0.06,relwidth=0.04)
     P3E[-1].configure(justify=tk.LEFT)
     P3E[-1].configure(variable=P3Fit)
-    
+
     ##########################################################################################
     #           Apsidal                                                                      #
     ##########################################################################################
 
     fAps=tk.Frame(tNTB)
     tNTB.add(fAps)
-    
+
     #labels
     Label15=tk.Label(fAps)
     Label15.place(relx=0.02,rely=0.03,height=18,width=47)
@@ -2450,9 +2450,9 @@ def params():
 
     Label20=tk.Label(fAps)
     Label20.place(relx=0.95,rely=0.03,height=18,width=16)
-    Label20.configure(text='fit')    
+    Label20.configure(text='fit')
     Label20.configure(font=('None',9))
-    
+
     Label2=tk.Label(fAps)
     Label2.place(relx=0.02,rely=0.10,height=18,width=17)
     Label2.configure(text='t0')
@@ -2464,7 +2464,7 @@ def params():
     Label3.configure(text='P')
     Label3.configure(font=('None',9))
     Label3.configure(anchor=tk.W)
-    
+
     Label14=tk.Label(fAps)
     Label14.place(relx=0.02,rely=0.24,height=18,width=25)
     Label14.configure(text='w0')
@@ -2560,7 +2560,7 @@ def params():
 
     dwA.append(tk.Entry(fAps))
     dwA[-1].place(relx=0.55,rely=0.30,height=25,relwidth=0.19)
-    dwA[-1].configure(textvariable=dwMax)    
+    dwA[-1].configure(textvariable=dwMax)
 
     dwA.append(tk.Entry(fAps))
     dwA[-1].place(relx=0.75,rely=0.30,height=25,relwidth=0.19)
@@ -2583,7 +2583,7 @@ def params():
     eA.append(tk.Entry(fAps))
     eA[-1].place(relx=0.55,rely=0.37,height=25,relwidth=0.19)
     eA[-1].configure(textvariable=eMax)
-    
+
     eA.append(tk.Entry(fAps))
     eA[-1].place(relx=0.75,rely=0.37,height=25,relwidth=0.19)
     eA[-1].configure(textvariable=eStep)
@@ -2592,62 +2592,62 @@ def params():
     eA[-1].place(relx=0.95,rely=0.37,relheight=0.06,relwidth=0.04)
     eA[-1].configure(justify=tk.LEFT)
     eA[-1].configure(variable=eFit)
-    
-    
+
+
     #button - save params
     bOk=tk.Button(tParams)
     bOk.place(relx=0.39,rely=0.94,height=26,width=133)
     bOk.configure(command=ok)
-    bOk.configure(text='OK')    
-    
-    init_vars() 
+    bOk.configure(text='OK')
+
+    init_vars()
 
 
 def plot(f=None):
     #plot O-Cs together with model
     if ocf.t[0]<2e6: trans=False
     else: trans=True
-    
+
     if f is not None:
         #solving problem with closing GUI when "f" is given
         try: mpl.switch_backend('Agg')
         except: pass #old version of matplotlib
-    
+
     try:
         if not ocf._set_err:
             w=1./ocf.err
             if min(w)==max(w): ocf.Plot(name=f,trans=trans,weight=w,min_type=True)
             else: ocf.Plot(name=f,trans=trans,weight=w,trans_weight=True,min_type=True)
         else: ocf.Plot(name=f,trans=trans,min_type=True)
-    except:   
+    except:
         mpl.close()
-        tkMessageBox.showerror('Plot O-C','Fit the model!') 
-    
+        tkinter.messagebox.showerror('Plot O-C','Fit the model!')
+
     if f is not None:
         #solving problem with closing GUI when "f" is given -> change to default backend
         try: mpl.switch_backend('TkAgg')
         except: pass #old version of matplotlib
-    
+
 def plotR(f=None):
     #plot residual O-Cs
     if ocf.t[0]<2e6: trans=False
     else: trans=True
-    
+
     if f is not None:
         #solving problem with closing GUI when "f" is given
         try: mpl.switch_backend('Agg')
         except: pass #old version of matplotlib
-    
+
     try:
         if not ocf._set_err:
             w=1./ocf.err
             if min(w)==max(w): ocf.PlotRes(name=f,trans=trans,weight=w,min_type=True)
             else: ocf.PlotRes(name=f,trans=trans,weight=w,trans_weight=True,min_type=True)
         else: ocf.PlotRes(name=f,trans=trans,min_type=True)
-    except: 
+    except:
         mpl.close()
-        tkMessageBox.showerror('Plot new O-C','Fit the model!') 
-    
+        tkinter.messagebox.showerror('Plot new O-C','Fit the model!')
+
     if f is not None:
         #solving problem with closing GUI when "f" is given -> change to default backend
         try: mpl.switch_backend('TkAgg')
@@ -2657,17 +2657,17 @@ def runBG():
     #run fitting on background
     for p in ocf.fit_params:
         if not p in ocf.limits:
-            tkMessageBox.showerror('Fit on background','Set limits of parameter "'+p+'"!')
+            tkinter.messagebox.showerror('Fit on background','Set limits of parameter "'+p+'"!')
             return
         if not p in ocf.steps:
-            tkMessageBox.showerror('Fit on background','Set step of parameter "'+p+'"!')
+            tkinter.messagebox.showerror('Fit on background','Set step of parameter "'+p+'"!')
             return
-            
+
     f=saveC() #save class to file
 
-    cmd='nohup python2 -u ocfit-bg.py '+f+' '+str(ga['gen'])+' '+str(ga['size'])+' '+str(mc['n'])+' '+str(mc['burn'])+' '+\
+    cmd='nohup python3 -u ocfit-bg.py '+f+' '+str(ga['gen'])+' '+str(ga['size'])+' '+str(mc['n'])+' '+str(mc['burn'])+' '+\
             str(mc['binn'])+' '+str(save)+' > '+f[:f.rfind('.')]+'.log'  #generate command for fitting
-    
+
     #create fitting script
     if 'win' in sys.platform:
         fsh=open(f[:f.rfind('.')]+'.bat','w')
@@ -2678,9 +2678,9 @@ def runBG():
     fsh.write('# Please,check the paths to OCFit file and python file "ocfit-bg.py"!\n')
     fsh.write(cmd+' &\n')
     fsh.close()
-    
+
     #start fitting?
-    result=tkMessageBox.askquestion('Run on background','Start fitting on background?',icon='question')
+    result=tkinter.messagebox.askquestion('Run on background','Start fitting on background?',icon='question')
     if result=='yes':
         if 'win' in sys.platform: cmd='START /B python'+cmd[13:]
         else: cmd+=' &'
@@ -2689,30 +2689,30 @@ def runBG():
 def saveM(f=None):
     #save model O-Cs
     if f is None:
-        f=tkFileDialog.asksaveasfilename(parent=master,title='Save model O-C to file',filetypes=[('Data files','*.dat *.txt'),('All files','*.*')],defaultextension='.dat')
+        f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save model O-C to file',filetypes=[('Data files','*.dat *.txt'),('All files','*.*')],defaultextension='.dat')
     if len(f)==0: return
-    
+
     try: ocf.SaveModel(f)
-    except: tkMessageBox.showerror('Save model','Fit the model!')     
+    except: tkinter.messagebox.showerror('Save model','Fit the model!')
 
 def saveR(f=None):
     #save residual O-Cs
     if f is None:
-        f=tkFileDialog.asksaveasfilename(parent=master,title='Save new O-C to file',filetypes=[('Data files','*.dat *.txt'),('All files','*.*')],defaultextension='.dat')
+        f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save new O-C to file',filetypes=[('Data files','*.dat *.txt'),('All files','*.*')],defaultextension='.dat')
     if len(f)==0: return
-        
+
     try:
-        if not 'err' in data and 'w' in data: ocf.SaveRes(f,weight=data['w'])    
-        else: ocf.SaveRes(f) 
-    except: tkMessageBox.showerror('Save new O-C','Fit the model!') 
-    
+        if not 'err' in data and 'w' in data: ocf.SaveRes(f,weight=data['w'])
+        else: ocf.SaveRes(f)
+    except: tkinter.messagebox.showerror('Save new O-C','Fit the model!')
+
 def saveAll():
     #run all saving functions
-    f=tkFileDialog.asksaveasfilename(parent=master,title='Save all to file',filetypes=[('All files','*.*')])
+    f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save all to file',filetypes=[('All files','*.*')])
     if len(f)==0: return
 
     if '.' in f[-5:]: f=f[:f.rfind('.')]
-    
+
     saveM(f+'_model.dat')
     saveR(f+'_res.dat')
     saveC(f+'.ocf')
@@ -2722,33 +2722,33 @@ def saveAll():
 
 def summary(f=None):
     #show summary for fitting
-    
+
     if f is not None:
         try: ocf.Summary(f)
-        except: tkMessageBox.showerror('Summary','Fit the model!') 
+        except: tkMessageBox.showerror('Summary','Fit the model!')
         return
-        
-    
+
+
     #create new window
     sumW=tk.Toplevel(master)
-    sumW.geometry('650x650')
+    sumW.geometry('750x650')
     sumW.title('Summary')
 
     #text field
     text=tk.Text(sumW)
     text.place(relx=0.02,rely=0.02,relheight=0.96,relwidth=0.96)
-    
+
     old=sys.stdout
     #redirect output to text field
-    sys.stdout=StdoutRedirector(text)    
-    
+    sys.stdout=StdoutRedirector(text)
+
     try: ocf.Summary()
-    except: 
-        sumW.destroy()  
-        tkMessageBox.showerror('Summary','Fit the model!') 
-    
+    except:
+        sumW.destroy()
+        tkinter.messagebox.showerror('Summary','Fit the model!')
+
     sys.stdout=old
-       
+
 data={}
 ga={}
 mc={}
@@ -2763,9 +2763,9 @@ master.title('OCFit GUI')
 #font.configure(size=9)
 #master.option_add("*Font",font)
 
-style=ttk.Style()
+style=tkinter.ttk.Style()
 
-style.layout('TNotebook.Tab',[]) 
+style.layout('TNotebook.Tab',[])
 
 #variable for T0 and P
 t0Var=tk.StringVar(master)
@@ -2908,7 +2908,7 @@ bFitParams.configure(command=fitParams)
 bFitParams.configure(state=tk.DISABLED)
 bFitParams.configure(text='Fit. Params')
 
-#button - GA fitting 
+#button - GA fitting
 bFitGA=tk.Button(Frame3)
 bFitGA.place(relx=0.35,rely=0.24,height=26,width=90)
 bFitGA.configure(command=fitGA)

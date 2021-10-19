@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 #main classes of OCFit package
-#version 0.1.6
-#update: 7.10.2021
+#version 0.2.1
+#update: 2021...
 # (c) Pavol Gajdos, 2018-2021
 
 from time import time
@@ -14,7 +14,7 @@ import warnings
 import pickle
 
 #import matplotlib
-try: 
+try:
     import matplotlib.pyplot as mpl
     fig=mpl.figure()
     mpl.close(fig)
@@ -23,7 +23,6 @@ except:
     try: mpl.switch_backend('Agg')
     except:
         import matplotlib
-        matplotlib.reload(matplotlib)    
         matplotlib.use('Agg',force=True)
         import matplotlib.pyplot as mpl
 
@@ -32,8 +31,8 @@ mpl.style.use('classic')
 
 import numpy as np
 
-try: import pymc
-except: warnings.warn('Module pymc not found! Using FitMC will not be possible!')
+try: import emcee
+except: warnings.warn('Module emcee not found! Using FitMC will not be possible!')
 
 from .ga import TPopul
 from .info_ga import InfoGA as InfoGAClass
@@ -60,19 +59,19 @@ class SimpleFit():
     def __init__(self,t,t0,P,oc=None,err=None):
         '''input: observed time, time of zeros epoch, period, (O-C values, errors)'''
         self.t=np.array(t)     #times
-        
+
         #linear ephemeris of binary
         self.P=P
         self.t0=t0
         self._t0P=[t0,P]   #given linear ephemeris of binary
-        
+
         if oc is None:
             #calculate O-C
             self.Epoch()
             tC=t0+P*self.epoch
             self.oc=self.t-tC
         else: self.oc=np.array(oc)
-        
+
         if err is None:
             #errors not given
             self.err=np.ones(self.t.shape)
@@ -84,17 +83,17 @@ class SimpleFit():
         self._corr_err=False
         self._calc_err=False
         self._old_err=[]
-        
+
         #sorting data...
         self._order=np.argsort(self.t)
         self.t=self.t[self._order]      #times
         self.oc=self.oc[self._order]    #O-Cs
         self.err=self.err[self._order]  #errors
-        
+
         self.Epoch()
         self.params={}         #values of parameters
         self.params_err={}     #errors of fitted parameters
-        self.model=[]          #model O-C 
+        self.model=[]          #model O-C
         self.new_oc=[]         #new O-C (residue)
         self.chi=0
         self._robust=False
@@ -105,7 +104,7 @@ class SimpleFit():
         '''calculate epoch'''
         self.epoch=np.round((self.t-self.t0)/self.P*2)/2.
         return self.epoch
-        
+
     def PhaseCurve(self,P,t0,plot=False):
         '''create phase curve'''
         f=np.mod(self.t-t0,P)/float(P)    #phase
@@ -117,16 +116,16 @@ class SimpleFit():
             if self._set_err: mpl.errorbar(f,oc,yerr=self.err,fmt='o')
             else: mpl.plot(f,oc,'.')
         return f,oc
-   
+
     def Summary(self,name=None):
         '''parameters summary, writting to file "name"'''
-        params=self.params.keys()
+        params=list(self.params.keys())
         units={'t0':'JD','P':'d','Q':'d'}
 
         text=['parameter'.ljust(15,' ')+'unit'.ljust(10,' ')+'value'.ljust(30,' ')+'error']
         for p in sorted(params):
             text.append(p.ljust(15,' ')+units[p].ljust(10,' ')+str(self.params[p]).ljust(30,' ')
-                        +str(self.params_err[p]).ljust(20,' '))
+                        +str(self.params_err[p]).ljust(30,' '))
         text.append('')
         if self._robust: text.append('Fitting method: Robust regression')
         elif self._mcmc: text.append('Fitting method: MCMC')
@@ -141,19 +140,19 @@ class SimpleFit():
         else: text.append('AICc = NA')
         text.append('BIC = '+str(self.chi+g*np.log(n)))
         if name is None:
-            print '------------------------------------'
-            for t in text: print t
-            print '------------------------------------'
+            print('------------------------------------')
+            for t in text: print(t)
+            print('------------------------------------')
         else:
             f=open(name,'w')
             for t in text: f.write(t+'\n')
             f.close()
-            
+
     def InfoMCMC(self,db,eps=False,geweke=False):
         '''statistics about GA fitting'''
         info=InfoMCClass(db)
         info.AllParams(eps)
-        
+
         for p in info.pars: info.OneParam(p,eps)
         if geweke: info.Geweke(eps)
 
@@ -163,7 +162,7 @@ class SimpleFit():
         err=np.sqrt(sum((self.oc-self.model)**2)/(n*(n-1)))
         errors=err*np.ones(self.model.shape)*np.sqrt(n-len(self.params))
         chi=sum(((self.oc-self.model)/errors)**2)
-        print 'New chi2:',chi,chi/(n-len(self.params))
+        print('New chi2:',chi,chi/(n-len(self.params)))
         self._calc_err=True
         self._set_err=False
         self.err=errors
@@ -176,18 +175,18 @@ class SimpleFit():
         alfa=chi0/(n-2)
         err=self.err*np.sqrt(alfa)
         chi=sum(((self.oc-self.model)/err)**2)
-        print 'New chi2:',chi,chi/(n-len(self.params))
+        print('New chi2:',chi,chi/(n-len(self.params)))
         if self._set_err and len(self._old_err)==0: self._old_err=self.err
         self.err=err
         self._corr_err=True
-        return err        
+        return err
 
     def AddWeight(self,weight):
         '''adding weight to data + scaling according to current model
-        warning: weights have to be in same order as input date!        
+        warning: weights have to be in same order as input date!
         '''
         if not len(weight)==len(self.t):
-            print 'incorrect length of "w"!'
+            print('incorrect length of "w"!')
             return
         weight=np.array(weight)[self._order]
         err=1./weight
@@ -196,17 +195,17 @@ class SimpleFit():
         alfa=chi0/(n-len(self.params))
         err*=np.sqrt(alfa)
         chi=sum(((self.oc-self.model)/err)**2)
-        print 'New chi2:',chi,chi/(n-len(self.params))
+        print('New chi2:',chi,chi/(n-len(self.params)))
         self._calc_err=True
         self._set_err=False
         self.err=err
         return err
-        
-        
+
+
     def SaveOC(self,name,weight=None):
         '''saving O-C calculated from given ephemeris to file
         name - name of file
-        weight - weight of data 
+        weight - weight of data
         warning: weights have to be in same order as input date!
         '''
         f=open(name,'w')
@@ -214,26 +213,26 @@ class SimpleFit():
             np.savetxt(f,np.column_stack((self.t,self.epoch,self.oc,np.array(weight)[self._order])),
                        fmt=["%14.7f",'%10.3f',"%+12.10f","%.10f"],delimiter="    ",
                        header='Time'.ljust(14,' ')+'    '+'Epoch'.ljust(10,' ')
-                       +'    '+'O-C'.ljust(12,' ')+'    '+'Weight')  
+                       +'    '+'O-C'.ljust(12,' ')+'    '+'Weight')
         elif self._set_err:
             if self._corr_err: err=self._old_err
             else: err=self.err
             np.savetxt(f,np.column_stack((self.t,self.epoch,self.oc,err)),
                        fmt=["%14.7f",'%10.3f',"%+12.10f","%.10f"],delimiter="    ",
                        header='Time'.ljust(14,' ')+'    '+'Epoch'.ljust(10,' ')
-                       +'    '+'O-C'.ljust(12,' ')+'    '+'Error')          
+                       +'    '+'O-C'.ljust(12,' ')+'    '+'Error')
         else:
             np.savetxt(f,np.column_stack((self.t,self.epoch,self.oc)),
                        fmt=["%14.7f",'%10.3f',"%+12.10f"],delimiter="    ",
                        header='Time'.ljust(14,' ')+'    '+'Epoch'.ljust(10,' ')
                        +'    '+'O-C')
         f.close()
-     
-     
+
+
     def SaveRes(self,name,weight=None):
         '''saving residue (new O-C) to file
         name - name of file
-        weight - weight of data 
+        weight - weight of data
         warning: weights have to be in same order as input date!
         '''
         f=open(name,'w')
@@ -248,7 +247,7 @@ class SimpleFit():
             np.savetxt(f,np.column_stack((self.t,self.epoch,self.new_oc,np.array(weight)[self._order])),
                        fmt=["%14.7f",'%10.3f',"%+12.10f","%.10f"],delimiter="    ",
                        header='Time'.ljust(14,' ')+'    '+'Epoch'.ljust(10,' ')
-                       +'    '+'new O-C'.ljust(12,' ')+'    Weight')            
+                       +'    '+'new O-C'.ljust(12,' ')+'    Weight')
         else:
             np.savetxt(f,np.column_stack((self.t,self.epoch,self.new_oc)),
                        fmt=["%14.7f",'%10.3f',"%+12.10f"],delimiter="    ",
@@ -277,7 +276,7 @@ class SimpleFit():
         bw - Black&White plot
         double_ax - two axes -> time and epoch
         fig_size - custom figure size - e.g. (12,6)
-        
+
         warning: weights have to be in same order as input data!
         '''
 
@@ -285,7 +284,7 @@ class SimpleFit():
             fig=mpl.figure(figsize=fig_size)
         else:
             fig=mpl.figure()
-            
+
         ax1=fig.add_subplot(111)
         #setting labels
         if epoch and not double_ax:
@@ -307,14 +306,14 @@ class SimpleFit():
             ax1.set_ylabel('Residue O - C (d)')
             k=1
 
-        if title is not None: 
+        if title is not None:
             if double_ax: fig.subplots_adjust(top=0.85)
             fig.suptitle(title,fontsize=20)
 
         #primary / secondary minimum
         if min_type:
             prim=np.where(np.round(self.epoch)==self.epoch)
-            sec=np.where(np.round(self.epoch)<>self.epoch)
+            sec=np.where(np.round(self.epoch)!=self.epoch)
         else:
             prim=np.arange(0,len(self.epoch),1)
             sec=np.array([])
@@ -375,14 +374,14 @@ class SimpleFit():
                 prim=np.delete(prim,np.where(np.in1d(prim,errors)))
                 sec=np.delete(sec,np.where(np.in1d(sec,errors)))
                 if not len(prim)==0:
-                    ax1.plot(x[prim],(self.new_oc*k)[prim],color+'o',zorder=2)
+                    ax1.plot(x[prim],(self.new_oc*k)[prim],color+'o')
                 if not len(sec)==0:
                     ax1.plot(x[sec],(self.new_oc*k)[sec],color+'o',
-                             mfc='none',markeredgewidth=1,markeredgecolor=color,zorder=2)
-        
+                             mfc='none',markeredgewidth=1,markeredgecolor=color)
+
         if double_ax:
-            #setting secound axis                        
-            ax2=ax1.twiny() 
+            #setting secound axis
+            ax2=ax1.twiny()
             #generate plot to obtain correct axis in epoch
             l=ax2.plot(self.epoch,self.oc*k)
             ax2.set_xlabel('Epoch')
@@ -390,7 +389,7 @@ class SimpleFit():
             lims=np.array(ax1.get_xlim())
             epoch=np.round((lims-self.t0)/self.P*2)/2.
             ax2.set_xlim(epoch)
-        
+
         if name is None: mpl.show()
         else:
             mpl.savefig(name+'.png')
@@ -418,7 +417,7 @@ class SimpleFit():
         bw - Black&White plot
         double_ax - two axes -> time and epoch
         fig_size - custom figure size - e.g. (12,6)
-        
+
         warning: weights have to be in same order as input data!
         '''
 
@@ -447,8 +446,8 @@ class SimpleFit():
         else:
             ax1.set_ylabel('O - C (d)')
             k=1
-            
-        if title is not None: 
+
+        if title is not None:
             if double_ax: fig.subplots_adjust(top=0.85)
             fig.suptitle(title,fontsize=20)
 
@@ -458,7 +457,7 @@ class SimpleFit():
         #primary / secondary minimum
         if min_type:
             prim=np.where(np.round(self.epoch)==self.epoch)
-            sec=np.where(np.round(self.epoch)<>self.epoch)
+            sec=np.where(np.round(self.epoch)!=self.epoch)
         else:
             prim=np.arange(0,len(self.epoch),1)
             sec=np.array([])
@@ -481,7 +480,7 @@ class SimpleFit():
                 set_w=True
             else:
                 warnings.warn('Shape of "weight" is different to shape of "time". Weight will be ignore!')
-        
+
         if bw: color='k'
         else: color='b'
         if len(self.new_oc)==len(self.oc): errors=GetMax(abs(self.new_oc),no_plot)  #remove outlier points
@@ -526,13 +525,13 @@ class SimpleFit():
                              mfc='none',markeredgewidth=1,markeredgecolor=color,zorder=1)
 
         #plot linear model
-        if bw: 
+        if bw:
             color='k'
             lw=2
-        else: 
+        else:
             color='r'
             lw=1
-            
+
         if len(self.model)==len(self.t):
             #model was calculated
             if len(self.t)<1000:
@@ -540,7 +539,7 @@ class SimpleFit():
                 E=np.linspace(self.epoch[0]-50*dE,self.epoch[-1]+50*dE,1100)
             else:
                 dE=(self.epoch[-1]-self.epoch[0])/len(self.epoch)
-                E=np.linspace(self.epoch[0]-0.05*len(self.epoch)*dE,self.epoch[-1]+0.05*len(self.epoch)*dE,int(1.1*len(self.epoch)))                
+                E=np.linspace(self.epoch[0]-0.05*len(self.epoch)*dE,self.epoch[-1]+0.05*len(self.epoch)*dE,int(1.1*len(self.epoch)))
             tC=self._t0P[0]+self._t0P[1]*E
             p=[]
             if 'Q' in self.params:
@@ -548,13 +547,13 @@ class SimpleFit():
                 p.append(self.params['Q'])
             p+=[self.params['P']-self._t0P[1],self.params['t0']-self._t0P[0]]
             new=np.polyval(p,E)
-            
-            if epoch and not double_ax: ax1.plot(E,new*k,color,linewidth=lw)
-            else: ax1.plot(tC+new-offset,new*k,color,linewidth=lw)
-        
+
+            if epoch and not double_ax: ax1.plot(E,new*k,color,linewidth=lw,zorder=2)
+            else: ax1.plot(tC+new-offset,new*k,color,linewidth=lw,zorder=2)
+
         if double_ax:
             #setting secound axis
-            ax2=ax1.twiny() 
+            ax2=ax1.twiny()
             #generate plot to obtain correct axis in epoch
             if len(self.model)==len(self.t): l=ax2.plot(E,new*k,zorder=2)
             else: l=ax2.plot(self.epoch,self.oc*k,zorder=2)
@@ -563,7 +562,7 @@ class SimpleFit():
             lims=np.array(ax1.get_xlim())
             epoch=np.round((lims-self.t0)/self.P*2)/2.
             ax2.set_xlim(epoch)
-        
+
 
         if name is None: mpl.show()
         else:
@@ -573,7 +572,7 @@ class SimpleFit():
 
 class FitLinear(SimpleFit):
     '''fitting of O-C diagram with linear function'''
-    
+
     def FitRobust(self,n_iter=10):
         '''robust regresion
         return: new O-C'''
@@ -596,10 +595,10 @@ class FitLinear(SimpleFit):
         w=1./err
 
         p,cov=np.polyfit(self.epoch,self.oc,1,cov=True,w=w)
-        
+
         self.P=p[0]+self._t0P[1]
         self.t0=p[1]+self._t0P[0]
-        
+
         self.params['P']=p[0]+self._t0P[1]
         self.params['t0']=p[1]+self._t0P[0]
 
@@ -611,10 +610,10 @@ class FitLinear(SimpleFit):
             n=len(self.t)*1.06*sum(1./err)/sum(1./self.err)
             chi_m=1.23*sum(((self.oc-self.model)/err)**2)/(n-2)
         else: chi_m=self.chi/(len(self.t)-2)
-        
+
         err=np.sqrt(chi_m*cov.diagonal())
         self.params_err['P']=err[0]
-        self.params_err['t0']=err[1]        
+        self.params_err['t0']=err[1]
 
         self.tC=self.t0+self.P*self.epoch
         self.new_oc=self.oc-self.model
@@ -622,7 +621,7 @@ class FitLinear(SimpleFit):
         self._robust=False
         self._mcmc=False
         return self.new_oc
-        
+
     def FitMCMC(self,n_iter,limits,steps,fit_params=None,burn=0,binn=1,visible=True,db=None):
         '''fitting with Markov chain Monte Carlo
         n_iter - number of MC iteration - should be at least 1e5
@@ -638,11 +637,11 @@ class FitLinear(SimpleFit):
         #setting pymc sampling for fitted parameters
         if fit_params is None: fit_params=['P','t0']
         vals0={'P': self._t0P[1], 't0': self._t0P[0]}
-        vals={}        
+        vals={}
         pars={}
         for p in ['P','t0']:
             if p in self.params: vals[p]=self.params[p]
-            else: vals[p]=vals0[p]                
+            else: vals[p]=vals0[p]
             if p in fit_params:
                 pars[p]=pymc.Uniform(p,lower=limits[p][0],upper=limits[p][1],value=vals[p])
 
@@ -650,9 +649,9 @@ class FitLinear(SimpleFit):
             '''model function for pymc'''
             if 'P' in arg: P=arg['P']
             else: P=vals['P']
-            if 't0' in arg: t0=arg['t0'] 
+            if 't0' in arg: t0=arg['t0']
             else: t0=vals['t0']
-            return t0+P*self.epoch        
+            return t0+P*self.epoch
 
         #definition of pymc model
         model=pymc.Deterministic(
@@ -674,7 +673,7 @@ class FitLinear(SimpleFit):
 
         #adding final distribution and sampling of parameters to model
         Model=[y]
-        for v in pars.itervalues():
+        for v in pars.values():
             Model.append(v)
 
         #create pymc object
@@ -692,40 +691,38 @@ class FitLinear(SimpleFit):
             R.use_step_method(pymc.Metropolis,pars[p],proposal_sd=steps[p],
                               proposal_distribution='Normal')
 
-        if not visible: 
+        if not visible:
             #hidden output
             f = open(os.devnull, 'w')
-            out=sys.stdout            
-            sys.stdout=f 
-            
+            out=sys.stdout
+            sys.stdout=f
+
         R.sample(iter=n_iter,burn=burn,thin=binn)  #MCMC fitting/simulation
 
         self.params_err={} #remove errors of parameters
-            
+
         for p in ['P','t0']:
             #calculate values and errors of parameters and save them
             if p in pars:
-                self.params[p]=R.stats()[p]['mean']
-                self.params_err[p]=R.stats()[p]['standard deviation']
-            else: 
+                self.params[p]=np.mean(pars[p].trace())
+                self.params_err[p]=np.std(pars[p].trace())
+            else:
                 self.params[p]=vals[p]
                 self.params_err[p]='---'
 
-        print ''
-        R.summary() #summary of MCMC fitting
-        
-        if not visible: 
+
+        if not visible:
             #hidden output
             sys.stdout=out
             f.close()
-        
+
         self.Epoch()
         self.tC=self.params['t0']+self.params['P']*self.epoch
         self.new_oc=self.t-self.tC
-        self.model=self.oc+self.new_oc    
-        
-        self.chi=sum(((self.oc-self.model)/self.err)**2)     
-        
+        self.model=self.oc+self.new_oc
+
+        self.chi=sum(((self.oc-self.model)/self.err)**2)
+
         self._robust=False
         self._mcmc=True
 
@@ -756,10 +753,10 @@ class FitQuad(SimpleFit):
         else: err=self.err
         p,cov=np.polyfit(self.epoch,self.oc,2,cov=True,w=1./err)
 
-        self.Q=p[0]      
+        self.Q=p[0]
         self.P=p[1]+self._t0P[1]
         self.t0=p[2]+self._t0P[0]
-        
+
         self.params['Q']=p[0]
         self.params['P']=p[1]+self._t0P[1]
         self.params['t0']=p[2]+self._t0P[0]
@@ -772,7 +769,7 @@ class FitQuad(SimpleFit):
             n=len(self.t)*1.06*sum(1./err)/sum(1./self.err)
             chi_m=1.23*sum(((self.oc-self.model)/err)**2)/(n-3)
         else: chi_m=self.chi/(len(self.t)-3)
-        
+
         err=np.sqrt(chi_m*cov.diagonal())
         self.params_err['Q']=err[0]
         self.params_err['P']=err[1]
@@ -784,7 +781,7 @@ class FitQuad(SimpleFit):
         self._robust=False
         self._mcmc=False
         return self.new_oc
-        
+
     def FitMCMC(self,n_iter,limits,steps,fit_params=None,burn=0,binn=1,visible=True,db=None):
         '''fitting with Markov chain Monte Carlo
         n_iter - number of MC iteration - should be at least 1e5
@@ -800,11 +797,11 @@ class FitQuad(SimpleFit):
         #setting pymc sampling for fitted parameters
         if fit_params is None: fit_params=['Q','P','t0']
         vals0={'P': self._t0P[1], 't0': self._t0P[0], 'Q':0}
-        vals={}        
+        vals={}
         pars={}
         for p in ['P','t0','Q']:
             if p in self.params: vals[p]=self.params[p]
-            else: vals[p]=vals0[p]                
+            else: vals[p]=vals0[p]
             if p in fit_params:
                 pars[p]=pymc.Uniform(p,lower=limits[p][0],upper=limits[p][1],value=vals[p])
 
@@ -814,9 +811,9 @@ class FitQuad(SimpleFit):
             else: Q=vals['Q']
             if 'P' in arg: P=arg['P']
             else: P=vals['P']
-            if 't0' in arg: t0=arg['t0'] 
+            if 't0' in arg: t0=arg['t0']
             else: t0=vals['t0']
-            return t0+P*self.epoch+Q*self.epoch**2        
+            return t0+P*self.epoch+Q*self.epoch**2
 
         #definition of pymc model
         model=pymc.Deterministic(
@@ -838,7 +835,7 @@ class FitQuad(SimpleFit):
 
         #adding final distribution and sampling of parameters to model
         Model=[y]
-        for v in pars.itervalues():
+        for v in pars.values():
             Model.append(v)
 
         #create pymc object
@@ -856,39 +853,37 @@ class FitQuad(SimpleFit):
             R.use_step_method(pymc.Metropolis,pars[p],proposal_sd=steps[p],
                               proposal_distribution='Normal')
 
-        if not visible: 
+        if not visible:
             #hidden output
             f = open(os.devnull, 'w')
-            out=sys.stdout            
-            sys.stdout=f 
-            
+            out=sys.stdout
+            sys.stdout=f
+
         R.sample(iter=n_iter,burn=burn,thin=binn)  #MCMC fitting/simulation
 
         self.params_err={} #remove errors of parameters
-            
+
         for p in ['Q','P','t0']:
             #calculate values and errors of parameters and save them
             if p in pars:
-                self.params[p]=R.stats()[p]['mean']
-                self.params_err[p]=R.stats()[p]['standard deviation']
-            else: 
+                self.params[p]=np.mean(pars[p].trace())
+                self.params_err[p]=np.std(pars[p].trace())
+            else:
                 self.params[p]=vals[p]
                 self.params_err[p]='---'
 
-        print ''
-        R.summary() #summary of MCMC fitting
-        
-        if not visible: 
+
+        if not visible:
             #hidden output
             sys.stdout=out
             f.close()
-        
+
         self.Epoch()
         self.tC=self.t0+self.P*self.epoch+self.Q*self.epoch**2
         self.new_oc=self.t-self.tC
-        self.model=self.oc+self.new_oc           
-        self.chi=sum(((self.oc-self.model)/self.err)**2)     
-        
+        self.model=self.oc+self.new_oc
+        self.chi=sum(((self.oc-self.model)/self.err)**2)
+
         self._robust=False
         self._mcmc=True
 
@@ -989,8 +984,8 @@ class ComplexFit():
         self.epoch=epoch
         self._t0P=[t0,P]
         self._min_type=np.abs((2*(epoch-epoch.astype('int'))).astype('int'))
-        return epoch        
-            
+        return epoch
+
     def InfoGA(self,db,eps=False):
         '''statistics about GA fitting'''
         info=InfoGAClass(db)
@@ -1006,16 +1001,16 @@ class ComplexFit():
             mpl.savefig(path+'ga-'+p+'.png')
             if eps: mpl.savefig(path+'ga-'+p+'.eps')
         mpl.close('all')
-        
+
     def InfoMCMC(self,db,eps=False,geweke=False):
         '''statistics about GA fitting'''
         info=InfoMCClass(db)
         info.AllParams(eps)
-        
+
         for p in info.pars: info.OneParam(p,eps)
-        if geweke: info.Geweke(eps)        
-        
-                
+        if geweke: info.Geweke(eps)
+
+
     def LiTE(self,t,a_sin_i3,e3,w3,t03,P3):
         '''model of O-C by Light-Time effect given by Irwin (1952)
         t - times of minima (np.array or float) [days]
@@ -1033,7 +1028,7 @@ class ComplexFit():
         nu=2*np.arctan(np.sqrt((1+e3)/(1-e3))*np.tan(E/2))  #true anomally
         dt=a_sin_i3*AU/c*((1-e3**2)/(1+e3*np.cos(nu))*np.sin(nu+w3)+e3*np.sin(w3))
         return dt/day
-              
+
 
 class OCFit(ComplexFit):
     '''class for fitting O-C diagrams'''
@@ -1049,13 +1044,13 @@ class OCFit(ComplexFit):
             #errors given
             self.err=np.array(err)
             self._set_err=True
-        
+
         #sorting data...
         self._order=np.argsort(self.t)
         self.t=self.t[self._order]    #times
         self.oc=self.oc[self._order]  #O-Cs
         self.err=self.err[self._order]   #errors
-        
+
         self.limits={}          #limits of parameters for fitting
         self.steps={}           #steps (width of normal distibution) of parameters for fitting
         self.params={}          #values of parameters, fixed values have to be set here
@@ -1065,7 +1060,7 @@ class OCFit(ComplexFit):
         self.fit_params=[]      #list of fitted parameters
         self._calc_err=False    #errors were calculated
         self._corr_err=False    #errors were corrected
-        self._old_err=[]        #given errors 
+        self._old_err=[]        #given errors
         self.model='LiTE3'      #used model of O-C
         self._t0P=[]            #linear ephemeris of binary
         self.epoch=[]           #epoch of binary
@@ -1075,32 +1070,32 @@ class OCFit(ComplexFit):
                               'AgolInPlanet','AgolInPlanetLin','AgolExPlanet',\
                               'AgolExPlanetLin','Apsidal']   #list of available models
 
-    
+
     def AvailableModels(self):
         '''print available models for fitting O-Cs'''
-        print 'Available Models:'
-        for s in self.availableModels: print s
-            
+        print('Available Models:')
+        for s in self.availableModels: print(s)
+
     def ModelParams(self,model=None,allModels=False):
         '''display parameters of model'''
-        
+
         def Display(model):
             s=model+': '
             if 'Quad' in model: s+='t0, P, Q, '
             if 'Lin' in model: s+='t0, '
             if 'LiTE' in model: s+='a_sin_i3, e3, w3, t03, P3, '
-            if '4' in model: s+='a_sin_i4, e4, w4, t04, P4, ' 
-            if 'InPlanet' in model: s+='P, a, w, e, mu3, r3, w3, t03, P3, '    
+            if '4' in model: s+='a_sin_i4, e4, w4, t04, P4, '
+            if 'InPlanet' in model: s+='P, a, w, e, mu3, r3, w3, t03, P3, '
             if 'ExPlanet' in model: s+='P, mu3, e3, t03, P3, '
             if 'Apsidal' in model: s+='t0, P, w0, dw, e, '
-            print s[:-2]
-            
+            print(s[:-2])
+
         if model is None: model=self.model
         if allModels:
             for m in self.availableModels: Display(m)
         else: Display(model)
-                
-    
+
+
     def Save(self,path):
         '''saving data, model, parameters... to file'''
         data={}
@@ -1119,25 +1114,25 @@ class OCFit(ComplexFit):
         data['paramsMore']=self.paramsMore
         data['paramsMore_err']=self.paramsMore_err
         data['fit_params']=self.fit_params
-        data['model']=self.model   
+        data['model']=self.model
         data['t0P']=self._t0P
         data['epoch']=self.epoch
         data['min_type']=self._min_type
-        
+
         path=path.replace('\\','/')   #change dirs in path (for Windows)
         if path.rfind('.')<=path.rfind('/'): path+='.ocf'   #without extesion
-        f=open(path,'wb') 
+        f=open(path,'wb')
         pickle.dump(data,f,protocol=2)
         f.close()
-        
+
     def Load(self,path):
         '''loading data, model, parameters... from file'''
         path=path.replace('\\','/')   #change dirs in path (for Windows)
         if path.rfind('.')<=path.rfind('/'): path+='.ocf'   #without extesion
         f=open(path,'rb')
-        data=pickle.load(f) 
+        data=pickle.load(f,encoding='latin1')
         f.close()
-        
+
         self.t=data['t']
         self.oc=data['oc']
         self.err=data['err']
@@ -1209,7 +1204,7 @@ class OCFit(ComplexFit):
         e3 - eccentricity of 3rd exoplanet
         t03 - time of pericenter passage of 3rd body [days]
         P3 - period of 3rd body [days]
-        output in days        
+        output in days
         '''
 
         M=2*np.pi/P3*(t-t03)
@@ -1232,16 +1227,16 @@ class OCFit(ComplexFit):
         e3 - eccentricity of 3rd exoplanet
         t03 - time of pericenter passage of 3rd body [days]
         P3 - period of 3rd body [days]
-        output in days  
+        output in days
         '''
 
         if not len(self.epoch)==len(t):
             raise NameError('Epoch not callculated! Run function "Epoch" before it.')
         dt=t0+P*self.epoch
-        
+
         dt3=self.AgolExPlanet(t,P,mu3,e3,t03,P3)
-        return dt+dt3-(self._t0P[0]+self._t0P[1]*self.epoch)    
-    
+        return dt+dt3-(self._t0P[0]+self._t0P[1]*self.epoch)
+
     def LiTE3(self,t,a_sin_i3,e3,w3,t03,P3):
         '''model of O-C by Light-Time effect caused by 3rd body given by Irwin (1952)
         t - times of minima (np.array or float) [days]
@@ -1254,8 +1249,8 @@ class OCFit(ComplexFit):
         '''
 
         dt3=self.LiTE(t,a_sin_i3,e3,w3,t03,P3)
-        return dt3     
-    
+        return dt3
+
     def LiTE34(self,t,a_sin_i3,e3,w3,t03,P3,a_sin_i4,e4,w4,t04,P4):
         '''model of O-C by Light-Time effect caused by 3rd and 4th body given by Irwin (1952)
         t - times of minima (np.array or float) [days]
@@ -1269,11 +1264,11 @@ class OCFit(ComplexFit):
 
         dt3=self.LiTE(t,a_sin_i3,e3,w3,t03,P3)
         dt4=self.LiTE(t,a_sin_i4,e4,w4,t04,P4)
-        return dt3+dt4    
-        
+        return dt3+dt4
+
     def LiTE3Quad(self,t,t0,P,Q,a_sin_i3,e3,w3,t03,P3):
         '''model of O-C by Light-Time effect caused by 3rd body given by Irwin (1952) \
-        with quadratic model of O-C         
+        with quadratic model of O-C
         t - times of minima (np.array or float) [days]
         t0 - time of refernce minima [days]
         P - period of eclipsing binary [days]
@@ -1316,7 +1311,7 @@ class OCFit(ComplexFit):
         dt3=self.LiTE(t,a_sin_i3,e3,w3,t03,P3)
         dt4=self.LiTE(t,a_sin_i4,e4,w4,t04,P4)
         return dt+dt3+dt4-(self._t0P[0]+self._t0P[1]*self.epoch)
-    
+
     def Apsidal(self,t,t0,P,w0,dw,e,min_type):
         '''Apsidal motion on O-C diagram (Gimenez&Bastero,1995)
         t0 - time of refernce minima [days]
@@ -1325,17 +1320,17 @@ class OCFit(ComplexFit):
         dw - angular velocity of line of apsides [rad/period]
         e - eccentricity
         min_type - type of minimas [0 or 1]
-        
+
         output in days
         '''
-        
+
         if not len(self.epoch)==len(t):
             raise NameError('Epoch not callculated! Run function "Epoch" before it.')
-        
+
         w=w0+dw*self.epoch   #position of pericenter
         nu=-w+np.pi/2       #true anomaly
         b=e/(1+np.sqrt(1-e**2))
-        
+
         sum1=0
         sum2=0
         tmp=0
@@ -1346,17 +1341,17 @@ class OCFit(ComplexFit):
             #secondary
             if n%2: sum2-=tmp
             else: sum2+=tmp
-            
+
         oc1=P/np.pi*sum1
         oc2=P/np.pi*sum2
-        
+
         dt=np.zeros(t.shape)
-        dt[np.where(min_type==0)[0]]=oc1[np.where(min_type==0)[0]]  #primary
-        dt[np.where(min_type==1)[0]]=oc2[np.where(min_type==1)[0]]  #secondary
-                
+        dt[np.where(min_type==0)]=oc1[np.where(min_type==0)]  #primary
+        dt[np.where(min_type==1)]=oc2[np.where(min_type==1)]  #secondary
+
         return dt+(t0+P*self.epoch)-(self._t0P[0]+self._t0P[1]*self.epoch)
-        
-    
+
+
     def PhaseCurve(self,P,t0,plot=False):
         '''create phase curve'''
         f=np.mod(self.t-t0,P)/float(P)    #phase
@@ -1404,26 +1399,26 @@ class OCFit(ComplexFit):
         if plot_graph:
             graph=[]
             graph_mean=[]
-            
+
         objfun=[]   #values of Objective Function
         for i in range(size): objfun.append(0)
-        
+
         if db is not None:
             #saving GA fitting details
             save_dat={}
             save_dat['chi2']=[]
-            for par in self.fit_params: save_dat[par]=[]  
+            for par in self.fit_params: save_dat[par]=[]
             path=db.replace('\\','/')   #change dirs in path (for Windows)
             if path.rfind('/')>0:
                 path=path[:path.rfind('/')+1]  #find current dir of db file
                 if not os.path.isdir(path): os.mkdir(path) #create dir of db file, if not exist
-    
-        if not visible: 
+
+        if not visible:
             #hidden output
             f = open(os.devnull, 'w')
-            out=sys.stdout            
-            sys.stdout=f 
-            
+            out=sys.stdout
+            sys.stdout=f
+
         tic=time()
         for gen in range(generation):
             #main loop of GA
@@ -1432,39 +1427,39 @@ class OCFit(ComplexFit):
             sys.stdout.flush()
             for t in range(n_thread):
                 #multithreading
-                threads.append(threading.Thread(target=Thread,args=[range(int(t*size/float(n_thread)),
-                                                                          int((t+1)*size/float(n_thread)))]))
+                threads.append(threading.Thread(target=Thread,args=[list(range(int(t*size/float(n_thread)),
+                                                                          int((t+1)*size/float(n_thread))))]))
             #waiting for all threads and joining them
             for t in threads: t.start()
             for t in threads: t.join()
 
-            #finding best solution in population and compare with global best solution            
+            #finding best solution in population and compare with global best solution
             i=np.argmin(objfun)
             if objfun[i]<min0:
                 min0=objfun[i]
                 p=dict(popul.p[i])
-            
+
             if plot_graph:
                 graph.append(min0)
-                graph_mean.append(np.mean(np.array(objfun)))                
-            
+                graph_mean.append(np.mean(np.array(objfun)))
+
             if db is not None:
-                save_dat['chi2'].append(list(objfun)) 
+                save_dat['chi2'].append(list(objfun))
                 for par in self.fit_params:
                     temp=[]
                     for x in popul.p: temp.append(x[par])
-                    save_dat[par].append(temp)  
-            
+                    save_dat[par].append(temp)
+
             popul.Next(objfun)  #generate new generation
             sys.stdout.write('\r')
             sys.stdout.flush()
-            
+
         sys.stdout.write('\n')
-        if not visible: 
+        if not visible:
             #hidden output
             sys.stdout=out
             f.close()
-            
+
         if plot_graph:
             mpl.figure()
             mpl.plot(graph,'-')
@@ -1479,8 +1474,8 @@ class OCFit(ComplexFit):
             f=open(db,'wb')
             pickle.dump(save_dat,f,protocol=2)
             f.close()
-            
-        for param in p: self.params[param]=p[param]   #save found parameters 
+
+        for param in p: self.params[param]=p[param]   #save found parameters
         self.params_err={}   #remove errors of parameters
         #remove some values calculated from old parameters
         self.paramsMore={}
@@ -1498,7 +1493,7 @@ class OCFit(ComplexFit):
         db - name of database to save MCMC fitting details (could be analysed later using InfoMCMC function)
         '''
 
-        #setting pymc sampling for fitted parameters        
+        #setting pymc sampling for fitted parameters
         pars={}
         for p in self.fit_params:
             pars[p]=pymc.Uniform(p,lower=self.limits[p][0],upper=self.limits[p][1],value=self.params[p])
@@ -1509,7 +1504,7 @@ class OCFit(ComplexFit):
             for x in self.params:
                 #add fixed parameters
                 if not x in param: param[x]=self.params[x]
-            return self.Model(param=param)        
+            return self.Model(param=param)
 
         #definition of pymc model
         model=pymc.Deterministic(
@@ -1531,7 +1526,7 @@ class OCFit(ComplexFit):
 
         #adding final distribution and sampling of parameters to model
         Model=[y]
-        for v in pars.itervalues():
+        for v in pars.values():
             Model.append(v)
 
         #create pymc object
@@ -1549,28 +1544,26 @@ class OCFit(ComplexFit):
             R.use_step_method(pymc.Metropolis,pars[p],proposal_sd=self.steps[p],
                               proposal_distribution='Normal')
 
-        if not visible: 
+        if not visible:
             #hidden output
             f = open(os.devnull, 'w')
-            out=sys.stdout            
-            sys.stdout=f 
-            
+            out=sys.stdout
+            sys.stdout=f
+
         R.sample(iter=n_iter,burn=burn,thin=binn)  #MCMC fitting/simulation
 
         self.params_err={} #remove errors of parameters
         #remove some values calculated from old parameters
         self.paramsMore={}
         self.paramsMore_err={}
-            
+
         for p in pars:
             #calculate values and errors of parameters and save them
-            self.params[p]=R.stats()[p]['mean']
-            self.params_err[p]=R.stats()[p]['standard deviation']
+            self.params[p]=np.mean(pars[p].trace())
+            self.params_err[p]=np.std(pars[p].trace())
 
-        print ''
-        R.summary() #summary of MCMC fitting
-        
-        if not visible: 
+
+        if not visible:
             #hidden output
             sys.stdout=out
             f.close()
@@ -1614,13 +1607,13 @@ class OCFit(ComplexFit):
                 try: err[-1]=str(np.rad2deg(float(err[-1]))) #error calculated
                 except: pass  #error not calculated
                 unit.append('deg')
-        
+
         #calculate some more parameters, if not calculated
         self.MassFun()
         self.Amplitude()
         self.ParamsApsidal()
-        
-        #make blank line        
+
+        #make blank line
         params.append('')
         vals.append('')
         err.append('')
@@ -1646,7 +1639,7 @@ class OCFit(ComplexFit):
                 try: err.append(str(float(err[-1])/365.2425)) #error calculated
                 except: err.append(err[-1])  #error not calculated
                 unit.append('y')
-            elif x[0]=='K': 
+            elif x[0]=='K':
                 unit.append('s')
                 #also in minutes
                 params.append(x)
@@ -1654,11 +1647,11 @@ class OCFit(ComplexFit):
                 try: err.append(str(float(err[-1])/60.)) #error calculated
                 except: err.append(err[-1])  #error not calculated
                 unit.append('m')
-        
+
         #generate text output
         text=['parameter'.ljust(15,' ')+'unit'.ljust(10,' ')+'value'.ljust(30,' ')+'error']
         for i in range(len(params)):
-            text.append(params[i].ljust(15,' ')+unit[i].ljust(10,' ')+vals[i].ljust(30,' ')+err[i].ljust(20,' '))
+            text.append(params[i].ljust(15,' ')+unit[i].ljust(10,' ')+vals[i].ljust(30,' ')+err[i].ljust(30,' '))
         text.append('')
         text.append('Model: '+self.model)
         if len(self.params_err)==0: text.append('Fitting method: GA')
@@ -1676,28 +1669,28 @@ class OCFit(ComplexFit):
         text.append('BIC = '+str(chi+g*np.log(n)))
         if name is None:
             #output to screen
-            print '------------------------------------'
-            for t in text: print t
-            print '------------------------------------'
+            print('------------------------------------')
+            for t in text: print(t)
+            print('------------------------------------')
         else:
             #output to file
             f=open(name,'w')
             for t in text: f.write(t+'\n')
             f.close()
-            
-            
+
+
     def Amplitude(self):
         '''calculate amplitude of O-C in seconds'''
-        output={}  
+        output={}
         if 'LiTE3' in self.model:
             #LiTE3 and LiTE3Quad models
-            if 'K4' in self.paramsMore: 
+            if 'K4' in self.paramsMore:
                 #remove values calculated before
                 del self.paramsMore['K4']
                 if 'K4' in self.paramsMore_err: del self.paramsMore_err['K4']
-                    
+
             self.paramsMore['K3']=self.params['a_sin_i3']*AU/c*np.sqrt(1-self.params['e3']**2*np.cos(self.params['w3'])**2)
-            output['K3']=self.paramsMore['K3']              
+            output['K3']=self.paramsMore['K3']
             if len(self.params_err)>0:
                 #calculate error of Amplitude
                 #get errors of params of 3rd body
@@ -1713,18 +1706,18 @@ class OCFit(ComplexFit):
                 de=-self.params['a_sin_i3']*AU*self.params['e3']*np.cos(self.params['w3'])/(c*sqrt) #dK3/de3
                 dw=self.params['a_sin_i3']*AU*self.params['e3']**2*np.sin(self.params['w3'])*np.cos(self.params['w3'])/(c*sqrt) #dK3/dw3
                 self.paramsMore_err['K3']=np.sqrt((da*a_err)**2+(de*e_err)**2+(dw*w_err)**2)
-                
-                #if some errors = 0, del them; and return only non-zero errors           
-                if self.paramsMore_err['K3']==0: del self.paramsMore_err['K3']                
+
+                #if some errors = 0, del them; and return only non-zero errors
+                if self.paramsMore_err['K3']==0: del self.paramsMore_err['K3']
                 else: output['K3_err']=self.paramsMore_err['K3']
-            
-            
+
+
         if 'LiTE34' in self.model:
             #LiTE34 and LiTE34Quad models
             self.paramsMore['K4']=self.params['a_sin_i4']*AU/c*np.sqrt(1-self.params['e4']**2*np.cos(self.params['w4'])**2)
-            output['K4']=self.paramsMore['K4']            
-            if len(self.params_err)>0:                 
-                #calculate error of Amplitude            
+            output['K4']=self.paramsMore['K4']
+            if len(self.params_err)>0:
+                #calculate error of Amplitude
                 #get errors of params of 4th body
                 if 'e4' in self.params_err: e_err=self.params_err['e4']
                 else: e_err=0
@@ -1738,24 +1731,24 @@ class OCFit(ComplexFit):
                 de=-self.params['a_sin_i4']*AU*self.params['e4']*np.cos(self.params['w4'])/(c*sqrt) #dK4/de4
                 dw=self.params['a_sin_i4']*AU*self.params['e4']**2*np.sin(self.params['w4'])*np.cos(self.params['w4'])/(c*sqrt) #dK4/dw4
                 self.paramsMore_err['K4']=np.sqrt((da*a_err)**2+(de*e_err)**2+(dw*w_err)**2)
-    
-                #if some errors = 0, del them; and return only non-zero errors           
-                if self.paramsMore_err['K4']==0: del self.paramsMore_err['K4']                
-                else: output['K4_err']=self.paramsMore_err['K4']        
-                    
-        
+
+                #if some errors = 0, del them; and return only non-zero errors
+                if self.paramsMore_err['K4']==0: del self.paramsMore_err['K4']
+                else: output['K4_err']=self.paramsMore_err['K4']
+
+
         if 'ExPlanet' in self.model:
             #AgolExPlanet and AgolExPlanetLin models
-            if 'K4' in self.paramsMore: 
+            if 'K4' in self.paramsMore:
                 #remove values calculated before
                 del self.paramsMore['K4']
                 if 'K4' in self.paramsMore_err: del self.paramsMore_err['K4']
-            
+
             self.paramsMore['K3']=day*self.params['mu3']/(2*np.pi*(1-self.params['mu3']))*self.params['P']**2/self.params['P3']*\
                                   (1-self.params['e3']**2)**(-3./2.)*2*(np.arctan(self.params['e3']/(1+np.sqrt(1-self.params['e3']**2)))+self.params['e3'])
-            
+
             output['K3']=self.paramsMore['K3']
-            if len(self.params_err)>0: 
+            if len(self.params_err)>0:
                 #calculate error of Amplitude
                 #get errors of params of 3rd body
                 if 'e3' in self.params_err: e_err=self.params_err['e3']
@@ -1775,24 +1768,24 @@ class OCFit(ComplexFit):
                 de=day*self.params['mu3']/(2*np.pi*(1-self.params['mu3']))*self.params['P']**2/self.params['P3']*\
                    ((4*np.sqrt(1-e**2))*e**2+2*np.sqrt(1-e**2)+6*np.sqrt(1-e**2)*e*np.arctan(e/(np.sqrt(1-e**2)+1))+1)/(e**2-1)**3           #dK3/de3
                 self.paramsMore_err['K3']=np.sqrt((dmu*mu_err)**2+(dP*P_err)**2+(dP3*P3_err)**2+(de*e_err)**2)
-                
-                #if some errors = 0, del them; and return only non-zero errors           
-                if self.paramsMore_err['K3']==0: del self.paramsMore_err['K3']                
+
+                #if some errors = 0, del them; and return only non-zero errors
+                if self.paramsMore_err['K3']==0: del self.paramsMore_err['K3']
                 else: output['K3_err']=self.paramsMore_err['K3']
-            
-            
+
+
         if 'InPlanet' in self.model:
             #AgolInPlanet and AgolInPlanetLin models
-            if 'K4' in self.paramsMore: 
+            if 'K4' in self.paramsMore:
                 #remove values calculated before
                 del self.paramsMore['K4']
                 if 'K4' in self.paramsMore_err: del self.paramsMore_err['K4']
-            
+
             self.paramsMore['K3']=day*self.params['P']*self.params['mu3']*self.params['r3']*np.sqrt(1-self.params['e']**2)/\
                                   (2*np.pi*self.params['a']*(1-self.params['e']*np.sin(self.params['w'])))
-            
+
             output['K3']=self.paramsMore['K3']
-            if len(self.params_err)>0:           
+            if len(self.params_err)>0:
                 #calculate error of Amplitude
                 #get errors of params of 3rd body
                 if 'e' in self.params_err: e_err=self.params_err['e']
@@ -1801,7 +1794,7 @@ class OCFit(ComplexFit):
                 else: mu_err=0
                 if 'P' in self.params_err: P_err=self.params_err['P']*day
                 else: P_err=0
-                if 'r3' in self.params_err: r_err=self.params_err['r3']*AU                
+                if 'r3' in self.params_err: r_err=self.params_err['r3']*AU
                 else: r_err=0
                 if 'a' in self.params_err: a_err=self.params_err['a']*AU
                 else: a_err=0
@@ -1819,21 +1812,21 @@ class OCFit(ComplexFit):
                 dw=K*e*np.cos(w)/(1-e*np.sin(w))          #dK3/dw
                 self.paramsMore_err['K3']=np.sqrt((dmu*mu_err)**2+(dP*P_err)**2+(dr*r_err)**2
                                                   +(de*e_err)**2+(da*a_err)**2+(dw*w_err)**2)
-                
-                #if some errors = 0, del them; and return only non-zero errors           
-                if self.paramsMore_err['K3']==0: del self.paramsMore_err['K3']                
+
+                #if some errors = 0, del them; and return only non-zero errors
+                if self.paramsMore_err['K3']==0: del self.paramsMore_err['K3']
                 else: output['K3_err']=self.paramsMore_err['K3']
-                
+
         if 'Apsid' in self.model:
             #Apsidal motion
-            if 'K4' in self.paramsMore: 
+            if 'K4' in self.paramsMore:
                 #remove values calculated before
                 del self.paramsMore['K4']
                 if 'K4' in self.paramsMore_err: del self.paramsMore_err['K4']
             self.paramsMore['K3']=day*self.params['P']*self.params['e']/np.pi
-            
+
             output['K3']=self.paramsMore['K3']
-            if len(self.params_err)>0:           
+            if len(self.params_err)>0:
                 #calculate error of Amplitude
                 #get errors of params of 3rd body
                 if 'e' in self.params_err: e_err=self.params_err['e']
@@ -1842,13 +1835,13 @@ class OCFit(ComplexFit):
                 else: P_err=0
                 self.paramsMore_err['K3']=self.paramsMore['K3']*np.sqrt((P_err/self.params['P'])**2+\
                                           (e_err/self.params['e'])**2)
-                
-                #if some errors = 0, del them; and return only non-zero errors           
-                if self.paramsMore_err['K3']==0: del self.paramsMore_err['K3']                
-                else: output['K3_err']=self.paramsMore_err['K3']            
-            
+
+                #if some errors = 0, del them; and return only non-zero errors
+                if self.paramsMore_err['K3']==0: del self.paramsMore_err['K3']
+                else: output['K3_err']=self.paramsMore_err['K3']
+
         return output
-    
+
     def ParamsApsidal(self):
         '''calculate some params for model of apsidal motion'''
         output={}
@@ -1857,78 +1850,78 @@ class OCFit(ComplexFit):
         self.paramsMore['U']=self.paramsMore['Ps']*2*np.pi/self.params['dw']
         output['Ps']=self.paramsMore['Ps']
         output['U']=self.paramsMore['U']
-            
-        if len(self.params_err)>0: 
+
+        if len(self.params_err)>0:
             #calculate error of params
             #get errors of params of model
             if 'P' in self.params_err: P_err=self.params_err['P']
-            else: P_err=0            
+            else: P_err=0
             if 'dw' in self.params_err: dw_err=self.params_err['dw']
             else: dw_err=0
-            
+
             self.paramsMore_err['Ps']=np.sqrt((1-self.params['dw']/(2*np.pi))**2*P_err**2+\
                                       (self.params['P']/(2*np.pi)*dw_err)**2)
             self.paramsMore_err['U']=self.paramsMore['U']*np.sqrt((P_err/self.params['P'])**2+\
                                       (dw_err/self.params['dw'])**2)
-            
-            #if some errors = 0, del them; and return only non-zero errors           
+
+            #if some errors = 0, del them; and return only non-zero errors
             if self.paramsMore_err['Ps']==0: del self.paramsMore_err['Ps']
             else: output['Ps_err']=self.paramsMore_err['Ps']
             if self.paramsMore_err['U']==0: del self.paramsMore_err['U']
             else: output['U_err']=self.paramsMore_err['U']
             return output
-            
-            
+
+
     def MassFun(self):
         '''calculate Mass Function for LiTE models'''
         output={}
         if 'LiTE3' in self.model:
             #LiTE3 and LiTE3Quad models
-            if 'f_m4' in self.paramsMore: 
+            if 'f_m4' in self.paramsMore:
                 #remove values calculated before
                 del self.paramsMore['f_m4']
                 if 'f_m4' in self.paramsMore_err: del self.paramsMore_err['f_m4']
-                
+
             self.paramsMore['f_m3']=self.params['a_sin_i3']**3/(self.params['P3']/365.2425)**2
-            output['f_m3']=self.paramsMore['f_m3']            
-            if len(self.params_err)>0: 
+            output['f_m3']=self.paramsMore['f_m3']
+            if len(self.params_err)>0:
                 #calculate error of Mass Function
                 #get errors of params of 3rd body
                 if 'P3' in self.params_err: P3_err=self.params_err['P3']
-                else: P3_err=0            
+                else: P3_err=0
                 if 'a_sin_i3' in self.params_err: a_err=self.params_err['a_sin_i3']
                 else: a_err=0
                 self.paramsMore_err['f_m3']=self.paramsMore['f_m3']*np.sqrt(9*(a_err/self.params['a_sin_i3'])**2+\
-                                             4*(P3_err/self.params['P3'])**2) 
-                #if some errors = 0, del them; and return only non-zero errors           
+                                             4*(P3_err/self.params['P3'])**2)
+                #if some errors = 0, del them; and return only non-zero errors
                 if self.paramsMore_err['f_m3']==0: del self.paramsMore_err['f_m3']
                 else: output['f_m3_err']=self.paramsMore_err['f_m3']
-            
-            
+
+
         if 'LiTE34' in self.model:
             #LiTE34 and LiTE34Quad models
             self.paramsMore['f_m4']=self.params['a_sin_i4']**3/(self.params['P4']/365.2425)**2
-            output['f_m4']=self.paramsMore['f_m4']            
-            if len(self.params_err)>0: 
+            output['f_m4']=self.paramsMore['f_m4']
+            if len(self.params_err)>0:
                 #calculate error of Mass Function
                 #get errors of params of 4th body
                 if 'P4' in self.params_err: P4_err=self.params_err['P4']
-                else: P4_err=0            
+                else: P4_err=0
                 if 'a_sin_i4' in self.params_err: a_err=self.params_err['a_sin_i4']
                 else: a_err=0
                 self.paramsMore_err['f_m4']=self.paramsMore['f_m4']*np.sqrt(9*(a_err/self.params['a_sin_i4'])**2+\
                                             4*(P4_err/self.params['P4'])**2)
-                
-                #if some errors = 0, del them; and return only non-zero errors           
+
+                #if some errors = 0, del them; and return only non-zero errors
                 if self.paramsMore_err['f_m4']==0: del self.paramsMore_err['f_m4']
                 else: output['f_m4_err']=self.paramsMore_err['f_m4']
         return output
-        
+
 
 
     def AbsoluteParam(self,M,i=90,M_err=0,i_err=0):
         '''calculate mass and semi-mayor axis of 3rd body from mass of binary and inclination'''
-        self.MassFun() 
+        self.MassFun()
         output={}
         if 'LiTE3' in self.model:
             #LiTE3 and LiTE3Quad models
@@ -1938,7 +1931,7 @@ class OCFit(ComplexFit):
             self.paramsMore['M3']=root/(3.*2.**(1./3.))-2.**(1./3.)*(-f**2-6.*f*M)/(3.*root)+f/3.
             self.paramsMore['a3']=self.paramsMore['a12']*M/self.paramsMore['M3']
             self.paramsMore['a']=self.paramsMore['a12']+self.paramsMore['a3']
-            
+
             output['M3']=self.paramsMore['M3']
             output['a12']=self.paramsMore['a12']
             output['a3']=self.paramsMore['a3']
@@ -1951,9 +1944,9 @@ class OCFit(ComplexFit):
                 if 'f_m3' in self.paramsMore_err: f3_err=self.paramsMore_err['f_m3']
                 else: f3_err=0
                 f_err=f*np.sqrt((f3_err/self.paramsMore['f_m3'])**2+9*(np.deg2rad(i_err)/np.tan(np.deg2rad(i)))**2)
-    
+
                 #some strange partial derivations... (calculated using Wolfram Mathematica)
-                #dM3/dM            
+                #dM3/dM
                 dM=-((2**(1/3.)*(f**2+6*f*M)*(54*f*M+(3*np.sqrt(3)*(8*f**3*M+108*f**2*M**3))/(2*np.sqrt(4*f**3*M**2+27*f**2*M**4))))/(9*(18*f**2+2*f**3+27*f*M**2+3*np.sqrt(3)*np.sqrt(4*f**3*M**2+\
                     27*f**2*M**4))**(4/3.)))+(54*f*M+(3*np.sqrt(3)*(8*f**3*M+108*f**2*M**3))/(2*np.sqrt(4*f**3*M**2+27*f**2*M**4)))/(9*2**(1/3.)*(18*f**2+2*f**3+27*f*M**2+3*np.sqrt(3)*np.sqrt(4*f**3*\
                     M**2+27*f**2*M**4))**(2/3.))+(2*2**(1/3.)*f)/(18*f**2+2*f**3+27*f*M**2+3*np.sqrt(3)*np.sqrt(4*f**3*M**2+27*f**2*M**4))**(1/3.)
@@ -1962,15 +1955,15 @@ class OCFit(ComplexFit):
                 df=1/3.-(2**(1/3.)*(f**2+6*f*M)*(36*f+6*f**2+27*M**2+(3*np.sqrt(3)*(12*f**2*M**2+54*f*M**4))/(2*np.sqrt(4*f**3*M**2+27*f**2*M**4))))/(9*(18*f**2+2*f**3+27*f*M**2+3*np.sqrt(3)*\
                     np.sqrt(4*f**3*M**2+27*f**2*M**4))**(4/3.))+(36*f+6*f**2+27*M**2+(3*np.sqrt(3)*(12*f**2*M**2+54*f*M**4))/(2*np.sqrt(4*f**3*M**2+27*f**2*M**4)))/(9*2**(1/3.)*(18*f**2+2*f**3+\
                     27*f*M**2+3*np.sqrt(3)*np.sqrt(4*f**3*M**2+27*f**2*M**4))**(2/3.))+(2**(1/3.)*(2*f+6*M))/(3*(18*f**2+2*f**3+27*f*M**2+3*np.sqrt(3)*np.sqrt(4*f**3*M**2+27*f**2*M**4))**(1/3.))
-                
+
                 #calculate errors of params
                 self.paramsMore_err['a12']=self.paramsMore['a12']*np.sqrt((a_err/self.params['a_sin_i3'])**2+(np.deg2rad(i_err)/np.tan(np.deg2rad(i)))**2)
                 self.paramsMore_err['M3']=np.sqrt((dM*M_err)**2+(df*f_err)**2)
                 self.paramsMore_err['a3']=self.paramsMore['a3']*np.sqrt((self.paramsMore_err['a12']/self.paramsMore['a12'])**2+\
                                         (M_err/M)**2+(self.paramsMore_err['M3']/self.paramsMore['M3'])**2)
                 self.paramsMore_err['a']=self.paramsMore_err['a12']+self.paramsMore_err['a3']
-                
-                #if some errors = 0, del them; and return only non-zero errors 
+
+                #if some errors = 0, del them; and return only non-zero errors
                 if self.paramsMore_err['M3']==0: del self.paramsMore_err['M3']
                 else: output['M3_err']=self.paramsMore_err['M3']
                 if self.paramsMore_err['a12']==0: del self.paramsMore_err['a12']
@@ -1979,16 +1972,16 @@ class OCFit(ComplexFit):
                 else: output['a3_err']=self.paramsMore_err['a3']
                 if self.paramsMore_err['a']==0: del self.paramsMore_err['a']
                 else: output['a_err']=self.paramsMore_err['a']
-                
-                
+
+
         if 'LiTE34' in self.model:
             #Lite34 a Lite34Quad models
             self.paramsMore['a12-3']=self.paramsMore['a']
             output['a12-3']=self.paramsMore['a']
-            if 'a' in self.paramsMore_err: 
+            if 'a' in self.paramsMore_err:
                 self.paramsMore_err['a12-3']=self.paramsMore_err['a']
                 output['a_err']=self.paramsMore_err['a']
-            
+
             self.paramsMore['a123']=self.params['a_sin_i4']/np.sin(np.deg2rad(i))
             f=self.paramsMore['f_m4']/np.sin(np.deg2rad(i))**3   #Mass function of 4th body/sin(i)**3
 
@@ -2009,11 +2002,11 @@ class OCFit(ComplexFit):
                 if 'f_m4' in self.paramsMore_err: f4_err=self.paramsMore_err['f_m4']
                 else: f4_err=0
                 f_err=f*np.sqrt((f4_err/self.paramsMore['f_m4'])**2+9*(np.deg2rad(i_err)/np.tan(np.deg2rad(i)))**2)
-    
+
                 #some strange partial derivations... (calculated using Derive6)
-                #dM4/dM            
+                #dM4/dM
                 #some strange partial derivations... (calculated using Wolfram Mathematica)
-                #dM3/dM            
+                #dM3/dM
                 dM=-((2**(1/3.)*(f**2+6*f*M)*(54*f*M+(3*np.sqrt(3)*(8*f**3*M+108*f**2*M**3))/(2*np.sqrt(4*f**3*M**2+27*f**2*M**4))))/(9*(18*f**2+2*f**3+27*f*M**2+3*np.sqrt(3)*np.sqrt(4*f**3*M**2+\
                     27*f**2*M**4))**(4/3.)))+(54*f*M+(3*np.sqrt(3)*(8*f**3*M+108*f**2*M**3))/(2*np.sqrt(4*f**3*M**2+27*f**2*M**4)))/(9*2**(1/3.)*(18*f**2+2*f**3+27*f*M**2+3*np.sqrt(3)*np.sqrt(4*f**3*\
                     M**2+27*f**2*M**4))**(2/3.))+(2*2**(1/3.)*f)/(18*f**2+2*f**3+27*f*M**2+3*np.sqrt(3)*np.sqrt(4*f**3*M**2+27*f**2*M**4))**(1/3.)
@@ -2022,7 +2015,7 @@ class OCFit(ComplexFit):
                 df=1/3.-(2**(1/3.)*(f**2+6*f*M)*(36*f+6*f**2+27*M**2+(3*np.sqrt(3)*(12*f**2*M**2+54*f*M**4))/(2*np.sqrt(4*f**3*M**2+27*f**2*M**4))))/(9*(18*f**2+2*f**3+27*f*M**2+3*np.sqrt(3)*\
                     np.sqrt(4*f**3*M**2+27*f**2*M**4))**(4/3.))+(36*f+6*f**2+27*M**2+(3*np.sqrt(3)*(12*f**2*M**2+54*f*M**4))/(2*np.sqrt(4*f**3*M**2+27*f**2*M**4)))/(9*2**(1/3.)*(18*f**2+2*f**3+\
                     27*f*M**2+3*np.sqrt(3)*np.sqrt(4*f**3*M**2+27*f**2*M**4))**(2/3.))+(2**(1/3.)*(2*f+6*M))/(3*(18*f**2+2*f**3+27*f*M**2+3*np.sqrt(3)*np.sqrt(4*f**3*M**2+27*f**2*M**4))**(1/3.))
-                
+
                 #calculate errors of params
                 self.paramsMore_err['a123']=self.paramsMore['a123']*np.sqrt((a_err/self.params['a_sin_i4'])**2+(np.deg2rad(i_err)/np.tan(np.deg2rad(i)))**2)
                 self.paramsMore_err['M4']=np.sqrt((dM*M_err)**2+(df*f_err)**2)
@@ -2030,7 +2023,7 @@ class OCFit(ComplexFit):
                                         (M_err/M)**2+(self.paramsMore_err['M4']/self.paramsMore['M4'])**2)
                 self.paramsMore_err['a']=self.paramsMore_err['a123']+self.paramsMore_err['a4']
 
-                #if some errors = 0, del them; and return only non-zero errors 
+                #if some errors = 0, del them; and return only non-zero errors
                 if self.paramsMore_err['M4']==0: del self.paramsMore_err['M4']
                 else: output['M4_err']=self.paramsMore_err['M4']
                 if self.paramsMore_err['a123']==0: del self.paramsMore_err['a123']
@@ -2039,15 +2032,15 @@ class OCFit(ComplexFit):
                 else: output['a4_err']=self.paramsMore_err['a4']
                 if self.paramsMore_err['a']==0: del self.paramsMore_err['a']
                 else: output['a_err']=self.paramsMore_err['a']
-            
-        
+
+
         if 'Agol' in self.model:
             #AgolInPlanet, AgolInPlanetLin, AgolExPlanet, AgolExPlanetLin
             self.paramsMore['M3']=M*self.params['mu3']/(1-self.params['mu3'])
             self.paramsMore['a']=((self.params['P3']/365.2425)**2*(M+self.paramsMore['M3']))**(1./3.)
-            
+
             output['M3']=self.paramsMore['M3']
-            output['a']=self.paramsMore['a']            
+            output['a']=self.paramsMore['a']
             if len(self.params_err)>0:
                 #calculate error of params
                 #get errors of params of 3rd body
@@ -2055,14 +2048,14 @@ class OCFit(ComplexFit):
                 else: mu3_err=0
                 if 'P3' in self.params_err: P3_err=self.params_err['P3']
                 else: P3_err=0
-                
+
                 #calculate error of params
                 self.paramsMore_err['M3']=self.paramsMore['M3']*np.sqrt((M_err/M)**2+\
                                     (mu3_err/(self.params['mu3']*(1-self.params['mu3'])))**2)
                 self.paramsMore_err['a']=self.paramsMore['a']/3.*np.sqrt(((M_err+self.paramsMore_err['M3'])/\
                                     (M+self.paramsMore['M3']))**2+(2*P3_err/self.params['P3'])**2)
-    
-                #if some errors = 0, del them; and return only non-zero errors 
+
+                #if some errors = 0, del them; and return only non-zero errors
                 if self.paramsMore_err['M3']==0: del self.paramsMore_err['M3']
                 else: output['M3_err']=self.paramsMore_err['M3']
                 if self.paramsMore_err['a']==0: del self.paramsMore_err['a']
@@ -2072,8 +2065,8 @@ class OCFit(ComplexFit):
 
     def Model(self,t=None,param=None,min_type=None):
         ''''calculate model curve of O-C in given times based on given set of parameters'''
-        if t is None: t=self.t          
-        if param is None: param=self.params        
+        if t is None: t=self.t
+        if param is None: param=self.params
         if self.model=='LiTE3':
             model=self.LiTE3(t,param['a_sin_i3'],param['e3'],param['w3'],param['t03'],param['P3'])
         elif self.model=='LiTE34':
@@ -2095,9 +2088,9 @@ class OCFit(ComplexFit):
         elif self.model=='AgolExPlanet':
             model=self.AgolExPlanet(t,param['P'],param['mu3'],param['e3'],param['t03'],param['P3'])
         elif self.model=='AgolExPlanetLin':
-            model=self.AgolExPlanetLin(t,param['t0'],param['P'],param['mu3'],param['e3'],param['t03'],param['P3']) 
+            model=self.AgolExPlanetLin(t,param['t0'],param['P'],param['mu3'],param['e3'],param['t03'],param['P3'])
         elif self.model=='Apsidal':
-            if min_type is None: min_type=self._min_type    
+            if min_type is None: min_type=self._min_type
             model=self.Apsidal(t,param['t0'],param['P'],param['w0'],param['dw'],param['e'],min_type)
         else:
             raise ValueError('The model "'+self.model+'" does not exist!')
@@ -2109,17 +2102,17 @@ class OCFit(ComplexFit):
         model=self.Model(self.t,self.params)  #calculate model values
 
         n=len(model)   #number of data points
-        err=np.sqrt(sum((self.oc-model)**2)/(n-1))   #calculate corrected sample standard deviation 
+        err=np.sqrt(sum((self.oc-model)**2)/(n-1))   #calculate corrected sample standard deviation
         err*=np.ones(model.shape)  #generate array of errors
         chi=sum(((self.oc-model)/err)**2)   #calculate new chi2 error -> chi2_r = 1
-        print 'New chi2:',chi,chi/(n-len(self.fit_params))
+        print('New chi2:',chi,chi/(n-len(self.fit_params)))
         self._calc_err=True
         self._set_err=False
         self.err=err
         return err
 
     def CorrectErr(self):
-        '''correct scale of given errors of input data based on current model 
+        '''correct scale of given errors of input data based on current model
         (useful if FitMCMC gives worse results like FitGA and chi2_r is not approx. 1)'''
         model=self.Model(self.t,self.params)     #calculate model values
 
@@ -2128,7 +2121,7 @@ class OCFit(ComplexFit):
         alfa=chi0/(n-len(self.fit_params))         #coefficient between old and new errors -> chi2_r = 1
         err=self.err*np.sqrt(alfa)          #new errors
         chi=sum(((self.oc-model)/err)**2)   #calculate new chi2 error
-        print 'New chi2:',chi,chi/(n-len(self.fit_params))
+        print('New chi2:',chi,chi/(n-len(self.fit_params)))
         if self._set_err and len(self._old_err)==0: self._old_err=self.err    #if errors were given, save old values
         self.err=err
         self._corr_err=True
@@ -2139,9 +2132,9 @@ class OCFit(ComplexFit):
         warning: weights have to be in same order as input date!'''
         if not len(weight)==len(self.t):
             #if wrong length of given weight array
-            print 'incorrect length of "w"!'
+            print('incorrect length of "w"!')
             return
-            
+
         weight=np.array(weight)
         err=1./weight[self._order]   #transform to errors and change order according to order of input data
         n=len(self.t)   #number of data points
@@ -2151,7 +2144,7 @@ class OCFit(ComplexFit):
         alfa=chi0/(n-len(self.fit_params))    #coefficient between old and new errors -> chi2_r = 1
         err*=np.sqrt(alfa)              #new errors
         chi=sum(((self.oc-model)/err)**2)   #calculate new chi2 error
-        print 'New chi2:',chi,chi/(n-len(self.fit_params))
+        print('New chi2:',chi,chi/(n-len(self.fit_params)))
         self._calc_err=True
         self._set_err=False
         self.err=err
@@ -2184,40 +2177,39 @@ class OCFit(ComplexFit):
         double_ax - two axes -> time and epoch
         legend - labels for data and model(s) - give '' if no show label, 2nd model given in "params" is the last
         fig_size - custom figure size - e.g. (12,6)
-        
+
         warning: weights have to be in same order as input data!
-        '''            
-        
+        '''
         if epoch:
             if not len(self.epoch)==len(self.t):
                 raise NameError('Epoch not callculated! Run function "Epoch" before it.')
 
         if model2:
-            if params is None:
+            if len(params)==0:
                 raise ValueError('Parameters set for 2nd model not given!')
             params_model=dict(params)
             params=self.params
         if params is None: params=self.params
-        if legend is None: 
+        if legend is None:
             legend=['','','']
             show_legend=False
         else: show_legend=True
-        
+
         if fig_size:
             fig=mpl.figure(figsize=fig_size)
         else:
             fig=mpl.figure()
-            
+
         #2 plots - for residue
-        if with_res:    
+        if with_res:
             gs=gridspec.GridSpec(2,1,height_ratios=[4,1])
             ax1=fig.add_subplot(gs[0])
             ax2=fig.add_subplot(gs[1],sharex=ax1)
-        else: 
+        else:
             ax1=fig.add_subplot(1,1,1)
             ax2=ax1
         ax1.yaxis.set_label_coords(-0.11,0.5)
-        
+
         #setting labels
         if epoch and not double_ax:
             ax2.set_xlabel('Epoch')
@@ -2237,11 +2229,11 @@ class OCFit(ComplexFit):
         else:
             ax1.set_ylabel('O - C (d)')
             k=1
-            
-        if title is not None: 
+
+        if title is not None:
             if double_ax: fig.subplots_adjust(top=0.85)
-            fig.suptitle(title,fontsize=20)                
-            
+            fig.suptitle(title,fontsize=20)
+
         model=self.Model(self.t,params)
         self.res=self.oc-model
 
@@ -2270,7 +2262,7 @@ class OCFit(ComplexFit):
                 for i in range(len(levels)-1):
                     w.append(np.where((weight>levels[i])*(weight<=levels[i+1])))
                 w[-1]=np.append(w[-1],np.where(weight>levels[-1]))  #if some weight is bigger than max. level
-                set_w=True                
+                set_w=True
             else:
                 warnings.warn('Shape of "weight" is different to shape of "time". Weight will be ignore!')
 
@@ -2347,13 +2339,13 @@ class OCFit(ComplexFit):
                 t1=np.linspace(self.t[0]-0.05*len(self.t)*dt,self.t[-1]+0.05*len(self.t)*dt,int(1.1*len(self.t)))
 
 
-        if bw: 
+        if bw:
             color='k'
             lw=2
-        else: 
+        else:
             color='r'
             lw=1
-                
+
         if self.model=='Apsidal':
             #primary
             model_long=self.Model(t1,params,min_type=np.zeros(t1.shape))
@@ -2364,31 +2356,31 @@ class OCFit(ComplexFit):
             if epoch and not double_ax: ax1.plot(E,model_long*k,color,linewidth=lw,label=legend[1],zorder=2)
             else: ax1.plot(t1-offset,model_long*k,color,linewidth=lw,label=legend[1],zorder=2)
         else:
-            model_long=self.Model(t1,params)            
+            model_long=self.Model(t1,params)
             if epoch and not double_ax: ax1.plot(E,model_long*k,color,linewidth=lw,label=legend[1],zorder=2)
             else: ax1.plot(t1-offset,model_long*k,color,linewidth=lw,label=legend[1],zorder=2)
-        
+
         if model2:
             #plot second model
-            if bw: 
+            if bw:
                 color='k'
                 lt='--'
-            else: 
+            else:
                 color='g'
                 lt='-'
             model_set=self.Model(t1,params_model)
             if epoch and not double_ax: ax1.plot(E,model_set*k,color+lt,linewidth=lw,label=legend[2],zorder=3)
             else: ax1.plot(t1-offset,model_set*k,color+lt,linewidth=lw,label=legend[2],zorder=3)
-        
-        if show_legend: ax1.legend() 
-        
+
+        if show_legend: ax1.legend()
+
         if 't0' in params: self.epoch=old_epoch
-        
+
         if double_ax:
             #setting secound axis
             if not len(self.epoch)==len(self.t):
                 raise NameError('Epoch not callculated! Run function "Epoch" before it.')
-            ax3=ax1.twiny() 
+            ax3=ax1.twiny()
             #generate plot to obtain correct axis in epoch
             #expand time interval for model O-C
             if len(self.t)<1000:
@@ -2402,8 +2394,8 @@ class OCFit(ComplexFit):
             l.pop(0).remove()
             lims=np.array(ax1.get_xlim())
             epoch=np.round((lims-self._t0P[0])/self._t0P[1]*2)/2.
-            ax3.set_xlim(epoch)     
-                    
+            ax3.set_xlim(epoch)
+
         if with_res:
             #plot residue
             if bw: color='k'
@@ -2450,7 +2442,7 @@ class OCFit(ComplexFit):
         bw - Black&White plot
         double_ax - two axes -> time and epoch
         fig_size - custom figure size - e.g. (12,6)
-        
+
         warning: weights have to be in same order as input data!
         '''
 
@@ -2464,10 +2456,10 @@ class OCFit(ComplexFit):
             fig=mpl.figure(figsize=fig_size)
         else:
             fig=mpl.figure()
-            
+
         ax1=fig.add_subplot(1,1,1)
         ax1.yaxis.set_label_coords(-0.11,0.5)
-        
+
         #setting labels
         if epoch and not double_ax:
             ax1.set_xlabel('Epoch')
@@ -2487,7 +2479,7 @@ class OCFit(ComplexFit):
         else:
             ax1.set_ylabel('Residue O - C (d)')
             k=1
-        if title is not None: 
+        if title is not None:
             if double_ax: fig.subplots_adjust(top=0.85)
             fig.suptitle(title,fontsize=20)
 
@@ -2524,7 +2516,7 @@ class OCFit(ComplexFit):
                 warnings.warn('Shape of "weight" is different to shape of "time". Weight will be ignore!')
 
 
-        errors=GetMax(abs(self.res),no_plot)  #remove outlier points   
+        errors=GetMax(abs(self.res),no_plot)  #remove outlier points
         if bw: color='k'
         else: color='b'
         if set_w:
@@ -2565,27 +2557,27 @@ class OCFit(ComplexFit):
                 if not len(sec)==0:
                     mpl.plot(x[sec],(self.res*k)[sec],color+'o',
                              mfc='none',markeredgewidth=1,markeredgecolor=color)
-        
+
         if double_ax:
             #setting secound axis
             if not len(self.epoch)==len(self.t):
                 raise NameError('Epoch not callculated! Run function "Epoch" before it.')
-            ax2=ax1.twiny() 
+            ax2=ax1.twiny()
             #generate plot to obtain correct axis in epoch
             l=ax2.plot(self.epoch,self.res*k)
             ax2.set_xlabel('Epoch')
             l.pop(0).remove()
             lims=np.array(ax1.get_xlim())
             epoch=np.round((lims-self._t0P[0])/self._t0P[1]*2)/2.
-            ax2.set_xlim(epoch)        
-                    
+            ax2.set_xlim(epoch)
+
         if name is None: mpl.show()
         else:
             mpl.savefig(name+'.png')
             if eps: mpl.savefig(name+'.eps')
             mpl.close(fig)
-            
-            
+
+
 
     def SaveModel(self,name,E_min=None,E_max=None,n=1000,params=None,t0=None,P=None):
         '''save model curve of O-C to file
@@ -2599,30 +2591,30 @@ class OCFit(ComplexFit):
         '''
 
         if params is None: params=self.params
-        
+
         #get linear ephemeris
         if 't0' in params: t0=params['t0']
         elif len(self.epoch)==len(self.t): t0=self._t0P[0]
         elif t0 is None: raise TypeError('t0 is not given!')
-        
+
         if 'P' in params: P=params['P']
         elif len(self.epoch)==len(self.t): P=self._t0P[1]
         elif P is None: raise TypeError('P is not given!')
-        
+
         old_epoch=self.epoch
         if not len(self.epoch)==len(self.t): self.Epoch(t0,P)
-        
+
         #same interval of epoch like in plot
         if len(self.epoch)<1000: dE=50*(self.epoch[-1]-self.epoch[0])/1000.
         else: dE=0.05*(self.epoch[-1]-self.epoch[0])
-        
+
         if E_min is None: E_min=min(self.epoch)-dE
         if E_max is None: E_max=max(self.epoch)+dE
-            
+
         self.epoch=np.linspace(E_min,E_max,n)
         t=t0+P*self.epoch
-        
-        if self.model=='Apsidal':            
+
+        if self.model=='Apsidal':
             typeA=np.append(np.zeros(t.shape),np.ones(t.shape))
             t=np.append(t,t)
             self.epoch=np.append(self.epoch,self.epoch)
@@ -2630,13 +2622,13 @@ class OCFit(ComplexFit):
             t=t[i]
             typeA=typeA[i]
             self.epoch=self.epoch[i]
-            model=self.Model(t,params,min_type=typeA)            
-            
+            model=self.Model(t,params,min_type=typeA)
+
             f=open(name,'w')
             np.savetxt(f,np.column_stack((t+model,self.epoch,model,typeA)), fmt=["%14.7f",'%10.3f',"%+12.10f","%1d"]
                        ,delimiter='    ',header='Obs. Time'.ljust(14,' ')+'    '+'Epoch'.ljust(10,' ')+'    model O-C'.ljust(13,' ')+'    type')
             f.close()
-        else: 
+        else:
             model=self.Model(t,params)
 
             f=open(name,'w')
@@ -2655,23 +2647,23 @@ class OCFit(ComplexFit):
         t0 - time of zeros epoch (necessary if not given in model or epoch not calculated)
         P - period (necessary if not given in model or epoch not calculated)
         weight - weights of input data points
-        
+
         warning: weights have to be in same order as input date!
         '''
-        
+
 
         if params is None: params=self.params
-        
+
         #get linear ephemeris
         if 't0' in params: t0=params['t0']
         elif len(self.epoch)==len(self.t): t0=self._t0P[0]
         elif t0 is None: raise TypeError('t0 is not given!')
-        
+
         if 'P' in params: P=params['P']
         elif len(self.epoch)==len(self.t): P=self._t0P[1]
         elif P is None: raise TypeError('P is not given!')
 
-        old_epoch=self.epoch        
+        old_epoch=self.epoch
         if not len(self.epoch)==len(self.t): self.Epoch(self.t,t0,P)
 
         model=self.Model(self.t,params)
@@ -2689,7 +2681,7 @@ class OCFit(ComplexFit):
             np.savetxt(f,np.column_stack((self.t,self.epoch,self.res,np.array(weight)[self._order])),
                        fmt=["%14.7f",'%10.3f',"%+12.10f","%.10f"],delimiter="    ",
                        header='Obs. Time'.ljust(14,' ')+'    '+'Epoch'.ljust(10,' ')
-                       +'    '+'new O-C'.ljust(12,' ')+'    Weight')  
+                       +'    '+'new O-C'.ljust(12,' ')+'    Weight')
         else:
             np.savetxt(f,np.column_stack((self.t,self.epoch,self.res)),
                        fmt=["%14.7f",'%10.3f',"%+12.10f"],delimiter="    ",
@@ -2701,7 +2693,7 @@ class OCFit(ComplexFit):
 
 
 class OCFitLoad(OCFit):
-    '''loading saved data, model... from OCFit class''' 
+    '''loading saved data, model... from OCFit class'''
     def __init__(self,path):
         '''loading data, model, parameters... from file'''
         self._order=[]
@@ -2709,7 +2701,7 @@ class OCFitLoad(OCFit):
         self.oc=[]  #O-Cs
         self.err=[]   #errors
         self._set_err=False
-        
+
         self.limits={}          #limits of parameters for fitting
         self.steps={}           #steps (width of normal distibution) of parameters for fitting
         self.params={}          #values of parameters, fixed values have to be set here
@@ -2719,7 +2711,7 @@ class OCFitLoad(OCFit):
         self.fit_params=[]      #list of fitted parameters
         self._calc_err=False    #errors were calculated
         self._corr_err=False    #errors were corrected
-        self._old_err=[]        #given errors 
+        self._old_err=[]        #given errors
         self.model='LiTE3'      #used model of O-C
         self._t0P=[]            #linear ephemeris of binary
         self.epoch=[]           #epoch of binary
@@ -2727,5 +2719,6 @@ class OCFitLoad(OCFit):
         self._min_type=[]        #type of minima (primary=0 / secondary=1)
         self.availableModels=['LiTE3','LiTE34','LiTE3Quad','LiTE34Quad',\
                               'AgolInPlanet','AgolInPlanetLin','AgolExPlanet',\
-                              'AgolExPlanetLin','Apsidal']   #list of available models        
+                              'AgolExPlanetLin','Apsidal']   #list of available models
         self.Load(path)
+

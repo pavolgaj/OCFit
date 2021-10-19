@@ -23,6 +23,7 @@ and used models.
 For install it, download/clone this repository or download suitable binary file from releases.
 
 ### Requirements
+* python3
 * numpy
 * matplotlib
 * PyAstronomy
