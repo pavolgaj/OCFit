@@ -10,6 +10,7 @@
 ![](https://img.shields.io/github/issues/pavolgaj/ocfit.svg?style=flat)
 ![](https://img.shields.io/github/issues-closed/pavolgaj/ocfit.svg?style=flat)
 
+__WARNING: This version is under development! Please, use version from master branch.__
 
 __IMPORTANT NOTE: E-mail address given in a paper is not working! If you want to contact me, use my new address `pavol (dot) gajdos (at) upjs (dot) sk` or create new issue here on GitHub.__
 
@@ -25,7 +26,7 @@ For install it, download/clone this repository or download suitable binary file 
 * numpy
 * matplotlib
 * PyAstronomy
-* pymc (recommended)
+* emcee (recommended)
 
 Installation is possible from source code or using build installation binary file (only for OS
 Windows). The following procedure is only for installation from the source code. Extract
@@ -33,6 +34,8 @@ files and go to new-created folder. Running script ``setup.py`` the installation
 
 ``python setup.py install``
 
-Or using pip:
 
-``pip install OCFit``
+
+[//]: # (Or using pip:)
+
+[//]: # (``pip install OCFit``)
