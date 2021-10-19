@@ -11,7 +11,7 @@
 ![](https://img.shields.io/github/issues-closed/pavolgaj/ocfit.svg?style=flat)
 
 
-__IMPORTANT NOTE: E-mail address given in a paper is not working! If you want to contact me, use my new address `pavol (dot) gajdos (at) upjs (dot) sk` or create new issue here on GitHub.__
+:warning:__IMPORTANT NOTE: E-mail address given in a paper is not working! If you want to contact me, use my new address `pavol (dot) gajdos (at) upjs (dot) sk` or create new issue here on GitHub.__
 
 Python package OCFit includes 4 classes for analysis and fitting of O-C diagrams of Eclipsing binaries
 
