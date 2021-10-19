@@ -11,10 +11,9 @@
 ![](https://img.shields.io/github/issues-closed/pavolgaj/ocfit.svg?style=flat)
 
 
-__IMPORTANT NOTE: E-mail address given in a paper is not working! If you want to contact me, use my new address `pavol (dot) gajdos (at) upjs (dot) sk` or create new issue here on GitHub.__
+:warning:__WARNING: This is a copy of the package OCFit which used `pymc` package. The development of this version was stopped! The new version uses the `emcee` package instead of `pymc`.__
 
-
-__IMPORTANT NOTE: This is a copy of the package OCFit which used `pymc` package. The development of this version was stopped! The new version uses the `emcee` package instead of `pymc`.__
+:warning:__IMPORTANT NOTE: E-mail address given in a paper is not working! If you want to contact me, use my new address `pavol (dot) gajdos (at) upjs (dot) sk` or create new issue here on GitHub.__
 
 Python package OCFit includes 4 classes for analysis and fitting of O-C diagrams of Eclipsing binaries
 
@@ -38,4 +37,4 @@ files and go to new-created folder. Running script ``setup.py`` the installation
 
 Or using pip:
 
-``pip install OCFit``
+``pip install OCFit==0.1.4``
