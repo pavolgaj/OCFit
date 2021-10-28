@@ -14,6 +14,9 @@ import warnings
 try: import emcee
 except: warnings.warn('Module emcee not found! Using FitMC will not be possible!')
 
+try: import pymc
+except: warnings.warn('Module pymc not found! Using FitMC_old will not be possible!')
+
 import numpy as np
 
 try: import matplotlib.pyplot as mpl

@@ -34,6 +34,9 @@ import numpy as np
 try: import emcee
 except: warnings.warn('Module emcee not found! Using FitMC will not be possible!')
 
+try: import pymc
+except: warnings.warn('Module pymc not found! Using FitMC_old will not be possible!')
+
 from .ga import TPopul
 from .info_ga import InfoGA as InfoGAClass
 from .info_mc import InfoMC as InfoMCClass
@@ -622,8 +625,8 @@ class FitLinear(SimpleFit):
         self._mcmc=False
         return self.new_oc
 
-    def FitMCMC(self,n_iter,limits,steps,fit_params=None,burn=0,binn=1,visible=True,db=None):
-        '''fitting with Markov chain Monte Carlo
+    def FitMCMC_old(self,n_iter,limits,steps,fit_params=None,burn=0,binn=1,visible=True,db=None):
+        '''fitting with Markov chain Monte Carlo using pymc
         n_iter - number of MC iteration - should be at least 1e5
         limits - limits of parameters for fitting
         steps - steps (width of normal distibution) of parameters for fitting
@@ -782,8 +785,8 @@ class FitQuad(SimpleFit):
         self._mcmc=False
         return self.new_oc
 
-    def FitMCMC(self,n_iter,limits,steps,fit_params=None,burn=0,binn=1,visible=True,db=None):
-        '''fitting with Markov chain Monte Carlo
+    def FitMCMC_old(self,n_iter,limits,steps,fit_params=None,burn=0,binn=1,visible=True,db=None):
+        '''fitting with Markov chain Monte Carlo using pymc
         n_iter - number of MC iteration - should be at least 1e5
         limits - limits of parameters for fitting
         steps - steps (width of normal distibution) of parameters for fitting
@@ -1484,8 +1487,8 @@ class OCFit(ComplexFit):
         return self.params
 
 
-    def FitMCMC(self,n_iter,burn=0,binn=1,visible=True,db=None):
-        '''fitting with Markov chain Monte Carlo
+    def FitMCMC_old(self,n_iter,burn=0,binn=1,visible=True,db=None):
+        '''fitting with Markov chain Monte Carlo using pymc
         n_iter - number of MC iteration - should be at least 1e5
         burn - number of removed steps before equilibrium - should be approx. 0.1-1% of n_iter
         binn - binning size - should be around 10
