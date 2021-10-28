@@ -16,6 +16,9 @@ except: warnings.warn('Module emcee not found! Using FitMC will not be possible!
 
 import numpy as np
 
+try: import corner
+except: warnings.warn('Module corner not found! Ploting corner plot will not be possible!')
+
 try: import matplotlib.pyplot as mpl
 except:
     #import on server without graphic output
