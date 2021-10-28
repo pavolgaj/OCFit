@@ -28,6 +28,7 @@ For install it, download/clone this repository or download suitable binary file 
 * matplotlib
 * PyAstronomy
 * emcee (recommended)
+* corner (recommended)
 
 Installation is possible from source code or using build installation binary file (only for OS
 Windows). The following procedure is only for installation from the source code. Extract
