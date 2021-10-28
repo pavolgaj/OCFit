@@ -2,7 +2,7 @@
 
 #class for statistics about GA fitting
 #version 0.2.1
-#update: 2021...
+#update: 28.10.2021
 # (c) Pavol Gajdos, 2018-2021
 
 import gc #cleaning var from RAM
@@ -11,8 +11,8 @@ from PyAstronomy.funcFit import TraceAnalysis
 
 import warnings
 
-try: import emcee
-except: warnings.warn('Module emcee not found! Using FitMC will not be possible!')
+try: import pymc
+except: warnings.warn('Module pymc not found! Using FitMC_old will not be possible!')
 
 import numpy as np
 
