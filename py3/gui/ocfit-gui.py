@@ -437,10 +437,15 @@ def plot0():
         tkinter.messagebox.showerror('Fit Linear','Set linear ephemeris (T0, P)!')
         return
 
-    if not 'tO' in data: data['tO']=[data['tC'][i]+data['oc'][i] for i in range(len(data['oc']))]
-
     t0=float(t0Var.get())
     P=float(pVar.get())
+
+    if not 'tO' in data:
+        if not 'tC' in data:
+            if not 'E' in data: data['E']=range(len(data['oc']))
+            data['tC']=[t0+P*data['E'][i] for i in range(len(data['oc']))]
+        data['tO']=[data['tC'][i]+data['oc'][i] for i in range(len(data['oc']))]
+
 
     #setting errors
     if not 'err' in data and 'w' in data:
@@ -470,10 +475,14 @@ def save0():
         tkinter.messagebox.showerror('Fit Linear','Set linear ephemeris (T0, P)!')
         return
 
-    if not 'tO' in data: data['tO']=[data['tC'][i]+data['oc'][i] for i in range(len(data['oc']))]
-
     t0=float(t0Var.get())
     P=float(pVar.get())
+
+    if not 'tO' in data:
+        if not 'tC' in data:
+            if not 'E' in data: data['E']=range(len(data['oc']))
+            data['tC']=[t0+P*data['E'][i] for i in range(len(data['oc']))]
+        data['tO']=[data['tC'][i]+data['oc'][i] for i in range(len(data['oc']))]
 
     #setting errors
     if not 'err' in data and 'w' in data:
@@ -646,16 +655,20 @@ def initC():
         tkinter.messagebox.showerror('O-C Fit','Set linear ephemeris (T0, P)!')
         return
 
+    t0=float(t0Var.get())
+    P=float(pVar.get())
+
     #calculationg O-Cs
     if not 'oc' in data:
-        t0=float(t0Var.get())
-        P=float(pVar.get())
-
         lin=OCFit.FitLinear(data['tO'],t0,P)
         for x in data: data[x]=np.array(data[x])[lin._order]   #save sorted values
         data['oc']=lin.oc
 
-    if not 'tO' in data: data['tO']=[data['tC'][i]+data['oc'][i] for i in range(len(data['oc']))]
+    if not 'tO' in data:
+        if not 'tC' in data:
+            if not 'E' in data: data['E']=range(len(data['oc']))
+            data['tC']=[t0+P*data['E'][i] for i in range(len(data['oc']))]
+        data['tO']=[data['tC'][i]+data['oc'][i] for i in range(len(data['oc']))]
 
     #setting errors
     weight=False
