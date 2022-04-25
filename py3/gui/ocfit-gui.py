@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
 #main file for GUI for OCFit class
-#update: 11.6.2019
-# (c) Pavol Gajdos, 2018-2019
+#update: 25.4.2022
+# (c) Pavol Gajdos, 2018-2022
 
 import tkinter as tk
 import tkinter.ttk
@@ -2769,8 +2769,25 @@ save=0
 
 #main window
 master=tk.Tk()
-master.geometry('329x492')
+#default scale of window - NOT change this values if you want to change size
+mwidth=329
+mheight=492
+master.geometry(str(mwidth)+'x'+str(mheight))   #modif. this line to change size - e.g. master.geometry('400x500')
 master.title('OCFit GUI')
+
+#set size of buttons, labels etc.
+b1height=26
+b2height=31
+iheight=25
+lheight=23
+l2height=18
+
+b1width=87
+b2width=117
+b3width=90
+b4width=135
+lwidth=47
+
 
 #font=tkFont.nametofont("TkDefaultFont")
 #font.configure(size=9)
@@ -2786,13 +2803,15 @@ pVar=tk.StringVar(master)
 
 #button - load data from file
 bLoad=tk.Button(master)
-bLoad.place(relx=0.36,rely=0.01,height=26,width=87)
+bLoad.place(relx=0.36,rely=0.01,relheight=b1height/mheight,relwidth=b1width/mwidth)
 bLoad.configure(command=load)
 bLoad.configure(text='Load Data')
 
 #frame for linear ephemeris
 Frame1=tk.Frame(master)
-Frame1.place(relx=0.06,rely=0.08,relheight=0.15,relwidth=0.9)
+f1height=74
+f1width=296
+Frame1.place(relx=0.06,rely=0.08,relheight=f1height/mheight,relwidth=f1width/mwidth)  
 Frame1.configure(relief=tk.GROOVE)
 Frame1.configure(borderwidth='2')
 Frame1.configure(relief=tk.GROOVE)
@@ -2800,13 +2819,13 @@ Frame1.configure(width=295)
 
 #labels
 Label1=tk.Label(Frame1)
-Label1.place(relx=0.07,rely=0.2,height=23,width=44)
+Label1.place(relx=0.07,rely=0.2,relheight=lheight/f1height,relwidth=lwidth/f1width)
 Label1.configure(anchor=tk.W)
 Label1.configure(text='T0')
 Label1.configure(font=('None',9))
 
 Label2=tk.Label(Frame1)
-Label2.place(relx=0.07,rely=0.53,height=23,width=47)
+Label2.place(relx=0.07,rely=0.53,relheight=lheight/f1height,relwidth=lwidth/f1width)
 Label2.configure(anchor=tk.W)
 Label2.configure(justify=tk.LEFT)
 Label2.configure(text='P')
@@ -2814,31 +2833,33 @@ Label2.configure(font=('None',9))
 
 #input - T0
 Entry1=tk.Entry(Frame1)
-Entry1.place(relx=0.24,rely=0.13,height=25,relwidth=0.73)
+Entry1.place(relx=0.24,rely=0.13,relheight=iheight/f1height,relwidth=0.73)
 Entry1.configure(textvariable=t0Var)
 
 #input - P
 Entry2=tk.Entry(Frame1)
-Entry2.place(relx=0.24,rely=0.53,height=25,relwidth=0.73)
+Entry2.place(relx=0.24,rely=0.53,relheight=iheight/f1height,relwidth=0.73)
 Entry2.configure(textvariable=pVar)
 
 #button - Plot O-C
 bPlot0=tk.Button(master)
-bPlot0.place(relx=0.12,rely=0.24,height=26,width=117)
+bPlot0.place(relx=0.12,rely=0.24,relheight=b1height/mheight,relwidth=b2width/mwidth)
 bPlot0.configure(command=plot0)
 bPlot0.configure(state=tk.DISABLED)
 bPlot0.configure(text='Plot O-C')
 
 #button - Save O-C
 bSave0=tk.Button(master)
-bSave0.place(relx=0.55,rely=0.24,height=26,width=117)
+bSave0.place(relx=0.55,rely=0.24,relheight=b1height/mheight,relwidth=b2width/mwidth)
 bSave0.configure(command=save0)
 bSave0.configure(state=tk.DISABLED)
 bSave0.configure(text='Save O-C')
 
 #frame for linear / quadratic fitting
 Frame2=tk.Frame(master)
-Frame2.place(relx=0.06,rely=0.32,relheight=0.23,relwidth=0.9)
+f2height=113
+f2width=296
+Frame2.place(relx=0.06,rely=0.32,relheight=f2height/mheight,relwidth=f2width/mwidth)
 Frame2.configure(relief=tk.GROOVE)
 Frame2.configure(borderwidth='2')
 Frame2.configure(relief=tk.GROOVE)
@@ -2846,49 +2867,51 @@ Frame2.configure(width=295)
 
 #button - fit linear
 bLin=tk.Button(Frame2)
-bLin.place(relx=0.05,rely=0.08,height=31,width=119)
+bLin.place(relx=0.05,rely=0.08,relheight=b2height/f2height,relwidth=b2width/f2width)
 bLin.configure(command=lin)
 bLin.configure(state=tk.DISABLED)
 bLin.configure(text='Fit Linear')
 
 #button - plot O-C
 bPlotS=tk.Button(Frame2)
-bPlotS.place(relx=0.05,rely=0.38,height=31,width=119)
+bPlotS.place(relx=0.05,rely=0.38,relheight=b2height/f2height,relwidth=b2width/f2width)
 bPlotS.configure(command=plotS)
 bPlotS.configure(state=tk.DISABLED)
 bPlotS.configure(text='Plot O-C')
 
 #button - summary
 bSumS=tk.Button(Frame2)
-bSumS.place(relx=0.05,rely=0.69,height=31,width=119)
+bSumS.place(relx=0.05,rely=0.69,relheight=b2height/f2height,relwidth=b2width/f2width)
 bSumS.configure(command=sumS)
 bSumS.configure(state=tk.DISABLED)
 bSumS.configure(text='Summary')
 
 #button - fit quadratic
 bQuad=tk.Button(Frame2)
-bQuad.place(relx=0.54,rely=0.08,height=31,width=119)
+bQuad.place(relx=0.54,rely=0.08,relheight=b2height/f2height,relwidth=b2width/f2width)
 bQuad.configure(command=quad)
 bQuad.configure(state=tk.DISABLED)
 bQuad.configure(text='Fit Quadratic')
 
 #button - plot residual O-C
 bPlotRS=tk.Button(Frame2)
-bPlotRS.place(relx=0.54,rely=0.38,height=31,width=119)
+bPlotRS.place(relx=0.54,rely=0.38,relheight=b2height/f2height,relwidth=b2width/f2width)
 bPlotRS.configure(command=plotRS)
 bPlotRS.configure(state=tk.DISABLED)
 bPlotRS.configure(text='Plot O-C res.')
 
 #button - save residual O-C
 bSaveRS=tk.Button(Frame2)
-bSaveRS.place(relx=0.54,rely=0.69,height=31,width=119)
+bSaveRS.place(relx=0.54,rely=0.69,relheight=b2height/f2height,relwidth=b2width/f2width)
 bSaveRS.configure(command=saveRS)
 bSaveRS.configure(state=tk.DISABLED)
 bSaveRS.configure(text='Save O-C res.')
 
 #frame for O-C fitting
 Frame3=tk.Frame(master)
-Frame3.place(relx=0.06,rely=0.56,relheight=0.38,relwidth=0.9)
+f3height=187
+f3width=296
+Frame3.place(relx=0.06,rely=0.56,relheight=f3height/mheight,relwidth=f3width/mwidth)
 Frame3.configure(relief=tk.GROOVE)
 Frame3.configure(borderwidth='2')
 Frame3.configure(relief=tk.GROOVE)
@@ -2896,105 +2919,105 @@ Frame3.configure(width=295)
 
 #button - class initialization
 bInit=tk.Button(Frame3)
-bInit.place(relx=0.02,rely=0.05,height=26,width=90)
+bInit.place(relx=0.02,rely=0.05,relheight=b1height/f3height,relwidth=b3width/f3width)
 bInit.configure(command=initC)
 bInit.configure(state=tk.DISABLED)
 bInit.configure(text='Init class')
 
 #button - load class from file
 bLoadC=tk.Button(Frame3)
-bLoadC.place(relx=0.35,rely=0.05,height=26,width=90)
+bLoadC.place(relx=0.35,rely=0.05,relheight=b1height/f3height,relwidth=b3width/f3width)
 bLoadC.configure(command=loadC)
 bLoadC.configure(text='Load Class')
 
 #button - set model parameters
 bParams=tk.Button(Frame3)
-bParams.place(relx=0.68,rely=0.05,height=26,width=90)
+bParams.place(relx=0.68,rely=0.05,relheight=b1height/f3height,relwidth=b3width/f3width)
 bParams.configure(command=params)
 bParams.configure(state=tk.DISABLED)
 bParams.configure(text='Set Params')
 
 #button - set parameters of GA and MC fitting
 bFitParams=tk.Button(Frame3)
-bFitParams.place(relx=0.02,rely=0.24,height=26,width=90)
+bFitParams.place(relx=0.02,rely=0.24,relheight=b1height/f3height,relwidth=b3width/f3width)
 bFitParams.configure(command=fitParams)
 bFitParams.configure(state=tk.DISABLED)
 bFitParams.configure(text='Fit. Params')
 
 #button - GA fitting
 bFitGA=tk.Button(Frame3)
-bFitGA.place(relx=0.35,rely=0.24,height=26,width=90)
+bFitGA.place(relx=0.35,rely=0.24,relheight=b1height/f3height,relwidth=b3width/f3width)
 bFitGA.configure(command=fitGA)
 bFitGA.configure(state=tk.DISABLED)
 bFitGA.configure(text='Fit GA')
 
 #button - MC fitting
 bFitMC=tk.Button(Frame3)
-bFitMC.place(relx=0.68,rely=0.24,height=26,width=90)
+bFitMC.place(relx=0.68,rely=0.24,relheight=b1height/f3height,relwidth=b3width/f3width)
 bFitMC.configure(command=fitMC)
 bFitMC.configure(state=tk.DISABLED)
 bFitMC.configure(text='Fit MCMC')
 
 #button - plot O-C with model
 bPlot=tk.Button(Frame3)
-bPlot.place(relx=0.02,rely=0.43,height=26,width=90)
+bPlot.place(relx=0.02,rely=0.43,relheight=b1height/f3height,relwidth=b3width/f3width)
 bPlot.configure(command=plot)
 bPlot.configure(state=tk.DISABLED)
 bPlot.configure(text='Plot O-C')
 
 #button - plot residual O-C
 bPlotR=tk.Button(Frame3)
-bPlotR.place(relx=0.35,rely=0.43,height=26,width=90)
+bPlotR.place(relx=0.35,rely=0.43,relheight=b1height/f3height,relwidth=b3width/f3width)
 bPlotR.configure(command=plotR)
 bPlotR.configure(state=tk.DISABLED)
 bPlotR.configure(text='Plot O-C res.')
 
 #button - summary of fitting
 bSum=tk.Button(Frame3)
-bSum.place(relx=0.68,rely=0.43,height=26,width=90)
+bSum.place(relx=0.68,rely=0.43,relheight=b1height/f3height,relwidth=b3width/f3width)
 bSum.configure(command=summary)
 bSum.configure(state=tk.DISABLED)
 bSum.configure(text='Summary')
 
 #button - save model O-C
 bSaveM=tk.Button(Frame3)
-bSaveM.place(relx=0.02,rely=0.62,height=26,width=90)
+bSaveM.place(relx=0.02,rely=0.62,relheight=b1height/f3height,relwidth=b3width/f3width)
 bSaveM.configure(command=saveM)
 bSaveM.configure(state=tk.DISABLED)
 bSaveM.configure(text='Save model')
 
 #button - save residual O-C
 bSaveR=tk.Button(Frame3)
-bSaveR.place(relx=0.35,rely=0.62,height=26,width=90)
+bSaveR.place(relx=0.35,rely=0.62,relheight=b1height/f3height,relwidth=b3width/f3width)
 bSaveR.configure(command=saveR)
 bSaveR.configure(state=tk.DISABLED)
 bSaveR.configure(text='Save O-C res.')
 
 #button - save class to file
 bSaveC=tk.Button(Frame3)
-bSaveC.place(relx=0.68,rely=0.62,height=26,width=90)
+bSaveC.place(relx=0.68,rely=0.62,relheight=b1height/f3height,relwidth=b3width/f3width)
 bSaveC.configure(command=saveC)
 bSaveC.configure(state=tk.DISABLED)
 bSaveC.configure(text='Save class')
 
 #button - fitting on background
 bRunBG=tk.Button(Frame3)
-bRunBG.place(relx=0.02,rely=0.81,height=26,width=135)
+bRunBG.place(relx=0.02,rely=0.81,relheight=b1height/f3height,relwidth=b4width/f3width)
 bRunBG.configure(command=runBG)
 bRunBG.configure(state=tk.DISABLED)
 bRunBG.configure(text='Fit on Background')
 
 #buttom - save all
 bSaveAll=tk.Button(Frame3)
-bSaveAll.place(relx=0.53, rely=0.81, height=26, width=135)
+bSaveAll.place(relx=0.53, rely=0.81,relheight=b1height/f3height,relwidth=b4width/f3width)
 bSaveAll.configure(command=saveAll)
 bSaveAll.configure(state=tk.DISABLED)
 bSaveAll.configure(text='Save All')
 
 #label
 Label3=tk.Label(master)
-Label3.place(relx=0.09,rely=0.95,height=18,width=276)
-Label3.configure(text='(c) Pavol Gajdos, 2018 - 2019')
+Label3.place(relx=0.09,rely=0.95,relheight=l2height/mheight,relwidth=0.9)
+Label3.configure(text='(c) Pavol Gajdos, 2018 - 2022')
 Label3.configure(font=('None',9))
 
 tk.mainloop()
