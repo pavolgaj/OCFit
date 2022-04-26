@@ -148,26 +148,33 @@ def load():
 
             #create window
             tMet=tk.Toplevel(tLoad)
-            tMet.geometry('258x150')
+            #default scale of window - NOT change this values if you want to change size
+            tmwidth=258
+            tmheight=150
+            if fixed:
+                tMet.geometry(str(tmwidth)+'x'+str(tmheight))   #modif. this line to change size - e.g. master.geometry('400x500')
+            else:
+                #set relatively to screen size
+                tMet.geometry('{}x{}'.format(int(tmwidth/mwidth*screenwidth), int(tmheight/mheight*screenheight)))
             tMet.title('Methods')
 
             valType=tk.IntVar(tMet,value=0)   #variable for radiobuttons errors / weights
 
             #button - generate file
             bGen=tk.Button(tMet)
-            bGen.place(relx=0.08,rely=0.09,height=26,width=100)
+            bGen.place(relx=0.08,rely=0.09,relheight=b1height/tmheight,relwidth=b5width/tmwidth)
             bGen.configure(command=gen)
             bGen.configure(text='Generate file')
 
             #button - load file
             bLoadM=tk.Button(tMet)
-            bLoadM.place(relx=0.54,rely=0.09,height=26,width=100)
+            bLoadM.place(relx=0.54,rely=0.09,relheight=b1height/tmheight,relwidth=b5width/tmwidth)
             bLoadM.configure(command=loadM)
             bLoadM.configure(text='Load file')
 
             #radiobutton - given values are errors
             Radiobutton1=tk.Radiobutton(tMet)
-            Radiobutton1.place(relx=0.16,rely=0.56,relheight=0.18,relwidth=0.24)
+            Radiobutton1.place(relx=0.16,rely=0.56,relheight=rheight/tmheight,relwidth=rwidth/tmwidth)
             Radiobutton1.configure(justify=tk.LEFT)
             Radiobutton1.configure(text='errors')
             Radiobutton1.configure(variable=valType)
@@ -176,7 +183,7 @@ def load():
 
             #radiobutton - given values are weights
             Radiobutton2=tk.Radiobutton(tMet)
-            Radiobutton2.place(relx=0.5,rely=0.56,relheight=0.18,relwidth=0.29)
+            Radiobutton2.place(relx=0.5,rely=0.56,relheight=rheight/tmheight,relwidth=rwidth/tmwidth)
             Radiobutton2.configure(justify=tk.LEFT)
             Radiobutton2.configure(text='weights')
             Radiobutton2.configure(variable=valType)
@@ -185,13 +192,13 @@ def load():
 
             #label
             Label1=tk.Label(tMet)
-            Label1.place(relx=0.08,rely=0.39,height=18,width=184)
+            Label1.place(relx=0.08,rely=0.39,relheight=lheight/tmheight,relwidth=184/tmwidth)
             Label1.configure(text='Given values for methods are:')
             Label1.configure(font=('None',9))
 
             #button - process file and set errors / weights for all methods
             Button1=tk.Button(tMet)
-            Button1.place(relx=0.35,rely=0.73,height=26,width=80)
+            Button1.place(relx=0.35,rely=0.73,relheight=b1height/tmheight,relwidth=b6width/tmwidth)
             Button1.configure(command=setM)
             Button1.configure(text='OK')
             Button1.config(state=tk.DISABLED)
@@ -208,7 +215,14 @@ def load():
 
     #create window
     tLoad=tk.Toplevel(master)
-    tLoad.geometry('297x406')
+    #default scale of window - NOT change this values if you want to change size
+    twidth=297
+    theight=406
+    if fixed:
+        tLoad.geometry(str(twidth)+'x'+str(theight))   #modif. this line to change size - e.g. master.geometry('400x500')
+    else:
+        #set relatively to screen size
+        tLoad.geometry('{}x{}'.format(int(twidth/mwidth*screenwidth), int(theight/mheight*screenheight)))
     tLoad.title('Load Data')
 
     #variables for delimiter and header
@@ -235,26 +249,28 @@ def load():
 
     #button load file
     bOpen=tk.Button(tLoad)
-    bOpen.place(relx=0.2,rely=0.02,height=26,width=79)
+    bOpen.place(relx=0.2,rely=0.02,relheight=b1height/theight,relwidth=b6width/twidth)
     bOpen.configure(command=openFile)
     bOpen.configure(text='Open file')
 
     #button show file
     bPrev=tk.Button(tLoad)
-    bPrev.place(relx=0.57,rely=0.02,height=26,width=72)
+    bPrev.place(relx=0.57,rely=0.02,relheight=b1height/theight,relwidth=b6width/twidth)
     bPrev.configure(command=preview)
     bPrev.configure(state=tk.DISABLED)
     bPrev.configure(text='Preview')
 
     #label with name of file
     tFName=tk.Label(tLoad)
-    tFName.place(relx=0.07,rely=0.11,height=18,width=256)
+    tFName.place(relx=0.07,rely=0.11,relheight=l2height/theight,relwidth=0.9)
     tFName.configure(text='')
     tFName.configure(width=256)
 
     #frame with delimiter and header
     Frame1=tk.Frame(tLoad)
-    Frame1.place(relx=0.07,rely=0.17,relheight=0.16,relwidth=0.89)
+    f1height=65
+    f1width=265
+    Frame1.place(relx=0.07,rely=0.17,relheight=f1height/theight,relwidth=f1width/twidth)
     Frame1.configure(relief=tk.GROOVE)
     Frame1.configure(borderwidth='2')
     Frame1.configure(relief=tk.GROOVE)
@@ -262,7 +278,7 @@ def load():
 
     #label
     Label3=tk.Label(Frame1)
-    Label3.place(relx=0.04,rely=0.15,height=18,width=86)
+    Label3.place(relx=0.04,rely=0.15,relheight=l2height/f1height,relwidth=l2width/f1width)
     Label3.configure(anchor=tk.W)
     Label3.configure(text='Delimiter')
     Label3.configure(width=86)
@@ -270,7 +286,7 @@ def load():
 
     #label
     Label4=tk.Label(Frame1)
-    Label4.place(relx=0.04,rely=0.54,height=18,width=86)
+    Label4.place(relx=0.04,rely=0.54,relheight=l2height/f1height,relwidth=l2width/f1width)
     Label4.configure(anchor=tk.W)
     Label4.configure(text='Header')
     Label4.configure(width=66)
@@ -278,18 +294,20 @@ def load():
 
     #input - delimiter
     delim=tk.Entry(Frame1)
-    delim.place(relx=0.32,rely=0.08,height=25,relwidth=0.64)
+    delim.place(relx=0.32,rely=0.08,relheight=iheight/f1height,relwidth=0.64)
     delim.configure(textvariable=delimVar)
     delim.configure(width=170)
 
     #input - header
     header=tk.Entry(Frame1)
-    header.place(relx=0.32,rely=0.46,height=25,relwidth=0.64)
+    header.place(relx=0.32,rely=0.46,relheight=iheight/f1height,relwidth=0.64)
     header.configure(textvariable=headVar)
 
     #frame with columns
     Frame2=tk.Frame(tLoad)
-    Frame2.place(relx=0.07,rely=0.34,relheight=0.55,relwidth=0.89)
+    f2height=223
+    f2width=265
+    Frame2.place(relx=0.07,rely=0.34,relheight=f2height/theight,relwidth=f2width/twidth)
     Frame2.configure(relief=tk.GROOVE)
     Frame2.configure(borderwidth='2')
     Frame2.configure(relief=tk.GROOVE)
@@ -297,87 +315,87 @@ def load():
 
     #labels
     Label2=tk.Label(Frame2)
-    Label2.place(relx=0.04,rely=0.04,height=18,width=246)
+    Label2.place(relx=0.04,rely=0.04,relheight=l2height/f2height,relwidth=0.9)
     Label2.configure(text='Columns')
     Label2.configure(width=246)
     Label2.configure(font=('None',9))
 
     Label5=tk.Label(Frame2)
-    Label5.place(relx=0.02,rely=0.16,height=18,width=66)
+    Label5.place(relx=0.02,rely=0.16,relheight=l2height/f2height,relwidth=l2width/f2width)
     Label5.configure(anchor=tk.W)
     Label5.configure(text='Obs. time')
     Label5.configure(width=66)
     Label5.configure(font=('None',9))
 
     Label6=tk.Label(Frame2)
-    Label6.place(relx=0.02,rely=0.26,height=18,width=60)
+    Label6.place(relx=0.02,rely=0.26,relheight=l2height/f2height,relwidth=l2width/f2width)
     Label6.configure(anchor=tk.W)
     Label6.configure(text='Calc.time')
     Label6.configure(font=('None',9))
 
     Label7=tk.Label(Frame2)
-    Label7.place(relx=0.02,rely=0.36,height=18,width=42)
+    Label7.place(relx=0.02,rely=0.36,relheight=l2height/f2height,relwidth=l2width/f2width)
     Label7.configure(anchor=tk.W)
     Label7.configure(text='Epoch')
     Label7.configure(font=('None',9))
 
     Label8=tk.Label(Frame2)
-    Label8.place(relx=0.02,rely=0.46,height=18,width=25)
+    Label8.place(relx=0.02,rely=0.46,relheight=l2height/f2height,relwidth=l2width/f2width)
     Label8.configure(anchor=tk.W)
     Label8.configure(text='O-C')
     Label8.configure(font=('None',9))
 
     Label9=tk.Label(Frame2)
-    Label9.place(relx=0.02,rely=0.56,height=18,width=34)
+    Label9.place(relx=0.02,rely=0.56,relheight=l2height/f2height,relwidth=l2width/f2width)
     Label9.configure(anchor=tk.W)
     Label9.configure(text='Error')
     Label9.configure(font=('None',9))
 
     Label10=tk.Label(Frame2)
-    Label10.place(relx=0.02,rely=0.66,height=18,width=47)
+    Label10.place(relx=0.02,rely=0.66,relheight=l2height/f2height,relwidth=l2width/f2width)
     Label10.configure(anchor=tk.W)
     Label10.configure(text='Weight')
     Label10.configure(font=('None',9))
 
     Label11=tk.Label(Frame2)
-    Label11.place(relx=0.02,rely=0.76,height=18,width=49)
+    Label11.place(relx=0.02,rely=0.76,relheight=l2height/f2height,relwidth=l2width/f2width)
     Label11.configure(anchor=tk.W)
     Label11.configure(text='Method')
     Label11.configure(font=('None',9))
 
     #input - column observed times
     obs=tk.Entry(Frame2)
-    obs.place(relx=0.3,rely=0.13,height=25,relwidth=0.57)
+    obs.place(relx=0.3,rely=0.13,relheight=iheight/f2height,relwidth=0.57)
     obs.configure(textvariable=obsVar)
 
     #input - column calculated times
     calc=tk.Entry(Frame2)
-    calc.place(relx=0.3,rely=0.23,height=25,relwidth=0.57)
+    calc.place(relx=0.3,rely=0.23,relheight=iheight/f2height,relwidth=0.57)
     calc.configure(textvariable=calcVar)
 
     #input - column epochs
     ep=tk.Entry(Frame2)
-    ep.place(relx=0.3,rely=0.33,height=25,relwidth=0.57)
+    ep.place(relx=0.3,rely=0.33,relheight=iheight/f2height,relwidth=0.57)
     ep.configure(textvariable=epVar)
 
     #input - column O-Cs
     oc=tk.Entry(Frame2)
-    oc.place(relx=0.3,rely=0.43,height=25,relwidth=0.57)
+    oc.place(relx=0.3,rely=0.43,relheight=iheight/f2height,relwidth=0.57)
     oc.configure(textvariable=ocVar)
 
     #input - column errors
     err=tk.Entry(Frame2)
-    err.place(relx=0.3,rely=0.53,height=25,relwidth=0.57)
+    err.place(relx=0.3,rely=0.53,relheight=iheight/f2height,relwidth=0.57)
     err.configure(textvariable=errVar)
 
     #input - column weights
     w=tk.Entry(Frame2)
-    w.place(relx=0.3,rely=0.63,height=25,relwidth=0.57)
+    w.place(relx=0.3,rely=0.63,relheight=iheight/f2height,relwidth=0.57)
     w.configure(textvariable=wVar)
 
     #input - column methods
     met=tk.Entry(Frame2)
-    met.place(relx=0.3,rely=0.73,height=25,relwidth=0.57)
+    met.place(relx=0.3,rely=0.73,relheight=iheight/f2height,relwidth=0.57)
     met.configure(textvariable=metVar)
 
     #check - column observed times available
@@ -424,7 +442,7 @@ def load():
 
     #button process file
     bProc=tk.Button(tLoad)
-    bProc.place(relx=0.35,rely=0.92,height=26,width=92)
+    bProc.place(relx=0.35,rely=0.92,relheight=b1height/theight,relwidth=b3width/twidth)
     bProc.configure(command=procFile)
     bProc.configure(state=tk.DISABLED)
     bProc.configure(text='Process file')
@@ -2738,7 +2756,7 @@ def summary(f=None):
 
     if f is not None:
         try: ocf.Summary(f)
-        except: tkMessageBox.showerror('Summary','Fit the model!')
+        except: tkinter.messagebox.showerror('Summary','Fit the model!')
         return
 
 
@@ -2767,26 +2785,43 @@ ga={}
 mc={}
 save=0
 
+# %% main window
+
 #main window
 master=tk.Tk()
 #default scale of window - NOT change this values if you want to change size
 mwidth=329
 mheight=492
-master.geometry(str(mwidth)+'x'+str(mheight))   #modif. this line to change size - e.g. master.geometry('400x500')
+fixed=True   #fixed size to default
+
+if fixed:
+    master.geometry(str(mwidth)+'x'+str(mheight))   #modif. this line to change size - e.g. master.geometry('400x500')
+else:
+    #set relatively to screen size
+    height = master.winfo_screenheight()
+    width = master.winfo_screenwidth()
+    screenheight = int(0.5*height)
+    screenwidth = int(0.25*width)
+    master.geometry('{}x{}'.format(screenwidth, screenheight))
 master.title('OCFit GUI')
 
 #set size of buttons, labels etc.
-b1height=26
+b1height=26   #button
 b2height=31
-iheight=25
-lheight=23
+iheight=25    #input/entry
+lheight=23    #label
 l2height=18
+rheight=27      #radiobutton
 
 b1width=87
 b2width=117
 b3width=90
 b4width=135
+b5width=100
+b6width=80
 lwidth=47
+l2width=86
+rwidth=75
 
 
 #font=tkFont.nametofont("TkDefaultFont")
@@ -2811,7 +2846,7 @@ bLoad.configure(text='Load Data')
 Frame1=tk.Frame(master)
 f1height=74
 f1width=296
-Frame1.place(relx=0.06,rely=0.08,relheight=f1height/mheight,relwidth=f1width/mwidth)  
+Frame1.place(relx=0.06,rely=0.08,relheight=f1height/mheight,relwidth=f1width/mwidth)
 Frame1.configure(relief=tk.GROOVE)
 Frame1.configure(borderwidth='2')
 Frame1.configure(relief=tk.GROOVE)
