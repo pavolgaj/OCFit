@@ -192,8 +192,9 @@ def load():
 
             #label
             Label1=tk.Label(tMet)
-            Label1.place(relx=0.08,rely=0.39,relheight=lheight/tmheight,relwidth=184/tmwidth)
+            Label1.place(relx=0.08,rely=0.39,relheight=lheight/tmheight,relwidth=0.9)
             Label1.configure(text='Given values for methods are:')
+            Label1.configure(anchor=tk.W)
             Label1.configure(font=('None',9))
 
             #button - process file and set errors / weights for all methods
@@ -278,7 +279,7 @@ def load():
 
     #label
     Label3=tk.Label(Frame1)
-    Label3.place(relx=0.04,rely=0.15,relheight=l2height/f1height,relwidth=l2width/f1width)
+    Label3.place(relx=0.02,rely=0.15,relheight=l2height/f1height,relwidth=0.27)
     Label3.configure(anchor=tk.W)
     Label3.configure(text='Delimiter')
     Label3.configure(width=86)
@@ -286,7 +287,7 @@ def load():
 
     #label
     Label4=tk.Label(Frame1)
-    Label4.place(relx=0.04,rely=0.54,relheight=l2height/f1height,relwidth=l2width/f1width)
+    Label4.place(relx=0.02,rely=0.54,relheight=l2height/f1height,relwidth=0.27)
     Label4.configure(anchor=tk.W)
     Label4.configure(text='Header')
     Label4.configure(width=66)
@@ -294,13 +295,13 @@ def load():
 
     #input - delimiter
     delim=tk.Entry(Frame1)
-    delim.place(relx=0.32,rely=0.08,relheight=iheight/f1height,relwidth=0.64)
+    delim.place(relx=0.3,rely=0.08,relheight=iheight/f1height,relwidth=0.64)
     delim.configure(textvariable=delimVar)
     delim.configure(width=170)
 
     #input - header
     header=tk.Entry(Frame1)
-    header.place(relx=0.32,rely=0.46,relheight=iheight/f1height,relwidth=0.64)
+    header.place(relx=0.3,rely=0.46,relheight=iheight/f1height,relwidth=0.64)
     header.configure(textvariable=headVar)
 
     #frame with columns
@@ -315,50 +316,50 @@ def load():
 
     #labels
     Label2=tk.Label(Frame2)
-    Label2.place(relx=0.04,rely=0.04,relheight=l2height/f2height,relwidth=0.9)
+    Label2.place(relx=0.02,rely=0.04,relheight=l2height/f2height,relwidth=0.95)
     Label2.configure(text='Columns')
     Label2.configure(width=246)
     Label2.configure(font=('None',9))
 
     Label5=tk.Label(Frame2)
-    Label5.place(relx=0.02,rely=0.16,relheight=l2height/f2height,relwidth=l2width/f2width)
+    Label5.place(relx=0.02,rely=0.16,relheight=l2height/f2height,relwidth=0.27)
     Label5.configure(anchor=tk.W)
     Label5.configure(text='Obs. time')
     Label5.configure(width=66)
     Label5.configure(font=('None',9))
 
     Label6=tk.Label(Frame2)
-    Label6.place(relx=0.02,rely=0.26,relheight=l2height/f2height,relwidth=l2width/f2width)
+    Label6.place(relx=0.02,rely=0.26,relheight=l2height/f2height,relwidth=0.27)
     Label6.configure(anchor=tk.W)
     Label6.configure(text='Calc.time')
     Label6.configure(font=('None',9))
 
     Label7=tk.Label(Frame2)
-    Label7.place(relx=0.02,rely=0.36,relheight=l2height/f2height,relwidth=l2width/f2width)
+    Label7.place(relx=0.02,rely=0.36,relheight=l2height/f2height,relwidth=0.27)
     Label7.configure(anchor=tk.W)
     Label7.configure(text='Epoch')
     Label7.configure(font=('None',9))
 
     Label8=tk.Label(Frame2)
-    Label8.place(relx=0.02,rely=0.46,relheight=l2height/f2height,relwidth=l2width/f2width)
+    Label8.place(relx=0.02,rely=0.46,relheight=l2height/f2height,relwidth=0.27)
     Label8.configure(anchor=tk.W)
     Label8.configure(text='O-C')
     Label8.configure(font=('None',9))
 
     Label9=tk.Label(Frame2)
-    Label9.place(relx=0.02,rely=0.56,relheight=l2height/f2height,relwidth=l2width/f2width)
+    Label9.place(relx=0.02,rely=0.56,relheight=l2height/f2height,relwidth=0.27)
     Label9.configure(anchor=tk.W)
     Label9.configure(text='Error')
     Label9.configure(font=('None',9))
 
     Label10=tk.Label(Frame2)
-    Label10.place(relx=0.02,rely=0.66,relheight=l2height/f2height,relwidth=l2width/f2width)
+    Label10.place(relx=0.02,rely=0.66,relheight=l2height/f2height,relwidth=0.27)
     Label10.configure(anchor=tk.W)
     Label10.configure(text='Weight')
     Label10.configure(font=('None',9))
 
     Label11=tk.Label(Frame2)
-    Label11.place(relx=0.02,rely=0.76,relheight=l2height/f2height,relwidth=l2width/f2width)
+    Label11.place(relx=0.02,rely=0.76,relheight=l2height/f2height,relwidth=0.27)
     Label11.configure(anchor=tk.W)
     Label11.configure(text='Method')
     Label11.configure(font=('None',9))
@@ -642,7 +643,14 @@ def sumS():
 
     #create new window
     sumW=tk.Toplevel(master)
-    sumW.geometry('750x450')
+    #default scale of window - NOT change this values if you want to change size
+    twidth=750
+    theight=450
+    if fixed:
+        sumW.geometry(str(twidth)+'x'+str(theight))   #modif. this line to change size - e.g. master.geometry('400x500')
+    else:
+        #set relatively to screen size
+        sumW.geometry('{}x{}'.format(int(twidth/mwidth*screenwidth), int(theight/mheight*screenheight)))
     sumW.title('Summary')
 
     #text field
@@ -825,7 +833,14 @@ def fitParams():
 
     #create new window
     tFitPar=tk.Toplevel(master)
-    tFitPar.geometry('288x316')
+    #default scale of window - NOT change this values if you want to change size
+    twidth=288
+    theight=316
+    if fixed:
+        tFitPar.geometry(str(twidth)+'x'+str(theight))   #modif. this line to change size - e.g. master.geometry('400x500')
+    else:
+        #set relatively to screen size
+        tFitPar.geometry('{}x{}'.format(int(twidth/mwidth*screenwidth), int(theight/mheight*screenheight)))
     tFitPar.title('Parameters of Fitting')
 
     #variables
@@ -838,86 +853,96 @@ def fitParams():
 
     #button process file
     bOK=tk.Button(tFitPar)
-    bOK.place(relx=0.35,rely=0.88,height=26,width=93)
+    bOK.place(relx=0.35,rely=0.88,relheight=b1height/theight,relwidth=b3width/twidth)
     bOK.configure(command=ok)
     bOK.configure(text='OK')
 
     #label
     Label1=tk.Label(tFitPar)
-    Label1.place(relx=0.07,rely=0.79,height=18,width=110)
+    Label1.place(relx=0.07,rely=0.79,relheight=l2height/theight,relwidth=0.4)
     Label1.configure(text='Save fitting to file')
+    Label1.configure(anchor=tk.W)
     Label1.configure(font=('None',9))
 
     #check - save fitting sample to file
     saveCh=tk.Checkbutton(tFitPar)
-    saveCh.place(relx=0.45,rely=0.78,relheight=0.06,relwidth=0.09)
+    saveCh.place(relx=0.5,rely=0.78,relheight=0.06,relwidth=0.09)
     saveCh.configure(justify=tk.LEFT)
     saveCh.configure(variable=saveChVar)
 
     #frame for GA
     Labelframe1=tk.LabelFrame(tFitPar)
-    Labelframe1.place(relx=0.07,rely=0.03,relheight=0.3,relwidth=0.87)
+    f1height=95
+    f1width=250
+    Labelframe1.place(relx=0.07,rely=0.03,relheight=f1height/theight,relwidth=f1width/twidth)
     Labelframe1.configure(relief=tk.GROOVE)
     Labelframe1.configure(text='FitGA')
     Labelframe1.configure(width=250)
 
     #labels
     Label2=tk.Label(Labelframe1)
-    Label2.place(relx=0.08,rely=0.26,height=18,width=69)
+    Label2.place(relx=0.08,rely=0.26,relheight=l2height/f1height,relwidth=0.3)
     Label2.configure(text='generation')
+    Label2.configure(anchor=tk.W)
     Label2.configure(font=('None',9))
 
     Label3=tk.Label(Labelframe1)
-    Label3.place(relx=0.08,rely=0.61,height=18,width=26)
+    Label3.place(relx=0.08,rely=0.61,relheight=l2height/f1height,relwidth=0.3)
     Label3.configure(text='size')
+    Label3.configure(anchor=tk.W)
     Label3.configure(font=('None',9))
 
     #input - number of generations
     gen=tk.Entry(Labelframe1)
-    gen.place(relx=0.4,rely=0.17,height=25,relwidth=0.56)
+    gen.place(relx=0.4,rely=0.17,relheight=iheight/f1height,relwidth=0.56)
     gen.configure(textvariable=genVar)
 
     #input - size of generation
     size=tk.Entry(Labelframe1)
-    size.place(relx=0.4,rely=0.53,height=25,relwidth=0.56)
+    size.place(relx=0.4,rely=0.53,relheight=iheight/f1height,relwidth=0.56)
     size.configure(textvariable=sizeVar)
 
     #frame for MC
     Labelframe2=tk.LabelFrame(tFitPar)
-    Labelframe2.place(relx=0.07,rely=0.35,relheight=0.4,relwidth=0.87)
+    f2height=127
+    f2width=250
+    Labelframe2.place(relx=0.07,rely=0.35,relheight=f2height/theight,relwidth=f2width/twidth)
     Labelframe2.configure(relief=tk.GROOVE)
     Labelframe2.configure(text='FitMCMC')
     Labelframe2.configure(width=250)
 
     #labels
     Label4=tk.Label(Labelframe2)
-    Label4.place(relx=0.08,rely=0.16,height=18,width=38)
+    Label4.place(relx=0.08,rely=0.16,relheight=l2height/f2height,relwidth=0.3)
     Label4.configure(text='n_iter')
+    Label4.configure(anchor=tk.W)
     Label4.configure(font=('None',9))
 
     Label5=tk.Label(Labelframe2)
-    Label5.place(relx=0.08,rely=0.43,height=18,width=33)
+    Label5.place(relx=0.08,rely=0.43,relheight=l2height/f2height,relwidth=0.3)
     Label5.configure(text='burn')
+    Label5.configure(anchor=tk.W)
     Label5.configure(font=('None',9))
 
     Label6=tk.Label(Labelframe2)
-    Label6.place(relx=0.08,rely=0.69,height=18,width=31)
+    Label6.place(relx=0.08,rely=0.69,relheight=l2height/f2height,relwidth=0.3)
     Label6.configure(text='binn')
+    Label6.configure(anchor=tk.W)
     Label6.configure(font=('None',9))
 
     #input - number of MC steps
     n=tk.Entry(Labelframe2)
-    n.place(relx=0.4,rely=0.1,height=25,relwidth=0.56)
+    n.place(relx=0.4,rely=0.1,relheight=iheight/f2height,relwidth=0.56)
     n.configure(textvariable=nVar)
 
     #input - number of removed steps
     burn=tk.Entry(Labelframe2)
-    burn.place(relx=0.4,rely=0.36,height=25,relwidth=0.56)
+    burn.place(relx=0.4,rely=0.36,relheight=iheight/f2height,relwidth=0.56)
     burn.configure(textvariable=burnVar)
 
     #input - binning size
     binn=tk.Entry(Labelframe2)
-    binn.place(relx=0.4,rely=0.63,height=25,relwidth=0.56)
+    binn.place(relx=0.4,rely=0.63,relheight=iheight/f2height,relwidth=0.56)
     binn.configure(textvariable=binnVar)
 
 
@@ -1352,7 +1377,14 @@ def params():
 
     #create new window
     tParams=tk.Toplevel(master)
-    tParams.geometry('595x500')
+    #default scale of window - NOT change this values if you want to change size
+    twidth=595
+    theight=500
+    if fixed:
+        tParams.geometry(str(twidth)+'x'+str(theight))   #modif. this line to change size - e.g. master.geometry('400x500')
+    else:
+        #set relatively to screen size
+        tParams.geometry('{}x{}'.format(int(twidth/mwidth*screenwidth), int(theight/mheight*screenheight)))
     tParams.title('Model Parameters')
 
     #model
@@ -1501,7 +1533,7 @@ def params():
 
     #combobox with all available models
     model=tkinter.ttk.Combobox(tParams)
-    model.place(relx=0.15,rely=0.02,relheight=0.03,relwidth=0.3)
+    model.place(relx=0.15,rely=0.02,relheight=0.04,relwidth=0.4)
     model.configure(textvariable=modelVar)
     model.configure(state='readonly')
     model['values']=('LiTE3','LiTE34','LiTE3Quad','LiTE34Quad','AgolInPlanet','AgolInPlanetLin','AgolExPlanet','AgolExPlanetLin','Apsidal')
@@ -1510,8 +1542,9 @@ def params():
 
     #label
     Label1=tk.Label(tParams)
-    Label1.place(relx=0.05,rely=0.02,height=18,width=39)
+    Label1.place(relx=0.05,rely=0.02,relheight=l2height/theight,relwidth=40/twidth)
     Label1.configure(text='Model')
+    Label1.configure(anchor=tk.W)
     Label1.configure(font=('None',9))
 
     #create notebook with objects for params of all models
@@ -1519,7 +1552,9 @@ def params():
     style.layout('TNotebook.Tab',[])
 
     tNTB=tkinter.ttk.Notebook(tParams)
-    tNTB.place(relx=0.02,rely=0.07,relheight=0.86,relwidth=0.96)
+    nheight=430
+    nwidth=571
+    tNTB.place(relx=0.02,rely=0.07,relheight=nheight/theight,relwidth=nwidth/twidth)
 
     ##########################################################################################
     #           LiTE                                                                         #
@@ -1530,128 +1565,133 @@ def params():
 
     #labels
     Label15=tk.Label(fLiTE)
-    Label15.place(relx=0.02,rely=0.03,height=18,width=47)
+    Label15.place(relx=0.02,rely=0.03,relheight=l2height/nheight,relwidth=0.12)
     Label15.configure(text='param.')
+    Label15.configure(anchor=tk.W)
     Label15.configure(font=('None',9))
 
     Label16=tk.Label(fLiTE)
-    Label16.place(relx=0.15,rely=0.03,height=18,width=36)
+    Label16.place(relx=0.15,rely=0.03,relheight=l2height/nheight,relwidth=0.19)
     Label16.configure(text='value')
+    Label16.configure(anchor=tk.W)
     Label16.configure(font=('None',9))
 
     Label17=tk.Label(fLiTE)
-    Label17.place(relx=0.35,rely=0.03,height=18,width=31)
+    Label17.place(relx=0.35,rely=0.03,relheight=l2height/nheight,relwidth=0.19)
     Label17.configure(text='min.')
+    Label17.configure(anchor=tk.W)
     Label17.configure(font=('None',9))
 
     Label18=tk.Label(fLiTE)
-    Label18.place(relx=0.55,rely=0.03,height=18,width=34)
+    Label18.place(relx=0.55,rely=0.03,relheight=l2height/nheight,relwidth=0.19)
     Label18.configure(text='max.')
+    Label18.configure(anchor=tk.W)
     Label18.configure(font=('None',9))
 
     Label19=tk.Label(fLiTE)
-    Label19.place(relx=0.75,rely=0.03,height=18,width=30)
+    Label19.place(relx=0.75,rely=0.03,relheight=l2height/nheight,relwidth=0.19)
     Label19.configure(text='step')
+    Label19.configure(anchor=tk.W)
     Label19.configure(font=('None',9))
 
     Label20=tk.Label(fLiTE)
-    Label20.place(relx=0.95,rely=0.03,height=18,width=16)
+    Label20.place(relx=0.95,rely=0.03,relheight=l2height/nheight,relwidth=0.04)
     Label20.configure(text='fit')
     Label20.configure(font=('None',9))
 
     Label2=tk.Label(fLiTE)
-    Label2.place(relx=0.02,rely=0.10,height=18,width=17)
+    Label2.place(relx=0.02,rely=0.10,relheight=l2height/nheight,relwidth=0.12)
     Label2.configure(text='t0')
     Label2.configure(anchor=tk.W)
     Label2.configure(font=('None',9))
 
     Label3=tk.Label(fLiTE)
-    Label3.place(relx=0.02,rely=0.17,height=18,width=11)
+    Label3.place(relx=0.02,rely=0.17,relheight=l2height/nheight,relwidth=0.12)
     Label3.configure(text='P')
     Label3.configure(anchor=tk.W)
     Label3.configure(font=('None',9))
 
     Label14=tk.Label(fLiTE)
-    Label14.place(relx=0.02,rely=0.24,height=18,width=13)
+    Label14.place(relx=0.02,rely=0.24,relheight=l2height/nheight,relwidth=0.12)
     Label14.configure(text='Q')
     Label14.configure(anchor=tk.W)
     Label14.configure(font=('None',9))
 
     Label4=tk.Label(fLiTE)
-    Label4.place(relx=0.02,rely=0.31,height=18,width=51)
+    Label4.place(relx=0.02,rely=0.31,relheight=l2height/nheight,relwidth=0.12)
     Label4.configure(text='a_sin_i3')
     Label4.configure(anchor=tk.W)
     Label4.configure(font=('None',9))
 
     Label5=tk.Label(fLiTE)
-    Label5.place(relx=0.02,rely=0.38,height=18,width=19)
+    Label5.place(relx=0.02,rely=0.38,relheight=l2height/nheight,relwidth=0.12)
     Label5.configure(text='e3')
     Label5.configure(anchor=tk.W)
     Label5.configure(font=('None',9))
 
     Label6=tk.Label(fLiTE)
-    Label6.place(relx=0.02,rely=0.45,height=18,width=22)
+    Label6.place(relx=0.02,rely=0.45,relheight=l2height/nheight,relwidth=0.12)
     Label6.configure(text='w3')
     Label6.configure(anchor=tk.W)
     Label6.configure(font=('None',9))
 
     Label7=tk.Label(fLiTE)
-    Label7.place(relx=0.02,rely=0.52,height=18,width=25)
+    Label7.place(relx=0.02,rely=0.52,relheight=l2height/nheight,relwidth=0.12)
     Label7.configure(text='t03')
     Label7.configure(anchor=tk.W)
     Label7.configure(font=('None',9))
 
     Label8=tk.Label(fLiTE)
-    Label8.place(relx=0.02,rely=0.59,height=18,width=19)
+    Label8.place(relx=0.02,rely=0.59,relheight=l2height/nheight,relwidth=0.12)
     Label8.configure(text='P3')
     Label8.configure(anchor=tk.W)
     Label8.configure(font=('None',9))
 
     Label9=tk.Label(fLiTE)
-    Label9.place(relx=0.02,rely=0.66,height=18,width=51)
+    Label9.place(relx=0.02,rely=0.66,relheight=l2height/nheight,relwidth=0.12)
     Label9.configure(text='a_sin_i4')
     Label9.configure(anchor=tk.W)
     Label9.configure(font=('None',9))
 
     Label10=tk.Label(fLiTE)
-    Label10.place(relx=0.02,rely=0.73,height=18,width=19)
+    Label10.place(relx=0.02,rely=0.73,relheight=l2height/nheight,relwidth=0.12)
     Label10.configure(text='e4')
     Label10.configure(anchor=tk.W)
     Label10.configure(font=('None',9))
 
     Label11=tk.Label(fLiTE)
-    Label11.place(relx=0.02,rely=0.80,height=18,width=22)
+    Label11.place(relx=0.02,rely=0.80,relheight=l2height/nheight,relwidth=0.12)
     Label11.configure(text='w4')
     Label11.configure(anchor=tk.W)
     Label11.configure(font=('None',9))
 
     Label12=tk.Label(fLiTE)
-    Label12.place(relx=0.02,rely=0.87,height=18,width=25)
+    Label12.place(relx=0.02,rely=0.87,relheight=l2height/nheight,relwidth=0.12)
     Label12.configure(text='t04')
     Label12.configure(anchor=tk.W)
     Label12.configure(font=('None',9))
 
     Label13=tk.Label(fLiTE)
-    Label13.place(relx=0.02,rely=0.94,height=18,width=19)
+    Label13.place(relx=0.02,rely=0.94,relheight=l2height/nheight,relwidth=0.12)
     Label13.configure(text='P4')
     Label13.configure(anchor=tk.W)
     Label13.configure(font=('None',9))
 
     #input objects for param t0
     t0=[tk.Entry(fLiTE)]
-    t0[-1].place(relx=0.15,rely=0.09,height=25,relwidth=0.19)
+    t0[-1].place(relx=0.15,rely=0.09,relheight=iheight/nheight,relwidth=0.19)
     t0[-1].configure(textvariable=t0Val)
 
     t0.append(tk.Entry(fLiTE))
-    t0[-1].place(relx=0.35,rely=0.09,height=25,relwidth=0.19)
+    t0[-1].place(relx=0.35,rely=0.09,relheight=iheight/nheight,relwidth=0.19)
     t0[-1].configure(textvariable=t0Min)
 
     t0.append(tk.Entry(fLiTE))
-    t0[-1].place(relx=0.55,rely=0.09,height=25,relwidth=0.19)
+    t0[-1].place(relx=0.55,rely=0.09,relheight=iheight/nheight,relwidth=0.19)
     t0[-1].configure(textvariable=t0Max)
 
     t0.append(tk.Entry(fLiTE))
-    t0[-1].place(relx=0.75,rely=0.09,height=25,relwidth=0.19)
+    t0[-1].place(relx=0.75,rely=0.09,relheight=iheight/nheight,relwidth=0.19)
     t0[-1].configure(textvariable=t0Step)
 
     t0.append(tk.Checkbutton(fLiTE))
@@ -1661,19 +1701,19 @@ def params():
 
     #input objects for param P
     P=[tk.Entry(fLiTE)]
-    P[-1].place(relx=0.15,rely=0.16,height=25,relwidth=0.19)
+    P[-1].place(relx=0.15,rely=0.16,relheight=iheight/nheight,relwidth=0.19)
     P[-1].configure(textvariable=PVal)
 
     P.append(tk.Entry(fLiTE))
-    P[-1].place(relx=0.35,rely=0.16,height=25,relwidth=0.19)
+    P[-1].place(relx=0.35,rely=0.16,relheight=iheight/nheight,relwidth=0.19)
     P[-1].configure(textvariable=PMin)
 
     P.append(tk.Entry(fLiTE))
-    P[-1].place(relx=0.55,rely=0.16,height=25,relwidth=0.19)
+    P[-1].place(relx=0.55,rely=0.16,relheight=iheight/nheight,relwidth=0.19)
     P[-1].configure(textvariable=PMax)
 
     P.append(tk.Entry(fLiTE))
-    P[-1].place(relx=0.75,rely=0.16,height=25,relwidth=0.19)
+    P[-1].place(relx=0.75,rely=0.16,relheight=iheight/nheight,relwidth=0.19)
     P[-1].configure(textvariable=PStep)
 
     P.append(tk.Checkbutton(fLiTE))
@@ -1683,19 +1723,19 @@ def params():
 
     #input objects for param Q
     Q=[tk.Entry(fLiTE)]
-    Q[-1].place(relx=0.15,rely=0.23,height=25,relwidth=0.19)
+    Q[-1].place(relx=0.15,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
     Q[-1].configure(textvariable=QVal)
 
     Q.append(tk.Entry(fLiTE))
-    Q[-1].place(relx=0.35,rely=0.23,height=25,relwidth=0.19)
+    Q[-1].place(relx=0.35,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
     Q[-1].configure(textvariable=QMin)
 
     Q.append(tk.Entry(fLiTE))
-    Q[-1].place(relx=0.55,rely=0.23,height=25,relwidth=0.19)
+    Q[-1].place(relx=0.55,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
     Q[-1].configure(textvariable=QMax)
 
     Q.append(tk.Entry(fLiTE))
-    Q[-1].place(relx=0.75,rely=0.23,height=25,relwidth=0.19)
+    Q[-1].place(relx=0.75,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
     Q[-1].configure(textvariable=QStep)
 
     Q.append(tk.Checkbutton(fLiTE))
@@ -1705,19 +1745,19 @@ def params():
 
     #input objects for param a_sin_i3
     a3=[tk.Entry(fLiTE)]
-    a3[-1].place(relx=0.15,rely=0.30,height=25,relwidth=0.19)
+    a3[-1].place(relx=0.15,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
     a3[-1].configure(textvariable=a3Val)
 
     a3.append(tk.Entry(fLiTE))
-    a3[-1].place(relx=0.35,rely=0.30,height=25,relwidth=0.19)
+    a3[-1].place(relx=0.35,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
     a3[-1].configure(textvariable=a3Min)
 
     a3.append(tk.Entry(fLiTE))
-    a3[-1].place(relx=0.55,rely=0.30,height=25,relwidth=0.19)
+    a3[-1].place(relx=0.55,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
     a3[-1].configure(textvariable=a3Max)
 
     a3.append(tk.Entry(fLiTE))
-    a3[-1].place(relx=0.75,rely=0.30,height=25,relwidth=0.19)
+    a3[-1].place(relx=0.75,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
     a3[-1].configure(textvariable=a3Step)
 
     a3.append(tk.Checkbutton(fLiTE))
@@ -1727,19 +1767,19 @@ def params():
 
     #input objects for param e3
     e3=[tk.Entry(fLiTE)]
-    e3[-1].place(relx=0.15,rely=0.37,height=25,relwidth=0.19)
+    e3[-1].place(relx=0.15,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
     e3[-1].configure(textvariable=e3Val)
 
     e3.append(tk.Entry(fLiTE))
-    e3[-1].place(relx=0.35,rely=0.37,height=25,relwidth=0.19)
+    e3[-1].place(relx=0.35,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
     e3[-1].configure(textvariable=e3Min)
 
     e3.append(tk.Entry(fLiTE))
-    e3[-1].place(relx=0.55,rely=0.37,height=25,relwidth=0.19)
+    e3[-1].place(relx=0.55,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
     e3[-1].configure(textvariable=e3Max)
 
     e3.append(tk.Entry(fLiTE))
-    e3[-1].place(relx=0.75,rely=0.37,height=25,relwidth=0.19)
+    e3[-1].place(relx=0.75,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
     e3[-1].configure(textvariable=e3Step)
 
     e3.append(tk.Checkbutton(fLiTE))
@@ -1749,19 +1789,19 @@ def params():
 
     #input objects for param w3
     w3=[tk.Entry(fLiTE)]
-    w3[-1].place(relx=0.15,rely=0.44,height=25,relwidth=0.19)
+    w3[-1].place(relx=0.15,rely=0.44,relheight=iheight/nheight,relwidth=0.19)
     w3[-1].configure(textvariable=w3Val)
 
     w3.append(tk.Entry(fLiTE))
-    w3[-1].place(relx=0.35,rely=0.44,height=25,relwidth=0.19)
+    w3[-1].place(relx=0.35,rely=0.44,relheight=iheight/nheight,relwidth=0.19)
     w3[-1].configure(textvariable=w3Min)
 
     w3.append(tk.Entry(fLiTE))
-    w3[-1].place(relx=0.55,rely=0.44,height=25,relwidth=0.19)
+    w3[-1].place(relx=0.55,rely=0.44,relheight=iheight/nheight,relwidth=0.19)
     w3[-1].configure(textvariable=w3Max)
 
     w3.append(tk.Entry(fLiTE))
-    w3[-1].place(relx=0.75,rely=0.44,height=25,relwidth=0.19)
+    w3[-1].place(relx=0.75,rely=0.44,relheight=iheight/nheight,relwidth=0.19)
     w3[-1].configure(textvariable=w3Step)
 
     w3.append(tk.Checkbutton(fLiTE))
@@ -1771,19 +1811,19 @@ def params():
 
     #input objects for param t03
     t3=[tk.Entry(fLiTE)]
-    t3[-1].place(relx=0.15,rely=0.51,height=25,relwidth=0.19)
+    t3[-1].place(relx=0.15,rely=0.51,relheight=iheight/nheight,relwidth=0.19)
     t3[-1].configure(textvariable=t3Val)
 
     t3.append(tk.Entry(fLiTE))
-    t3[-1].place(relx=0.35,rely=0.51,height=25,relwidth=0.19)
+    t3[-1].place(relx=0.35,rely=0.51,relheight=iheight/nheight,relwidth=0.19)
     t3[-1].configure(textvariable=t3Min)
 
     t3.append(tk.Entry(fLiTE))
-    t3[-1].place(relx=0.55,rely=0.51,height=25,relwidth=0.19)
+    t3[-1].place(relx=0.55,rely=0.51,relheight=iheight/nheight,relwidth=0.19)
     t3[-1].configure(textvariable=t3Max)
 
     t3.append(tk.Entry(fLiTE))
-    t3[-1].place(relx=0.75,rely=0.51,height=25,relwidth=0.19)
+    t3[-1].place(relx=0.75,rely=0.51,relheight=iheight/nheight,relwidth=0.19)
     t3[-1].configure(textvariable=t3Step)
 
     t3.append(tk.Checkbutton(fLiTE))
@@ -1793,19 +1833,19 @@ def params():
 
     #input objects for param P
     P3=[tk.Entry(fLiTE)]
-    P3[-1].place(relx=0.15,rely=0.58,height=25,relwidth=0.19)
+    P3[-1].place(relx=0.15,rely=0.58,relheight=iheight/nheight,relwidth=0.19)
     P3[-1].configure(textvariable=P3Val)
 
     P3.append(tk.Entry(fLiTE))
-    P3[-1].place(relx=0.35,rely=0.58,height=25,relwidth=0.19)
+    P3[-1].place(relx=0.35,rely=0.58,relheight=iheight/nheight,relwidth=0.19)
     P3[-1].configure(textvariable=P3Min)
 
     P3.append(tk.Entry(fLiTE))
-    P3[-1].place(relx=0.55,rely=0.58,height=25,relwidth=0.19)
+    P3[-1].place(relx=0.55,rely=0.58,relheight=iheight/nheight,relwidth=0.19)
     P3[-1].configure(textvariable=P3Max)
 
     P3.append(tk.Entry(fLiTE))
-    P3[-1].place(relx=0.75,rely=0.58,height=25,relwidth=0.19)
+    P3[-1].place(relx=0.75,rely=0.58,relheight=iheight/nheight,relwidth=0.19)
     P3[-1].configure(textvariable=P3Step)
 
     P3.append(tk.Checkbutton(fLiTE))
@@ -1815,19 +1855,19 @@ def params():
 
     #input objects for param a_sin_i4
     a4=[tk.Entry(fLiTE)]
-    a4[-1].place(relx=0.15,rely=0.65,height=25,relwidth=0.19)
+    a4[-1].place(relx=0.15,rely=0.65,relheight=iheight/nheight,relwidth=0.19)
     a4[-1].configure(textvariable=a4Val)
 
     a4.append(tk.Entry(fLiTE))
-    a4[-1].place(relx=0.35,rely=0.65,height=25,relwidth=0.19)
+    a4[-1].place(relx=0.35,rely=0.65,relheight=iheight/nheight,relwidth=0.19)
     a4[-1].configure(textvariable=a4Min)
 
     a4.append(tk.Entry(fLiTE))
-    a4[-1].place(relx=0.55,rely=0.65,height=25,relwidth=0.19)
+    a4[-1].place(relx=0.55,rely=0.65,relheight=iheight/nheight,relwidth=0.19)
     a4[-1].configure(textvariable=a4Max)
 
     a4.append(tk.Entry(fLiTE))
-    a4[-1].place(relx=0.75,rely=0.65,height=25,relwidth=0.19)
+    a4[-1].place(relx=0.75,rely=0.65,relheight=iheight/nheight,relwidth=0.19)
     a4[-1].configure(textvariable=a4Step)
 
     a4.append(tk.Checkbutton(fLiTE))
@@ -1837,19 +1877,19 @@ def params():
 
     #input objects for param e4
     e4=[tk.Entry(fLiTE)]
-    e4[-1].place(relx=0.15,rely=0.72,height=25,relwidth=0.19)
+    e4[-1].place(relx=0.15,rely=0.72,relheight=iheight/nheight,relwidth=0.19)
     e4[-1].configure(textvariable=e4Val)
 
     e4.append(tk.Entry(fLiTE))
-    e4[-1].place(relx=0.35,rely=0.72,height=25,relwidth=0.19)
+    e4[-1].place(relx=0.35,rely=0.72,relheight=iheight/nheight,relwidth=0.19)
     e4[-1].configure(textvariable=e4Min)
 
     e4.append(tk.Entry(fLiTE))
-    e4[-1].place(relx=0.55,rely=0.72,height=25,relwidth=0.19)
+    e4[-1].place(relx=0.55,rely=0.72,relheight=iheight/nheight,relwidth=0.19)
     e4[-1].configure(textvariable=e4Max)
 
     e4.append(tk.Entry(fLiTE))
-    e4[-1].place(relx=0.75,rely=0.72,height=25,relwidth=0.19)
+    e4[-1].place(relx=0.75,rely=0.72,relheight=iheight/nheight,relwidth=0.19)
     e4[-1].configure(textvariable=e4Step)
 
     e4.append(tk.Checkbutton(fLiTE))
@@ -1859,19 +1899,19 @@ def params():
 
     #input objects for param w4
     w4=[tk.Entry(fLiTE)]
-    w4[-1].place(relx=0.15,rely=0.79,height=25,relwidth=0.19)
+    w4[-1].place(relx=0.15,rely=0.79,relheight=iheight/nheight,relwidth=0.19)
     w4[-1].configure(textvariable=w4Val)
 
     w4.append(tk.Entry(fLiTE))
-    w4[-1].place(relx=0.35,rely=0.79,height=25,relwidth=0.19)
+    w4[-1].place(relx=0.35,rely=0.79,relheight=iheight/nheight,relwidth=0.19)
     w4[-1].configure(textvariable=w4Min)
 
     w4.append(tk.Entry(fLiTE))
-    w4[-1].place(relx=0.55,rely=0.79,height=25,relwidth=0.19)
+    w4[-1].place(relx=0.55,rely=0.79,relheight=iheight/nheight,relwidth=0.19)
     w4[-1].configure(textvariable=w4Max)
 
     w4.append(tk.Entry(fLiTE))
-    w4[-1].place(relx=0.75,rely=0.79,height=25,relwidth=0.19)
+    w4[-1].place(relx=0.75,rely=0.79,relheight=iheight/nheight,relwidth=0.19)
     w4[-1].configure(textvariable=w4Step)
 
     w4.append(tk.Checkbutton(fLiTE))
@@ -1881,19 +1921,19 @@ def params():
 
     #input objects for param t04
     t4=[tk.Entry(fLiTE)]
-    t4[-1].place(relx=0.15,rely=0.86,height=25,relwidth=0.19)
+    t4[-1].place(relx=0.15,rely=0.86,relheight=iheight/nheight,relwidth=0.19)
     t4[-1].configure(textvariable=t4Val)
 
     t4.append(tk.Entry(fLiTE))
-    t4[-1].place(relx=0.35,rely=0.86,height=25,relwidth=0.19)
+    t4[-1].place(relx=0.35,rely=0.86,relheight=iheight/nheight,relwidth=0.19)
     t4[-1].configure(textvariable=t4Min)
 
     t4.append(tk.Entry(fLiTE))
-    t4[-1].place(relx=0.55,rely=0.86,height=25,relwidth=0.19)
+    t4[-1].place(relx=0.55,rely=0.86,relheight=iheight/nheight,relwidth=0.19)
     t4[-1].configure(textvariable=t4Max)
 
     t4.append(tk.Entry(fLiTE))
-    t4[-1].place(relx=0.75,rely=0.86,height=25,relwidth=0.19)
+    t4[-1].place(relx=0.75,rely=0.86,relheight=iheight/nheight,relwidth=0.19)
     t4[-1].configure(textvariable=t4Step)
 
     t4.append(tk.Checkbutton(fLiTE))
@@ -1903,19 +1943,19 @@ def params():
 
     #input objects for param P4
     P4=[tk.Entry(fLiTE)]
-    P4[-1].place(relx=0.15,rely=0.93,height=25,relwidth=0.19)
+    P4[-1].place(relx=0.15,rely=0.93,relheight=iheight/nheight,relwidth=0.19)
     P4[-1].configure(textvariable=P4Val)
 
     P4.append(tk.Entry(fLiTE))
-    P4[-1].place(relx=0.35,rely=0.93,height=25,relwidth=0.19)
+    P4[-1].place(relx=0.35,rely=0.93,relheight=iheight/nheight,relwidth=0.19)
     P4[-1].configure(textvariable=P4Min)
 
     P4.append(tk.Entry(fLiTE))
-    P4[-1].place(relx=0.55,rely=0.93,height=25,relwidth=0.19)
+    P4[-1].place(relx=0.55,rely=0.93,relheight=iheight/nheight,relwidth=0.19)
     P4[-1].configure(textvariable=P4Max)
 
     P4.append(tk.Entry(fLiTE))
-    P4[-1].place(relx=0.75,rely=0.93,height=25,relwidth=0.19)
+    P4[-1].place(relx=0.75,rely=0.93,relheight=iheight/nheight,relwidth=0.19)
     P4[-1].configure(textvariable=P4Step)
 
     P4.append(tk.Checkbutton(fLiTE))
@@ -1932,110 +1972,115 @@ def params():
 
     #labels
     Label15=tk.Label(fIn)
-    Label15.place(relx=0.02,rely=0.03,height=18,width=47)
+    Label15.place(relx=0.02,rely=0.03,relheight=l2height/nheight,relwidth=0.12)
     Label15.configure(text='param.')
     Label15.configure(font=('None',9))
+    Label15.configure(anchor=tk.W)
 
     Label16=tk.Label(fIn)
-    Label16.place(relx=0.15,rely=0.03,height=18,width=36)
+    Label16.place(relx=0.15,rely=0.03,relheight=l2height/nheight,relwidth=0.19)
     Label16.configure(text='value')
     Label16.configure(font=('None',9))
+    Label16.configure(anchor=tk.W)
 
     Label17=tk.Label(fIn)
-    Label17.place(relx=0.35,rely=0.03,height=18,width=31)
+    Label17.place(relx=0.35,rely=0.03,relheight=l2height/nheight,relwidth=0.19)
     Label17.configure(text='min.')
     Label17.configure(font=('None',9))
+    Label17.configure(anchor=tk.W)
 
     Label18=tk.Label(fIn)
-    Label18.place(relx=0.55,rely=0.03,height=18,width=34)
+    Label18.place(relx=0.55,rely=0.03,relheight=l2height/nheight,relwidth=0.19)
     Label18.configure(text='max.')
     Label18.configure(font=('None',9))
+    Label18.configure(anchor=tk.W)
 
     Label19=tk.Label(fIn)
-    Label19.place(relx=0.75,rely=0.03,height=18,width=30)
+    Label19.place(relx=0.75,rely=0.03,relheight=l2height/nheight,relwidth=0.19)
     Label19.configure(text='step')
     Label19.configure(font=('None',9))
+    Label19.configure(anchor=tk.W)
 
     Label20=tk.Label(fIn)
-    Label20.place(relx=0.95,rely=0.03,height=18,width=16)
+    Label20.place(relx=0.95,rely=0.03,relheight=l2height/nheight,relwidth=0.04)
     Label20.configure(text='fit')
     Label20.configure(font=('None',9))
 
     Label2=tk.Label(fIn)
-    Label2.place(relx=0.02,rely=0.10,height=18,width=17)
+    Label2.place(relx=0.02,rely=0.10,relheight=l2height/nheight,relwidth=0.12)
     Label2.configure(text='t0')
     Label2.configure(anchor=tk.W)
     Label2.configure(font=('None',9))
 
     Label3=tk.Label(fIn)
-    Label3.place(relx=0.02,rely=0.17,height=18,width=11)
+    Label3.place(relx=0.02,rely=0.17,relheight=l2height/nheight,relwidth=0.12)
     Label3.configure(text='P')
     Label3.configure(anchor=tk.W)
     Label3.configure(font=('None',9))
 
     Label14=tk.Label(fIn)
-    Label14.place(relx=0.02,rely=0.24,height=18,width=11)
+    Label14.place(relx=0.02,rely=0.24,relheight=l2height/nheight,relwidth=0.12)
     Label14.configure(text='a')
     Label14.configure(anchor=tk.W)
     Label14.configure(font=('None',9))
 
     Label4=tk.Label(fIn)
-    Label4.place(relx=0.02,rely=0.31,height=18,width=11)
+    Label4.place(relx=0.02,rely=0.31,relheight=l2height/nheight,relwidth=0.12)
     Label4.configure(text='w')
     Label4.configure(anchor=tk.W)
     Label4.configure(font=('None',9))
 
     Label5=tk.Label(fIn)
-    Label5.place(relx=0.02,rely=0.38,height=18,width=11)
+    Label5.place(relx=0.02,rely=0.38,relheight=l2height/nheight,relwidth=0.12)
     Label5.configure(text='e')
     Label5.configure(anchor=tk.W)
     Label5.configure(font=('None',9))
 
     Label6=tk.Label(fIn)
-    Label6.place(relx=0.02,rely=0.45,height=18,width=35)
+    Label6.place(relx=0.02,rely=0.45,relheight=l2height/nheight,relwidth=0.12)
     Label6.configure(text='mu3')
     Label6.configure(anchor=tk.W)
     Label6.configure(font=('None',9))
 
     Label7=tk.Label(fIn)
-    Label7.place(relx=0.02,rely=0.52,height=18,width=19)
+    Label7.place(relx=0.02,rely=0.52,relheight=l2height/nheight,relwidth=0.12)
     Label7.configure(text='r3')
     Label7.configure(anchor=tk.W)
     Label7.configure(font=('None',9))
 
     Label8=tk.Label(fIn)
-    Label8.place(relx=0.02,rely=0.59,height=18,width=19)
+    Label8.place(relx=0.02,rely=0.59,relheight=l2height/nheight,relwidth=0.12)
     Label8.configure(text='w3')
     Label8.configure(anchor=tk.W)
     Label8.configure(font=('None',9))
 
     Label9=tk.Label(fIn)
-    Label9.place(relx=0.02,rely=0.66,height=18,width=25)
+    Label9.place(relx=0.02,rely=0.66,relheight=l2height/nheight,relwidth=0.12)
     Label9.configure(text='t03')
     Label9.configure(anchor=tk.W)
     Label9.configure(font=('None',9))
 
     Label10=tk.Label(fIn)
-    Label10.place(relx=0.02,rely=0.73,height=18,width=22)
+    Label10.place(relx=0.02,rely=0.73,relheight=l2height/nheight,relwidth=0.12)
     Label10.configure(text='P3')
     Label10.configure(anchor=tk.W)
     Label10.configure(font=('None',9))
 
     #input objects for param t0
     t0I=[tk.Entry(fIn)]
-    t0I[-1].place(relx=0.15,rely=0.09,height=25,relwidth=0.19)
+    t0I[-1].place(relx=0.15,rely=0.09,relheight=iheight/nheight,relwidth=0.19)
     t0I[-1].configure(textvariable=t0Val)
 
     t0I.append(tk.Entry(fIn))
-    t0I[-1].place(relx=0.35,rely=0.09,height=25,relwidth=0.19)
+    t0I[-1].place(relx=0.35,rely=0.09,relheight=iheight/nheight,relwidth=0.19)
     t0I[-1].configure(textvariable=t0Min)
 
     t0I.append(tk.Entry(fIn))
-    t0I[-1].place(relx=0.55,rely=0.09,height=25,relwidth=0.19)
+    t0I[-1].place(relx=0.55,rely=0.09,relheight=iheight/nheight,relwidth=0.19)
     t0I[-1].configure(textvariable=t0Max)
 
     t0I.append(tk.Entry(fIn))
-    t0I[-1].place(relx=0.75,rely=0.09,height=25,relwidth=0.19)
+    t0I[-1].place(relx=0.75,rely=0.09,relheight=iheight/nheight,relwidth=0.19)
     t0I[-1].configure(textvariable=t0Step)
 
     t0I.append(tk.Checkbutton(fIn))
@@ -2045,19 +2090,19 @@ def params():
 
     #input objects for param P
     PI=[tk.Entry(fIn)]
-    PI[-1].place(relx=0.15,rely=0.16,height=25,relwidth=0.19)
+    PI[-1].place(relx=0.15,rely=0.16,relheight=iheight/nheight,relwidth=0.19)
     PI[-1].configure(textvariable=PVal)
 
     PI.append(tk.Entry(fIn))
-    PI[-1].place(relx=0.35,rely=0.16,height=25,relwidth=0.19)
+    PI[-1].place(relx=0.35,rely=0.16,relheight=iheight/nheight,relwidth=0.19)
     PI[-1].configure(textvariable=PMin)
 
     PI.append(tk.Entry(fIn))
-    PI[-1].place(relx=0.55,rely=0.16,height=25,relwidth=0.19)
+    PI[-1].place(relx=0.55,rely=0.16,relheight=iheight/nheight,relwidth=0.19)
     PI[-1].configure(textvariable=PMax)
 
     PI.append(tk.Entry(fIn))
-    PI[-1].place(relx=0.75,rely=0.16,height=25,relwidth=0.19)
+    PI[-1].place(relx=0.75,rely=0.16,relheight=iheight/nheight,relwidth=0.19)
     PI[-1].configure(textvariable=PStep)
 
     PI.append(tk.Checkbutton(fIn))
@@ -2067,19 +2112,19 @@ def params():
 
     #input objects for param a
     aI=[tk.Entry(fIn)]
-    aI[-1].place(relx=0.15,rely=0.23,height=25,relwidth=0.19)
+    aI[-1].place(relx=0.15,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
     aI[-1].configure(textvariable=aVal)
 
     aI.append(tk.Entry(fIn))
-    aI[-1].place(relx=0.35,rely=0.23,height=25,relwidth=0.19)
+    aI[-1].place(relx=0.35,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
     aI[-1].configure(textvariable=aMin)
 
     aI.append(tk.Entry(fIn))
-    aI[-1].place(relx=0.55,rely=0.23,height=25,relwidth=0.19)
+    aI[-1].place(relx=0.55,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
     aI[-1].configure(textvariable=aMax)
 
     aI.append(tk.Entry(fIn))
-    aI[-1].place(relx=0.75,rely=0.23,height=25,relwidth=0.19)
+    aI[-1].place(relx=0.75,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
     aI[-1].configure(textvariable=aStep)
 
     aI.append(tk.Checkbutton(fIn))
@@ -2089,19 +2134,19 @@ def params():
 
     #input objects for param w
     wI=[tk.Entry(fIn)]
-    wI[-1].place(relx=0.15,rely=0.30,height=25,relwidth=0.19)
+    wI[-1].place(relx=0.15,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
     wI[-1].configure(textvariable=wVal)
 
     wI.append(tk.Entry(fIn))
-    wI[-1].place(relx=0.35,rely=0.30,height=25,relwidth=0.19)
+    wI[-1].place(relx=0.35,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
     wI[-1].configure(textvariable=wMin)
 
     wI.append(tk.Entry(fIn))
-    wI[-1].place(relx=0.55,rely=0.30,height=25,relwidth=0.19)
+    wI[-1].place(relx=0.55,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
     wI[-1].configure(textvariable=wMax)
 
     wI.append(tk.Entry(fIn))
-    wI[-1].place(relx=0.75,rely=0.30,height=25,relwidth=0.19)
+    wI[-1].place(relx=0.75,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
     wI[-1].configure(textvariable=wStep)
 
     wI.append(tk.Checkbutton(fIn))
@@ -2111,19 +2156,19 @@ def params():
 
     #input objects for param e
     eI=[tk.Entry(fIn)]
-    eI[-1].place(relx=0.15,rely=0.37,height=25,relwidth=0.19)
+    eI[-1].place(relx=0.15,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
     eI[-1].configure(textvariable=eVal)
 
     eI.append(tk.Entry(fIn))
-    eI[-1].place(relx=0.35,rely=0.37,height=25,relwidth=0.19)
+    eI[-1].place(relx=0.35,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
     eI[-1].configure(textvariable=eMin)
 
     eI.append(tk.Entry(fIn))
-    eI[-1].place(relx=0.55,rely=0.37,height=25,relwidth=0.19)
+    eI[-1].place(relx=0.55,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
     eI[-1].configure(textvariable=eMax)
 
     eI.append(tk.Entry(fIn))
-    eI[-1].place(relx=0.75,rely=0.37,height=25,relwidth=0.19)
+    eI[-1].place(relx=0.75,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
     eI[-1].configure(textvariable=eStep)
 
     eI.append(tk.Checkbutton(fIn))
@@ -2133,19 +2178,19 @@ def params():
 
     #input objects for param mu3
     mu3I=[tk.Entry(fIn)]
-    mu3I[-1].place(relx=0.15,rely=0.44,height=25,relwidth=0.19)
+    mu3I[-1].place(relx=0.15,rely=0.44,relheight=iheight/nheight,relwidth=0.19)
     mu3I[-1].configure(textvariable=mu3Val)
 
     mu3I.append(tk.Entry(fIn))
-    mu3I[-1].place(relx=0.35,rely=0.44,height=25,relwidth=0.19)
+    mu3I[-1].place(relx=0.35,rely=0.44,relheight=iheight/nheight,relwidth=0.19)
     mu3I[-1].configure(textvariable=mu3Min)
 
     mu3I.append(tk.Entry(fIn))
-    mu3I[-1].place(relx=0.55,rely=0.44,height=25,relwidth=0.19)
+    mu3I[-1].place(relx=0.55,rely=0.44,relheight=iheight/nheight,relwidth=0.19)
     mu3I[-1].configure(textvariable=mu3Max)
 
     mu3I.append(tk.Entry(fIn))
-    mu3I[-1].place(relx=0.75,rely=0.44,height=25,relwidth=0.19)
+    mu3I[-1].place(relx=0.75,rely=0.44,relheight=iheight/nheight,relwidth=0.19)
     mu3I[-1].configure(textvariable=mu3Step)
 
     mu3I.append(tk.Checkbutton(fIn))
@@ -2155,19 +2200,19 @@ def params():
 
     #input objects for param r3
     r3I=[tk.Entry(fIn)]
-    r3I[-1].place(relx=0.15,rely=0.51,height=25,relwidth=0.19)
+    r3I[-1].place(relx=0.15,rely=0.51,relheight=iheight/nheight,relwidth=0.19)
     r3I[-1].configure(textvariable=r3Val)
 
     r3I.append(tk.Entry(fIn))
-    r3I[-1].place(relx=0.35,rely=0.51,height=25,relwidth=0.19)
+    r3I[-1].place(relx=0.35,rely=0.51,relheight=iheight/nheight,relwidth=0.19)
     r3I[-1].configure(textvariable=r3Min)
 
     r3I.append(tk.Entry(fIn))
-    r3I[-1].place(relx=0.55,rely=0.51,height=25,relwidth=0.19)
+    r3I[-1].place(relx=0.55,rely=0.51,relheight=iheight/nheight,relwidth=0.19)
     r3I[-1].configure(textvariable=r3Max)
 
     r3I.append(tk.Entry(fIn))
-    r3I[-1].place(relx=0.75,rely=0.51,height=25,relwidth=0.19)
+    r3I[-1].place(relx=0.75,rely=0.51,relheight=iheight/nheight,relwidth=0.19)
     r3I[-1].configure(textvariable=r3Step)
 
     r3I.append(tk.Checkbutton(fIn))
@@ -2177,19 +2222,19 @@ def params():
 
     #input objects for param w3
     w3I=[tk.Entry(fIn)]
-    w3I[-1].place(relx=0.15,rely=0.58,height=25,relwidth=0.19)
+    w3I[-1].place(relx=0.15,rely=0.58,relheight=iheight/nheight,relwidth=0.19)
     w3I[-1].configure(textvariable=w3Val)
 
     w3I.append(tk.Entry(fIn))
-    w3I[-1].place(relx=0.35,rely=0.58,height=25,relwidth=0.19)
+    w3I[-1].place(relx=0.35,rely=0.58,relheight=iheight/nheight,relwidth=0.19)
     w3I[-1].configure(textvariable=w3Min)
 
     w3I.append(tk.Entry(fIn))
-    w3I[-1].place(relx=0.55,rely=0.58,height=25,relwidth=0.19)
+    w3I[-1].place(relx=0.55,rely=0.58,relheight=iheight/nheight,relwidth=0.19)
     w3I[-1].configure(textvariable=w3Max)
 
     w3I.append(tk.Entry(fIn))
-    w3I[-1].place(relx=0.75,rely=0.58,height=25,relwidth=0.19)
+    w3I[-1].place(relx=0.75,rely=0.58,relheight=iheight/nheight,relwidth=0.19)
     w3I[-1].configure(textvariable=w3Step)
 
     w3I.append(tk.Checkbutton(fIn))
@@ -2199,19 +2244,19 @@ def params():
 
     #input objects for param t03
     t3I=[tk.Entry(fIn)]
-    t3I[-1].place(relx=0.15,rely=0.65,height=25,relwidth=0.19)
+    t3I[-1].place(relx=0.15,rely=0.65,relheight=iheight/nheight,relwidth=0.19)
     t3I[-1].configure(textvariable=t3Val)
 
     t3I.append(tk.Entry(fIn))
-    t3I[-1].place(relx=0.35,rely=0.65,height=25,relwidth=0.19)
+    t3I[-1].place(relx=0.35,rely=0.65,relheight=iheight/nheight,relwidth=0.19)
     t3I[-1].configure(textvariable=t3Min)
 
     t3I.append(tk.Entry(fIn))
-    t3I[-1].place(relx=0.55,rely=0.65,height=25,relwidth=0.19)
+    t3I[-1].place(relx=0.55,rely=0.65,relheight=iheight/nheight,relwidth=0.19)
     t3I[-1].configure(textvariable=t3Max)
 
     t3I.append(tk.Entry(fIn))
-    t3I[-1].place(relx=0.75,rely=0.65,height=25,relwidth=0.19)
+    t3I[-1].place(relx=0.75,rely=0.65,relheight=iheight/nheight,relwidth=0.19)
     t3I[-1].configure(textvariable=t3Step)
 
     t3I.append(tk.Checkbutton(fIn))
@@ -2221,19 +2266,19 @@ def params():
 
     #input objects for param P3
     P3I=[tk.Entry(fIn)]
-    P3I[-1].place(relx=0.15,rely=0.72,height=25,relwidth=0.19)
+    P3I[-1].place(relx=0.15,rely=0.72,relheight=iheight/nheight,relwidth=0.19)
     P3I[-1].configure(textvariable=P3Val)
 
     P3I.append(tk.Entry(fIn))
-    P3I[-1].place(relx=0.35,rely=0.72,height=25,relwidth=0.19)
+    P3I[-1].place(relx=0.35,rely=0.72,relheight=iheight/nheight,relwidth=0.19)
     P3I[-1].configure(textvariable=P3Min)
 
     P3I.append(tk.Entry(fIn))
-    P3I[-1].place(relx=0.55,rely=0.72,height=25,relwidth=0.19)
+    P3I[-1].place(relx=0.55,rely=0.72,relheight=iheight/nheight,relwidth=0.19)
     P3I[-1].configure(textvariable=P3Max)
 
     P3I.append(tk.Entry(fIn))
-    P3I[-1].place(relx=0.75,rely=0.72,height=25,relwidth=0.19)
+    P3I[-1].place(relx=0.75,rely=0.72,relheight=iheight/nheight,relwidth=0.19)
     P3I[-1].configure(textvariable=P3Step)
 
     P3I.append(tk.Checkbutton(fIn))
@@ -2250,85 +2295,90 @@ def params():
 
     #labels
     Label15=tk.Label(fEx)
-    Label15.place(relx=0.02,rely=0.03,height=18,width=47)
+    Label15.place(relx=0.02,rely=0.03,relheight=l2height/nheight,relwidth=0.12)
     Label15.configure(text='param.')
     Label15.configure(font=('None',9))
+    Label15.configure(anchor=tk.W)
 
     Label16=tk.Label(fEx)
-    Label16.place(relx=0.15,rely=0.03,height=18,width=36)
+    Label16.place(relx=0.15,rely=0.03,relheight=l2height/nheight,relwidth=0.19)
     Label16.configure(text='value')
     Label16.configure(font=('None',9))
+    Label16.configure(anchor=tk.W)
 
     Label17=tk.Label(fEx)
-    Label17.place(relx=0.35,rely=0.03,height=18,width=31)
+    Label17.place(relx=0.35,rely=0.03,relheight=l2height/nheight,relwidth=0.19)
     Label17.configure(text='min.')
     Label17.configure(font=('None',9))
+    Label17.configure(anchor=tk.W)
 
     Label18=tk.Label(fEx)
-    Label18.place(relx=0.55,rely=0.03,height=18,width=34)
+    Label18.place(relx=0.55,rely=0.03,relheight=l2height/nheight,relwidth=0.19)
     Label18.configure(text='max.')
     Label18.configure(font=('None',9))
+    Label18.configure(anchor=tk.W)
 
     Label19=tk.Label(fEx)
-    Label19.place(relx=0.75,rely=0.03,height=18,width=30)
+    Label19.place(relx=0.75,rely=0.03,relheight=l2height/nheight,relwidth=0.19)
     Label19.configure(text='step')
     Label19.configure(font=('None',9))
+    Label19.configure(anchor=tk.W)
 
     Label20=tk.Label(fEx)
-    Label20.place(relx=0.95,rely=0.03,height=18,width=16)
+    Label20.place(relx=0.95,rely=0.03,relheight=l2height/nheight,relwidth=0.04)
     Label20.configure(text='fit')
     Label20.configure(font=('None',9))
 
     Label2=tk.Label(fEx)
-    Label2.place(relx=0.02,rely=0.10,height=18,width=17)
+    Label2.place(relx=0.02,rely=0.10,relheight=l2height/nheight,relwidth=0.12)
     Label2.configure(text='t0')
     Label2.configure(anchor=tk.W)
 
     Label3=tk.Label(fEx)
-    Label3.place(relx=0.02,rely=0.17,height=18,width=11)
+    Label3.place(relx=0.02,rely=0.17,relheight=l2height/nheight,relwidth=0.12)
     Label3.configure(text='P')
     Label3.configure(anchor=tk.W)
     Label3.configure(font=('None',9))
 
     Label14=tk.Label(fEx)
-    Label14.place(relx=0.02,rely=0.24,height=18,width=30)
+    Label14.place(relx=0.02,rely=0.24,relheight=l2height/nheight,relwidth=0.12)
     Label14.configure(text='mu3')
     Label14.configure(anchor=tk.W)
     Label14.configure(font=('None',9))
 
     Label4=tk.Label(fEx)
-    Label4.place(relx=0.02,rely=0.31,height=18,width=25)
+    Label4.place(relx=0.02,rely=0.31,relheight=l2height/nheight,relwidth=0.12)
     Label4.configure(text='e3')
     Label4.configure(anchor=tk.W)
     Label4.configure(font=('None',9))
 
     Label5=tk.Label(fEx)
-    Label5.place(relx=0.02,rely=0.38,height=18,width=30)
+    Label5.place(relx=0.02,rely=0.38,relheight=l2height/nheight,relwidth=0.12)
     Label5.configure(text='t03')
     Label5.configure(anchor=tk.W)
     Label5.configure(font=('None',9))
 
     Label6=tk.Label(fEx)
-    Label6.place(relx=0.02,rely=0.45,height=18,width=35)
+    Label6.place(relx=0.02,rely=0.45,relheight=l2height/nheight,relwidth=0.12)
     Label6.configure(text='P3')
     Label6.configure(anchor=tk.W)
     Label6.configure(font=('None',9))
 
     #input objects for param t0
     t0E=[tk.Entry(fEx)]
-    t0E[-1].place(relx=0.15,rely=0.09,height=25,relwidth=0.19)
+    t0E[-1].place(relx=0.15,rely=0.09,relheight=iheight/nheight,relwidth=0.19)
     t0E[-1].configure(textvariable=t0Val)
 
     t0E.append(tk.Entry(fEx))
-    t0E[-1].place(relx=0.35,rely=0.09,height=25,relwidth=0.19)
+    t0E[-1].place(relx=0.35,rely=0.09,relheight=iheight/nheight,relwidth=0.19)
     t0E[-1].configure(textvariable=t0Min)
 
     t0E.append(tk.Entry(fEx))
-    t0E[-1].place(relx=0.55,rely=0.09,height=25,relwidth=0.19)
+    t0E[-1].place(relx=0.55,rely=0.09,relheight=iheight/nheight,relwidth=0.19)
     t0E[-1].configure(textvariable=t0Max)
 
     t0E.append(tk.Entry(fEx))
-    t0E[-1].place(relx=0.75,rely=0.09,height=25,relwidth=0.19)
+    t0E[-1].place(relx=0.75,rely=0.09,relheight=iheight/nheight,relwidth=0.19)
     t0E[-1].configure(textvariable=t0Step)
 
     t0E.append(tk.Checkbutton(fEx))
@@ -2338,19 +2388,19 @@ def params():
 
     #input objects for param P
     PE=[tk.Entry(fEx)]
-    PE[-1].place(relx=0.15,rely=0.16,height=25,relwidth=0.19)
+    PE[-1].place(relx=0.15,rely=0.16,relheight=iheight/nheight,relwidth=0.19)
     PE[-1].configure(textvariable=PVal)
 
     PE.append(tk.Entry(fEx))
-    PE[-1].place(relx=0.35,rely=0.16,height=25,relwidth=0.19)
+    PE[-1].place(relx=0.35,rely=0.16,relheight=iheight/nheight,relwidth=0.19)
     PE[-1].configure(textvariable=PMin)
 
     PE.append(tk.Entry(fEx))
-    PE[-1].place(relx=0.55,rely=0.16,height=25,relwidth=0.19)
+    PE[-1].place(relx=0.55,rely=0.16,relheight=iheight/nheight,relwidth=0.19)
     PE[-1].configure(textvariable=PMax)
 
     PE.append(tk.Entry(fEx))
-    PE[-1].place(relx=0.75,rely=0.16,height=25,relwidth=0.19)
+    PE[-1].place(relx=0.75,rely=0.16,relheight=iheight/nheight,relwidth=0.19)
     PE[-1].configure(textvariable=PStep)
 
     PE.append(tk.Checkbutton(fEx))
@@ -2360,19 +2410,19 @@ def params():
 
     #input objects for param mu3
     mu3E=[tk.Entry(fEx)]
-    mu3E[-1].place(relx=0.15,rely=0.23,height=25,relwidth=0.19)
+    mu3E[-1].place(relx=0.15,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
     mu3E[-1].configure(textvariable=mu3Val)
 
     mu3E.append(tk.Entry(fEx))
-    mu3E[-1].place(relx=0.35,rely=0.23,height=25,relwidth=0.19)
+    mu3E[-1].place(relx=0.35,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
     mu3E[-1].configure(textvariable=mu3Min)
 
     mu3E.append(tk.Entry(fEx))
-    mu3E[-1].place(relx=0.55,rely=0.23,height=25,relwidth=0.19)
+    mu3E[-1].place(relx=0.55,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
     mu3E[-1].configure(textvariable=mu3Max)
 
     mu3E.append(tk.Entry(fEx))
-    mu3E[-1].place(relx=0.75,rely=0.23,height=25,relwidth=0.19)
+    mu3E[-1].place(relx=0.75,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
     mu3E[-1].configure(textvariable=mu3Step)
 
     mu3E.append(tk.Checkbutton(fEx))
@@ -2382,19 +2432,19 @@ def params():
 
     #input objects for param e3
     e3E=[tk.Entry(fEx)]
-    e3E[-1].place(relx=0.15,rely=0.30,height=25,relwidth=0.19)
+    e3E[-1].place(relx=0.15,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
     e3E[-1].configure(textvariable=e3Val)
 
     e3E.append(tk.Entry(fEx))
-    e3E[-1].place(relx=0.35,rely=0.30,height=25,relwidth=0.19)
+    e3E[-1].place(relx=0.35,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
     e3E[-1].configure(textvariable=e3Min)
 
     e3E.append(tk.Entry(fEx))
-    e3E[-1].place(relx=0.55,rely=0.30,height=25,relwidth=0.19)
+    e3E[-1].place(relx=0.55,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
     e3E[-1].configure(textvariable=e3Max)
 
     e3E.append(tk.Entry(fEx))
-    e3E[-1].place(relx=0.75,rely=0.30,height=25,relwidth=0.19)
+    e3E[-1].place(relx=0.75,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
     e3E[-1].configure(textvariable=e3Step)
 
     e3E.append(tk.Checkbutton(fEx))
@@ -2404,19 +2454,19 @@ def params():
 
     #input objects for param t03
     t3E=[tk.Entry(fEx)]
-    t3E[-1].place(relx=0.15,rely=0.37,height=25,relwidth=0.19)
+    t3E[-1].place(relx=0.15,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
     t3E[-1].configure(textvariable=t3Val)
 
     t3E.append(tk.Entry(fEx))
-    t3E[-1].place(relx=0.35,rely=0.37,height=25,relwidth=0.19)
+    t3E[-1].place(relx=0.35,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
     t3E[-1].configure(textvariable=t3Min)
 
     t3E.append(tk.Entry(fEx))
-    t3E[-1].place(relx=0.55,rely=0.37,height=25,relwidth=0.19)
+    t3E[-1].place(relx=0.55,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
     t3E[-1].configure(textvariable=t3Max)
 
     t3E.append(tk.Entry(fEx))
-    t3E[-1].place(relx=0.75,rely=0.37,height=25,relwidth=0.19)
+    t3E[-1].place(relx=0.75,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
     t3E[-1].configure(textvariable=t3Step)
 
     t3E.append(tk.Checkbutton(fEx))
@@ -2426,19 +2476,19 @@ def params():
 
     #input objects for param P3
     P3E=[tk.Entry(fEx)]
-    P3E[-1].place(relx=0.15,rely=0.44,height=25,relwidth=0.19)
+    P3E[-1].place(relx=0.15,rely=0.44,relheight=iheight/nheight,relwidth=0.19)
     P3E[-1].configure(textvariable=P3Val)
 
     P3E.append(tk.Entry(fEx))
-    P3E[-1].place(relx=0.35,rely=0.44,height=25,relwidth=0.19)
+    P3E[-1].place(relx=0.35,rely=0.44,relheight=iheight/nheight,relwidth=0.19)
     P3E[-1].configure(textvariable=P3Min)
 
     P3E.append(tk.Entry(fEx))
-    P3E[-1].place(relx=0.55,rely=0.44,height=25,relwidth=0.19)
+    P3E[-1].place(relx=0.55,rely=0.44,relheight=iheight/nheight,relwidth=0.19)
     P3E[-1].configure(textvariable=P3Max)
 
     P3E.append(tk.Entry(fEx))
-    P3E[-1].place(relx=0.75,rely=0.44,height=25,relwidth=0.19)
+    P3E[-1].place(relx=0.75,rely=0.44,relheight=iheight/nheight,relwidth=0.19)
     P3E[-1].configure(textvariable=P3Step)
 
     P3E.append(tk.Checkbutton(fEx))
@@ -2455,80 +2505,85 @@ def params():
 
     #labels
     Label15=tk.Label(fAps)
-    Label15.place(relx=0.02,rely=0.03,height=18,width=47)
+    Label15.place(relx=0.02,rely=0.03,relheight=l2height/nheight,relwidth=0.12)
     Label15.configure(text='param.')
     Label15.configure(font=('None',9))
+    Label15.configure(anchor=tk.W)
 
     Label16=tk.Label(fAps)
-    Label16.place(relx=0.15,rely=0.03,height=18,width=36)
+    Label16.place(relx=0.15,rely=0.03,relheight=l2height/nheight,relwidth=0.19)
     Label16.configure(text='value')
     Label16.configure(font=('None',9))
+    Label16.configure(anchor=tk.W)
 
     Label17=tk.Label(fAps)
-    Label17.place(relx=0.35,rely=0.03,height=18,width=31)
+    Label17.place(relx=0.35,rely=0.03,relheight=l2height/nheight,relwidth=0.19)
     Label17.configure(text='min.')
     Label17.configure(font=('None',9))
+    Label17.configure(anchor=tk.W)
 
     Label18=tk.Label(fAps)
-    Label18.place(relx=0.55,rely=0.03,height=18,width=34)
+    Label18.place(relx=0.55,rely=0.03,relheight=l2height/nheight,relwidth=0.19)
     Label18.configure(text='max.')
     Label18.configure(font=('None',9))
+    Label18.configure(anchor=tk.W)
 
     Label19=tk.Label(fAps)
-    Label19.place(relx=0.75,rely=0.03,height=18,width=30)
+    Label19.place(relx=0.75,rely=0.03,relheight=l2height/nheight,relwidth=0.19)
     Label19.configure(text='step')
     Label19.configure(font=('None',9))
+    Label19.configure(anchor=tk.W)
 
     Label20=tk.Label(fAps)
-    Label20.place(relx=0.95,rely=0.03,height=18,width=16)
+    Label20.place(relx=0.95,rely=0.03,relheight=l2height/nheight,relwidth=0.04)
     Label20.configure(text='fit')
     Label20.configure(font=('None',9))
 
     Label2=tk.Label(fAps)
-    Label2.place(relx=0.02,rely=0.10,height=18,width=17)
+    Label2.place(relx=0.02,rely=0.10,relheight=l2height/nheight,relwidth=0.12)
     Label2.configure(text='t0')
     Label2.configure(font=('None',9))
     Label2.configure(anchor=tk.W)
 
     Label3=tk.Label(fAps)
-    Label3.place(relx=0.02,rely=0.17,height=18,width=11)
+    Label3.place(relx=0.02,rely=0.17,relheight=l2height/nheight,relwidth=0.12)
     Label3.configure(text='P')
     Label3.configure(font=('None',9))
     Label3.configure(anchor=tk.W)
 
     Label14=tk.Label(fAps)
-    Label14.place(relx=0.02,rely=0.24,height=18,width=25)
+    Label14.place(relx=0.02,rely=0.24,relheight=l2height/nheight,relwidth=0.12)
     Label14.configure(text='w0')
     Label14.configure(font=('None',9))
     Label14.configure(anchor=tk.W)
 
     Label4=tk.Label(fAps)
-    Label4.place(relx=0.02,rely=0.31,height=18,width=25)
+    Label4.place(relx=0.02,rely=0.31,relheight=l2height/nheight,relwidth=0.12)
     Label4.configure(text='dw')
     Label4.configure(font=('None',9))
     Label4.configure(anchor=tk.W)
 
     Label5=tk.Label(fAps)
-    Label5.place(relx=0.02,rely=0.38,height=18,width=11)
+    Label5.place(relx=0.02,rely=0.38,relheight=l2height/nheight,relwidth=0.12)
     Label5.configure(text='e')
     Label5.configure(font=('None',9))
     Label5.configure(anchor=tk.W)
 
     #input objects for param t0
     t0A=[tk.Entry(fAps)]
-    t0A[-1].place(relx=0.15,rely=0.09,height=25,relwidth=0.19)
+    t0A[-1].place(relx=0.15,rely=0.09,relheight=iheight/nheight,relwidth=0.19)
     t0A[-1].configure(textvariable=t0Val)
 
     t0A.append(tk.Entry(fAps))
-    t0A[-1].place(relx=0.35,rely=0.09,height=25,relwidth=0.19)
+    t0A[-1].place(relx=0.35,rely=0.09,relheight=iheight/nheight,relwidth=0.19)
     t0A[-1].configure(textvariable=t0Min)
 
     t0A.append(tk.Entry(fAps))
-    t0A[-1].place(relx=0.55,rely=0.09,height=25,relwidth=0.19)
+    t0A[-1].place(relx=0.55,rely=0.09,relheight=iheight/nheight,relwidth=0.19)
     t0A[-1].configure(textvariable=t0Max)
 
     t0A.append(tk.Entry(fAps))
-    t0A[-1].place(relx=0.75,rely=0.09,height=25,relwidth=0.19)
+    t0A[-1].place(relx=0.75,rely=0.09,relheight=iheight/nheight,relwidth=0.19)
     t0A[-1].configure(textvariable=t0Step)
 
     t0A.append(tk.Checkbutton(fAps))
@@ -2538,19 +2593,19 @@ def params():
 
     #input objects for param P
     PA=[tk.Entry(fAps)]
-    PA[-1].place(relx=0.15,rely=0.16,height=25,relwidth=0.19)
+    PA[-1].place(relx=0.15,rely=0.16,relheight=iheight/nheight,relwidth=0.19)
     PA[-1].configure(textvariable=PVal)
 
     PA.append(tk.Entry(fAps))
-    PA[-1].place(relx=0.35,rely=0.16,height=25,relwidth=0.19)
+    PA[-1].place(relx=0.35,rely=0.16,relheight=iheight/nheight,relwidth=0.19)
     PA[-1].configure(textvariable=PMin)
 
     PA.append(tk.Entry(fAps))
-    PA[-1].place(relx=0.55,rely=0.16,height=25,relwidth=0.19)
+    PA[-1].place(relx=0.55,rely=0.16,relheight=iheight/nheight,relwidth=0.19)
     PA[-1].configure(textvariable=PMax)
 
     P.append(tk.Entry(fAps))
-    P[-1].place(relx=0.75,rely=0.16,height=25,relwidth=0.19)
+    P[-1].place(relx=0.75,rely=0.16,relheight=iheight/nheight,relwidth=0.19)
     P[-1].configure(textvariable=PStep)
 
     PA.append(tk.Checkbutton(fAps))
@@ -2560,19 +2615,19 @@ def params():
 
     #input objects for param w0
     w0A=[tk.Entry(fAps)]
-    w0A[-1].place(relx=0.15,rely=0.23,height=25,relwidth=0.19)
+    w0A[-1].place(relx=0.15,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
     w0A[-1].configure(textvariable=w0Val)
 
     w0A.append(tk.Entry(fAps))
-    w0A[-1].place(relx=0.35,rely=0.23,height=25,relwidth=0.19)
+    w0A[-1].place(relx=0.35,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
     w0A[-1].configure(textvariable=w0Min)
 
     w0A.append(tk.Entry(fAps))
-    w0A[-1].place(relx=0.55,rely=0.23,height=25,relwidth=0.19)
+    w0A[-1].place(relx=0.55,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
     w0A[-1].configure(textvariable=w0Max)
 
     w0A.append(tk.Entry(fAps))
-    w0A[-1].place(relx=0.75,rely=0.23,height=25,relwidth=0.19)
+    w0A[-1].place(relx=0.75,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
     w0A[-1].configure(textvariable=w0Step)
 
     w0A.append(tk.Checkbutton(fAps))
@@ -2582,19 +2637,19 @@ def params():
 
     #input objects for param dw
     dwA=[tk.Entry(fAps)]
-    dwA[-1].place(relx=0.15,rely=0.30,height=25,relwidth=0.19)
+    dwA[-1].place(relx=0.15,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
     dwA[-1].configure(textvariable=dwVal)
 
     dwA.append(tk.Entry(fAps))
-    dwA[-1].place(relx=0.35,rely=0.30,height=25,relwidth=0.19)
+    dwA[-1].place(relx=0.35,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
     dwA[-1].configure(textvariable=dwMin)
 
     dwA.append(tk.Entry(fAps))
-    dwA[-1].place(relx=0.55,rely=0.30,height=25,relwidth=0.19)
+    dwA[-1].place(relx=0.55,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
     dwA[-1].configure(textvariable=dwMax)
 
     dwA.append(tk.Entry(fAps))
-    dwA[-1].place(relx=0.75,rely=0.30,height=25,relwidth=0.19)
+    dwA[-1].place(relx=0.75,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
     dwA[-1].configure(textvariable=dwStep)
 
     dwA.append(tk.Checkbutton(fAps))
@@ -2604,19 +2659,19 @@ def params():
 
     #input objects for param e
     eA=[tk.Entry(fAps)]
-    eA[-1].place(relx=0.15,rely=0.37,height=25,relwidth=0.19)
+    eA[-1].place(relx=0.15,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
     eA[-1].configure(textvariable=eVal)
 
     eA.append(tk.Entry(fAps))
-    eA[-1].place(relx=0.35,rely=0.37,height=25,relwidth=0.19)
+    eA[-1].place(relx=0.35,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
     eA[-1].configure(textvariable=eMin)
 
     eA.append(tk.Entry(fAps))
-    eA[-1].place(relx=0.55,rely=0.37,height=25,relwidth=0.19)
+    eA[-1].place(relx=0.55,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
     eA[-1].configure(textvariable=eMax)
 
     eA.append(tk.Entry(fAps))
-    eA[-1].place(relx=0.75,rely=0.37,height=25,relwidth=0.19)
+    eA[-1].place(relx=0.75,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
     eA[-1].configure(textvariable=eStep)
 
     eA.append(tk.Checkbutton(fAps))
@@ -2627,7 +2682,7 @@ def params():
 
     #button - save params
     bOk=tk.Button(tParams)
-    bOk.place(relx=0.39,rely=0.94,height=26,width=133)
+    bOk.place(relx=0.39,rely=0.94,relheight=b1height/theight,relwidth=b4width/twidth)
     bOk.configure(command=ok)
     bOk.configure(text='OK')
 
@@ -2762,7 +2817,14 @@ def summary(f=None):
 
     #create new window
     sumW=tk.Toplevel(master)
-    sumW.geometry('750x650')
+    #default scale of window - NOT change this values if you want to change size
+    twidth=750
+    theight=650
+    if fixed:
+        sumW.geometry(str(twidth)+'x'+str(theight))   #modif. this line to change size - e.g. master.geometry('400x500')
+    else:
+        #set relatively to screen size
+        sumW.geometry('{}x{}'.format(int(twidth/mwidth*screenwidth), int(theight/mheight*screenheight)))
     sumW.title('Summary')
 
     #text field
@@ -2785,13 +2847,12 @@ ga={}
 mc={}
 save=0
 
-# %% main window
-
 #main window
 master=tk.Tk()
 #default scale of window - NOT change this values if you want to change size
 mwidth=329
 mheight=492
+
 fixed=True   #fixed size to default
 
 if fixed:
@@ -2819,14 +2880,7 @@ b3width=90
 b4width=135
 b5width=100
 b6width=80
-lwidth=47
-l2width=86
 rwidth=75
-
-
-#font=tkFont.nametofont("TkDefaultFont")
-#font.configure(size=9)
-#master.option_add("*Font",font)
 
 style=tkinter.ttk.Style()
 
@@ -2854,13 +2908,13 @@ Frame1.configure(width=295)
 
 #labels
 Label1=tk.Label(Frame1)
-Label1.place(relx=0.07,rely=0.2,relheight=lheight/f1height,relwidth=lwidth/f1width)
+Label1.place(relx=0.07,rely=0.2,relheight=lheight/f1height,relwidth=0.15)
 Label1.configure(anchor=tk.W)
 Label1.configure(text='T0')
 Label1.configure(font=('None',9))
 
 Label2=tk.Label(Frame1)
-Label2.place(relx=0.07,rely=0.53,relheight=lheight/f1height,relwidth=lwidth/f1width)
+Label2.place(relx=0.07,rely=0.53,relheight=lheight/f1height,relwidth=0.15)
 Label2.configure(anchor=tk.W)
 Label2.configure(justify=tk.LEFT)
 Label2.configure(text='P')
