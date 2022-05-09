@@ -81,7 +81,7 @@ def load():
         #reading data
         for l in lines[header:]:
             #remove blank lines or comments
-            if len(l)==0: continue
+            if len(l.strip())==0: continue
             if l[0]=='#': continue
 
             if len(delimiter)==0: tmp=[x.strip() for x in l.split()]
