@@ -27,15 +27,15 @@ except:
         import matplotlib.pyplot as mpl
 
 from matplotlib import gridspec
-mpl.style.use('classic')
+#mpl.style.use('classic')
 
 import numpy as np
 
 try: import emcee
-except: warnings.warn('Module emcee not found! Using FitMC will not be possible!')
+except ModuleNotFoundError: warnings.warn('Module emcee not found! Using FitMC will not be possible!')
 
 try: import pymc
-except: warnings.warn('Module pymc not found! Using FitMC_old will not be possible!')
+except ModuleNotFoundError: warnings.warn('Module pymc not found! Using FitMC_old will not be possible!')
 
 from .ga import TPopul
 from .info_ga import InfoGA as InfoGAClass
@@ -1374,7 +1374,7 @@ class OCFit(ComplexFit):
             #add fixed parameters
             if not x in param: param[x]=self.params[x]
         model=self.Model(param=param)   #calculate model
-        return sum(((model-self.oc)/self.err)**2)
+        return np.sum(((model-self.oc)/self.err)**2)
 
     def FitGA(self,generation,size,mut=0.5,SP=2,plot_graph=False,visible=True,
               n_thread=1,db=None):

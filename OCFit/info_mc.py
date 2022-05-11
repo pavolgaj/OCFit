@@ -1,61 +1,85 @@
 # -*- coding: utf-8 -*-
 
-#class for statistics about GA fitting
+#class for statistics about MC fitting from emcee package
 #version 0.2.1
-#update: 2021...
-# (c) Pavol Gajdos, 2018-2021
+#update: 11.5.2022
+# (c) Pavol Gajdos, 2018-2022
 
 import gc #cleaning var from RAM
-
-from PyAstronomy.funcFit import TraceAnalysis
 
 import warnings
 
 try: import emcee
-except: warnings.warn('Module emcee not found! Using FitMC will not be possible!')
+except ModuleNotFoundError: warnings.warn('Module emcee not found! Using FitMC will not be possible!')
 
 import numpy as np
+from scipy.stats import pearsonr
 
 try: import corner
-except: warnings.warn('Module corner not found! Ploting corner plot will not be possible!')
+except ModuleNotFoundError: warnings.warn('Module corner not found! Ploting corner plot will not be possible!')
 
-try: import matplotlib.pyplot as mpl
+try:
+    import matplotlib.pyplot as mpl
+    fig=mpl.figure()
+    mpl.close(fig)
 except:
     #import on server without graphic output
-    import matplotlib
-    matplotlib.use('Agg',force=True)
-    import matplotlib.pyplot as mpl
-    
+    try: mpl.switch_backend('Agg')
+    except:
+        import matplotlib
+        matplotlib.use('Agg',force=True)
+        import matplotlib.pyplot as mpl
+
 
 class InfoMC():
     '''statistics about MC fitting from db file'''
     def __init__(self,dbfile):
         '''load db file'''
-        self.dbfile=dbfile
-        self.ta=TraceAnalysis(dbfile)
+        self.ta=np.load(dbfile,allow_pickle=True)
         path=dbfile.replace('\\','/')
         if path.rfind('/')>0: self.path=path[:path.rfind('/')+1]
         else: self.path=''
-        self.pars=self.ta.availableParameters()
-    
+        self.pars=list(self.ta['pnames'])
+
+        self.flat=self.ta['chain'].reshape((self.ta['chain'].shape[0]*self.ta['chain'].shape[1],self.ta['chain'].shape[2]),order='F')
+        self.flatprob=self.ta['lnp'].reshape((self.ta['lnp'].shape[0]*self.ta['lnp'].shape[1]),order='F')
+
+    def _plotsizeHelper(self,size):
+        '''Helps to define the optimum plot size for large big-picture plots.'''
+        c = 1
+        r = 1
+        while c * r < size:
+            c += 1
+            if c * r >= size: break
+            else: r += 1
+        return c, r
+
     def AllParams(self,eps=False):
         '''statistics about MCMC fitting for all params'''
         #summary plots
         if len(self.pars)>1:
-            try: self.ta.plotCorr(point=True)
-            except: self.ta.plotCorr()
+            try:
+                self.Corner()
+                mpl.savefig(self.path+'corner.png')
+                if eps: mpl.savefig(self.path+'corner.eps')
+                mpl.close('all')
+            except NameError: warnings.warn('Ploting corner plot is not be possible!')
+
+            self.Corr()
             mpl.savefig(self.path+'corr.png')
             if eps: mpl.savefig(self.path+'corr.eps')
             mpl.close('all')
-            self.ConfidInt(points=self.ta.db.trace(self.pars[0])().shape[0]<1000)
+
+            self.ConfidInt(points=self.flat.shape[0]<1000)  #only if not many points
             mpl.savefig(self.path+'conf.png')
             if eps: mpl.savefig(self.path+'conf.eps')
             mpl.close('all')
-        self.ta.plotHist()
+
+        self.Hists()
         mpl.savefig(self.path+'hist.png')
         if eps: mpl.savefig(self.path+'hist.eps')
         mpl.close('all')
-        self.ta.plotDeviance()
+        self.Devs()
         mpl.savefig(self.path+'dev.png')
         if eps: mpl.savefig(self.path+'dev.eps')
         mpl.close('all')
@@ -69,68 +93,209 @@ class InfoMC():
             for p in self.pars: head+=(" %"+str(colWidth[p])+"s |")%p
             f.write(head+'\n')
             f.write("-"*len(head)+'\n')
-            for p2 in self.pars:
+            for i2,p2 in enumerate(self.pars):
                 f.write(("%"+str(max(colWidth.values()))+"s |")%(p2))
-                for p1 in self.pars:
-                    coe=self.ta.pearsonr(p1,p2)[0]
+                for i1,p1 in enumerate(self.pars):
+                    coe=pearsonr(self.flat[:,i1],self.flat[:,i2])[0]
                     f.write(" % 8.6f |"%coe)
                 f.write('\n')
             f.write("-" * len(head))
             f.close()
         gc.collect()  #cleaning RAM...
 
-    def Geweke(self,eps=False):
-        '''plot geweke diagnostics'''
-        db=pymc.database.pickle.load(self.dbfile)
-        for p in self.pars:
-            exec('gw=pymc.geweke(db.%s())' %p)
-            if self.path=='': pymc.Matplot.geweke_plot(gw,p,suffix='_geweke')
-            else: pymc.Matplot.geweke_plot(gw,p,path=self.path,suffix='_geweke')
-            if eps: mpl.savefig(self.path+p+'_geweke.eps')
-            mpl.close('all')
-        del db
-        gc.collect()  #cleaning RAM...
 
-
-    def OneParam(self,name,eps=False):
+    def OneParam(self,name,eps=False):  #todo
         '''plots and info-files for one parameter from MCMC fitting'''
-        f=open(self.path+name+'.stat','w')
-        f.write('iter: '+str(self.ta.stateDic['sampler']['_iter'])+'\n')
-        f.write('burn: '+str(self.ta.stateDic['sampler']['_burn'])+'\n')
-        f.write('thin: '+str(self.ta.stateDic['sampler']['_thin'])+'\n\n')
+        f=open(self.path+name+'_stat.txt','w')
+
+        sampleArgs=self.ta['sampleArgs'].item()
+
+        f.write('iter: '+str(sampleArgs['iters'])+'\n')
+        f.write('burn: '+str(sampleArgs['burn'])+'\n')
+        f.write('thin: '+str(sampleArgs['binn'])+'\n')
+        f.write('walkers: '+str(sampleArgs['nwalker'])+'\n\n')
 
         f.write(name+'\n')
-        m=self.ta['deviance'].argmin()
-        f.write('min chi2: '+str(self.ta[name][m])+'\n')
-        f.write('mean: '+str(self.ta.mean(name))+'\n')
-        f.write('median: '+str(self.ta.median(name))+'\n')
-        f.write('STD: '+str(self.ta.std(name))+'\n')
-        f.write('1sigma - 68%: '+str(self.ta.hpd(name,cred=0.682))+'\n')
-        f.write('2sigma - 95%: '+str(self.ta.hpd(name,cred=0.955))+'\n')
-        f.write('3sigma - 99%: '+str(self.ta.hpd(name,cred=0.997))+'\n')
+        i=self.pars.index(name)
+        m=np.argmax(self.flatprob)
+        f.write('max. prob.: '+str(self.flat[m,i])+'\n')
+        f.write('mean: '+str(np.mean(self.flat[:,i]))+'\n')
+        f.write('median: '+str(np.median(self.flat[:,i]))+'\n')
+        f.write('STD: '+str(np.std(self.flat[:,i]))+'\n')
+        f.write('1sigma - 68%: '+str(np.quantile(self.flat[:,i],1-0.6827))+' ... '+str(np.quantile(self.flat[:,i],0.6827))+'\n')
+        f.write('2sigma - 95%: '+str(np.quantile(self.flat[:,i],1-0.9545))+' ... '+str(np.quantile(self.flat[:,i],0.9545))+'\n')
+        f.write('3sigma - 99%: '+str(np.quantile(self.flat[:,i],1-0.9973))+' ... '+str(np.quantile(self.flat[:,i],0.9973))+'\n')
         f.close()
 
-        self.ta.plotTrace(name)
+        self.Trace(name)
         mpl.savefig(self.path+name+'_trace.png')
         if eps: mpl.savefig(self.path+name+'_trace.eps')
         mpl.close('all')
-        self.ta.plotTraceHist(name)
-        mpl.savefig(self.path+name+'_traceHist.png')
-        if eps: mpl.savefig(self.path+name+'_traceHist.eps')
+
+        self.MultiPlot(name)
+        mpl.savefig(self.path+name+'_all.png')
+        if eps: mpl.savefig(self.path+name+'_all.eps')
         mpl.close('all')
 
         gc.collect() #cleaning RAM...
 
+    def Corner(self,params=None):
+        '''plot corner plot'''
+        values=[]
+        tr=[]
+        if params is None: params=self.pars
+        for p in params:
+            i=self.pars.index(p)
+            values.append(np.median(self.flat[:,i]))
+            tr.append(self.flat[:,i])
+        fig=corner.corner(np.array(tr).transpose(),labels=params,truths=values,quantiles=[1-0.6827,0.6827],show_titles=True)
+        return fig
 
-    def ConfidInt(self,nbins=20,points=True,levels=None,params=None):
-        '''plot of Confidence Regions for 1 sigma=0.6827 and 2 sigma = 0.9545 (or 3 sigma = 0.9973)'''
-        if params is None: params=self.ta.availableParameters()
-        if levels is None: levels=[0.6827,0.9545]
+    def Hist(self,param,new_fig=True,label=True):
+        '''plot histogram for one parameter'''
+        i=self.pars.index(param)
+        if new_fig: fig=mpl.figure()
+        mpl.hist(self.flat[:,i],bins=20,color='k')
+        if label: mpl.xlabel(param)
+        mpl.gca().ticklabel_format(useOffset=False)
+        if new_fig: return fig
+
+    def Hists(self,params=None):
+        '''plot histograms for multiple parameters'''
+        if params is None: params=self.pars
+
+        if len(params)==1: return self.Hist(params[0])
+        if isinstance(params,str): return self.Hist(params)
+
+        fig=mpl.figure()
+        cols,rows = self._plotsizeHelper(len(params))
+        for i,p in enumerate(params):
+            mpl.subplot(rows, cols, i + 1)
+            self.Hist(p,new_fig=False)
+        fig.tight_layout()
+        return fig
+
+    def Dev(self,param,new_fig=True,label=True):
+        '''plot deviance for one parameter'''
+        i=self.pars.index(param)
+        if new_fig: fig=mpl.figure()
+        mpl.plot(self.flat[:,i],self.flatprob,'k.',alpha=0.2)
+        if label:
+            mpl.xlabel(param)
+            mpl.ylabel('log probability')
+        mpl.gca().invert_yaxis()
+        mpl.gca().ticklabel_format(useOffset=False)
+        if new_fig: return fig
+
+    def Devs(self,params=None):
+        '''plot deviances for multiple parameters'''
+        if params is None: params=self.pars
+
+        if len(params)==1: return self.Dev(params[0])
+        if isinstance(params,str): return self.Dev(params)
+
+        fig=mpl.figure()
+        cols,rows = self._plotsizeHelper(len(params))
+        for i,p in enumerate(params):
+            mpl.subplot(rows, cols, i + 1)
+            self.Dev(p,new_fig=False)
+        fig.tight_layout()
+        return fig
+
+    def Acorr(self,param,new_fig=True,label=True):
+        '''autocorrelation plot for one parameter'''
+        i=self.pars.index(param)
+        if new_fig: fig=mpl.figure()
+        acorr=emcee.autocorr.function_1d(self.flat[:,i])
+        x=np.arange(-len(acorr),len(acorr))
+        acorr=np.append(acorr[::-1],acorr)
+        mpl.plot(x,acorr,'k-',lw=1)
+        mpl.plot([x[0],x[-1]],[0,0],'k-')
+        if label: mpl.title(param)
+        mpl.xlim(-200,200)
+        mpl.gca().ticklabel_format(useOffset=False)
+        if new_fig: return fig
+
+    def Trace(self,param,new_fig=True,label=True):
+        '''plot traces for one param'''
+        i=self.pars.index(param)
+        if new_fig: fig=mpl.figure()
+        for j in range(self.ta['chain'].shape[0]):
+            mpl.plot(self.ta['chain'][j,:,i],'k-',alpha=0.2)
+        if label: mpl.ylabel(param)
+        mpl.gca().ticklabel_format(useOffset=False)
+        if new_fig: return fig
+
+    def MultiPlot(self,param):
+        '''plot trace, acorr, hist and deviance for one param'''
+        fig=mpl.figure()
+        mpl.subplot(2,2,1)
+        self.Trace(param,new_fig=False,label=False)
+        mpl.title('trace')
+        mpl.subplot(2,2,2)
+        self.Hist(param,new_fig=False,label=False)
+        mpl.title('hist')
+        mpl.subplot(2,2,3)
+        self.Acorr(param,new_fig=False,label=False)
+        mpl.title('acorr')
+        mpl.subplot(2,2,4)
+        self.Dev(param,new_fig=False,label=False)
+        mpl.title('log prob.')
+        fig.suptitle(param)
+        fig.tight_layout()
+        return fig
+
+    def Corr(self,params=None):
+        '''plot of Correlations between params'''
+        if params is None: params=self.pars
         traces={}
-        for p in params: traces[p]=self.ta[p]
+        for p in params: traces[p]=self.flat[:,self.pars.index(p)]
         fontmap={1:10,2:8,3:6,4:5,5:4}
         k=1
         n=len(traces)
+
+        fig=mpl.figure()
+        for j in range(n):
+            for i in range(n):
+                if i>j:
+                    tr1=traces[params[j]]
+                    tr2=traces[params[i]]
+
+                    x_s=tr1.mean()
+                    y_s=tr2.mean()
+
+                    mpl.subplot(n-1,n-1,k)
+                    mpl.xlabel(params[j],fontsize='x-small')
+                    mpl.ylabel(params[i],fontsize='x-small')
+                    tlabels=mpl.gca().get_xticklabels()
+                    mpl.title("Pearson's R: %1.5f" % pearsonr(tr1,tr2)[0],fontsize='x-small')
+                    if n>6:
+                        mpl.setp(tlabels,'fontsize',3)
+                        tlabels=mpl.gca().get_yticklabels()
+                        mpl.setp(tlabels,'fontsize',3)
+                    else:
+                        mpl.setp(tlabels,'fontsize',fontmap[n-1])
+                        tlabels=mpl.gca().get_yticklabels()
+                        mpl.setp(tlabels,'fontsize',fontmap[n-1])
+                    mpl.plot(tr1,tr2,'k.',ms=2,zorder=-10)
+                    mpl.plot(x_s,y_s,'r.',ms=10)
+                if not i==j: k+=1
+                gc.collect() #cleaning RAM...
+        fig.tight_layout()
+        return fig
+
+
+    def ConfidInt(self,nbins=20,points=True,levels=None,params=None):
+        '''plot of Confidence Regions for 1 sigma=0.6827 and 2 sigma = 0.9545 (or 3 sigma = 0.9973)'''
+        if params is None: params=self.pars
+        if levels is None: levels=[0.6827,0.9545]
+        traces={}
+        for p in params: traces[p]=self.flat[:,self.pars.index(p)]
+        fontmap={1:10,2:8,3:6,4:5,5:4}
+        k=1
+        n=len(traces)
+
+        fig=mpl.figure()
         for j in range(n):
             for i in range(n):
                 if i>j:
@@ -164,8 +329,10 @@ class InfoMC():
                         mpl.setp(tlabels,'fontsize',fontmap[n-1])
                         tlabels=mpl.gca().get_yticklabels()
                         mpl.setp(tlabels,'fontsize',fontmap[n-1])
-                    mpl.contour(xbins,ybins,sigma.T,levels=levels)
-                    if points: mpl.plot(tr1,tr2,'k.',ms=2)
+                    mpl.contour(xbins,ybins,sigma.T,levels=levels,colors=['lime','magenta'])
+                    if points: mpl.plot(tr1,tr2,'k.',ms=2,zorder=-10)
                     mpl.plot(x_s,y_s,'r.',ms=10)
                 if not i==j: k+=1
                 gc.collect() #cleaning RAM...
+        fig.tight_layout()
+        return fig
