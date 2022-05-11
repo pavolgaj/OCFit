@@ -30,6 +30,15 @@ except:
         matplotlib.use('Agg',force=True)
         import matplotlib.pyplot as mpl
 
+def _plotsizeHelper(size):
+    '''Helps to define the optimum plot size for large big-picture plots.'''
+    c = 1
+    r = 1
+    while c * r < size:
+        c += 1
+        if c * r >= size: break
+        else: r += 1
+    return c, r
 
 class InfoMC():
     '''statistics about MC fitting from db file'''
@@ -44,15 +53,6 @@ class InfoMC():
         self.flat=self.ta['chain'].reshape((self.ta['chain'].shape[0]*self.ta['chain'].shape[1],self.ta['chain'].shape[2]),order='F')
         self.flatprob=self.ta['lnp'].reshape((self.ta['lnp'].shape[0]*self.ta['lnp'].shape[1]),order='F')
 
-    def _plotsizeHelper(self,size):
-        '''Helps to define the optimum plot size for large big-picture plots.'''
-        c = 1
-        r = 1
-        while c * r < size:
-            c += 1
-            if c * r >= size: break
-            else: r += 1
-        return c, r
 
     def AllParams(self,eps=False):
         '''statistics about MCMC fitting for all params'''
@@ -168,7 +168,7 @@ class InfoMC():
         if isinstance(params,str): return self.Hist(params)
 
         fig=mpl.figure()
-        cols,rows = self._plotsizeHelper(len(params))
+        cols,rows = _plotsizeHelper(len(params))
         for i,p in enumerate(params):
             mpl.subplot(rows, cols, i + 1)
             self.Hist(p,new_fig=False)
@@ -195,7 +195,7 @@ class InfoMC():
         if isinstance(params,str): return self.Dev(params)
 
         fig=mpl.figure()
-        cols,rows = self._plotsizeHelper(len(params))
+        cols,rows = _plotsizeHelper(len(params))
         for i,p in enumerate(params):
             mpl.subplot(rows, cols, i + 1)
             self.Dev(p,new_fig=False)
