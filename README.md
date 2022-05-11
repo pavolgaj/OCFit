@@ -26,7 +26,6 @@ For install it, download/clone this repository or download suitable binary file 
 * python3
 * numpy
 * matplotlib
-* PyAstronomy
 * emcee (recommended)
 * corner (recommended)
 
