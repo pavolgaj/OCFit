@@ -56,6 +56,24 @@ def GetMax(x,n):
         x[temp[-1]]=0
     return np.array(temp)
 
+class _Prior(object):
+    '''set uniform prior with limits'''
+    def _uniformLimit(self, **kwargs):
+        if kwargs["upper"] < kwargs["lower"]:
+            raise ValueError('Upper limit needs to be larger than lower! Correct limits of parameter "'+kwargs["name"]+'"!')
+        p = np.log(1.0 / (kwargs["upper"] - kwargs["lower"]))
+
+        def unilimit(ps, n, **rest):
+            if (ps[n] >= kwargs["lower"]) and (ps[n] <= kwargs["upper"]):
+                return p
+            else: return -np.Inf
+        return unilimit
+
+    def __call__(self, *args, **kwargs):
+        return self._callDelegator(*args, **kwargs)
+
+    def __init__(self, lnp, **kwargs):
+        self._callDelegator = self._uniformLimit(**kwargs)
 
 class SimpleFit():
     '''class with common function for FitLinear and FitQuad'''
@@ -151,13 +169,12 @@ class SimpleFit():
             for t in text: f.write(t+'\n')
             f.close()
 
-    def InfoMCMC(self,db,eps=False,geweke=False):
+    def InfoMCMC(self,db,eps=False):
         '''statistics about GA fitting'''
         info=InfoMCClass(db)
         info.AllParams(eps)
 
         for p in info.pars: info.OneParam(p,eps)
-        if geweke: info.Geweke(eps)
 
     def CalcErr(self):
         '''calculate errors according to current model'''
@@ -625,6 +642,133 @@ class FitLinear(SimpleFit):
         self._mcmc=False
         return self.new_oc
 
+    def FitMCMC(self,n_iter,limits,steps,fit_params=None,burn=0,binn=1,walkers=0,visible=True,db=None):
+        '''fitting with Markov chain Monte Carlo using emcee
+        n_iter - number of MC iteration - should be at least 1e5
+        limits - limits of parameters for fitting
+        steps - steps (width of normal distibution) of parameters for fitting
+        fit_params - list of fitted parameters
+        burn - number of removed steps before equilibrium - should be approx. 0.1-1% of n_iter
+        binn - binning size - should be around 10
+        walkers - number of walkers - should be at least 2-times number of fitted parameters
+        visible - display status of fitting
+        db - name of database to save MCMC fitting details (could be analysed later using InfoMCMC function)
+        '''
+
+        #setting pymc sampling for fitted parameters
+        if fit_params is None: fit_params=['P','t0']
+        vals0={'P': self._t0P[1], 't0': self._t0P[0]}
+        vals1={}
+        priors={}
+        for p in ['P','t0']:
+            if p in self.params: vals1[p]=self.params[p]
+            else: vals1[p]=vals0[p]
+            if p in fit_params:
+                priors[p]=_Prior("limuniform",lower=limits[p][0],upper=limits[p][1],name=p)
+
+        dims=len(fit_params)
+        if walkers==0: walkers=dims*2
+        elif walkers<dims * 2:
+            walkers=dims*2
+            warnings.warn('Numbers of walkers is smaller than two times number of free parameters. Auto-set to '+str(int(walkers))+'.')
+
+
+        def likeli(names, vals):
+            '''likelihood function for emcee'''
+            pp={n:v for n,v in zip(names,vals)}
+
+            if 'P' in pp: P=pp['P']
+            else: P=vals1['P']
+            if 't0' in pp: t0=pp['t0']
+            else: t0=vals1['t0']
+
+            tC=t0+P*self.epoch
+            chi=np.sum(((self.t-tC)/self.err)**2)
+
+            likeli=-0.5*chi
+            return likeli
+
+        def lnpostdf(values):
+            # Parameter-Value dictionary
+            ps = dict(zip(fit_params,values))
+            # Check prior information
+            prior_sum = 0
+            for name in fit_params: prior_sum += priors[name](ps, name)
+            # If log prior is negative infinity, parameters
+            # are out of range, so no need to evaluate the
+            # likelihood function at this step:
+            pdf = prior_sum
+            if pdf == -np.inf: return pdf
+            # Likelihood
+            pdf += likeli(fit_params, values)
+            return pdf
+
+        # Generate the sampler
+        emceeSampler=emcee.EnsembleSampler(walkers,dims,lnpostdf)
+
+        # Generate starting values
+        pos = []
+        for j in range(walkers):
+            pos.append(np.zeros(dims))
+            for i, n in enumerate(fit_params):
+                # Trial counter -- avoid values beyond restrictions
+                tc = 0
+                while True:
+                    if tc == 100:
+                        raise ValueError('Could not determine valid starting point for parameter: "'+n+'" due to its limits! Try to change the limits and/or step.')
+                    propval = np.random.normal(vals1[n],steps[n])
+                    if propval < limits[n][0]:
+                        tc += 1
+                        continue
+                    if propval > limits[n][1]:
+                        tc += 1
+                        continue
+                    break
+                pos[-1][i] = propval
+
+        # Default value for state
+        state = None
+
+        if burn>0:
+            # Run burn-in
+            pos,prob,state=emceeSampler.run_mcmc(pos,int(burn),progress=visible)
+            # Reset the chain to remove the burn-in samples.
+            emceeSampler.reset()
+
+        pos,prob,state=emceeSampler.run_mcmc(pos,int(n_iter),rstate0=state,thin=int(binn),progress=visible)
+
+        if not db is None:
+            sampleArgs={}
+            sampleArgs["burn"] = int(burn)
+            sampleArgs["binn"] = int(binn)
+            sampleArgs["iters"] = int(n_iter)
+            sampleArgs["nwalker"] = int(walkers)
+            np.savez_compressed(open(db,'wb'),chain=emceeSampler.chain,lnp=emceeSampler.lnprobability,                               pnames=list(fit_params),sampleArgs=sampleArgs)
+
+        self.params_err={} #remove errors of parameters
+
+        for p in ['P','t0']:
+            #calculate values and errors of parameters and save them
+            if p in fit_params:
+                i=fit_params.index(p)
+                self.params[p]=np.mean(emceeSampler.flatchain[:,i])
+                self.params_err[p]=np.std(emceeSampler.flatchain[:,i])
+            else:
+                self.params[p]=vals1[p]
+                self.params_err[p]='---'
+
+        self.Epoch()
+        self.tC=self.params['t0']+self.params['P']*self.epoch
+        self.new_oc=self.t-self.tC
+        self.model=self.oc+self.new_oc
+
+        self.chi=sum(((self.oc-self.model)/self.err)**2)
+
+        self._robust=False
+        self._mcmc=True
+
+        return self.new_oc
+
     def FitMCMC_old(self,n_iter,limits,steps,fit_params=None,burn=0,binn=1,visible=True,db=None):
         '''fitting with Markov chain Monte Carlo using pymc
         n_iter - number of MC iteration - should be at least 1e5
@@ -783,6 +927,135 @@ class FitQuad(SimpleFit):
 
         self._robust=False
         self._mcmc=False
+        return self.new_oc
+
+    def FitMCMC(self,n_iter,limits,steps,fit_params=None,burn=0,binn=1,walkers=0,visible=True,db=None):
+        '''fitting with Markov chain Monte Carlo using emcee
+        n_iter - number of MC iteration - should be at least 1e5
+        limits - limits of parameters for fitting
+        steps - steps (width of normal distibution) of parameters for fitting
+        fit_params - list of fitted parameters
+        burn - number of removed steps before equilibrium - should be approx. 0.1-1% of n_iter
+        binn - binning size - should be around 10
+        walkers - number of walkers - should be at least 2-times number of fitted parameters
+        visible - display status of fitting
+        db - name of database to save MCMC fitting details (could be analysed later using InfoMCMC function)
+        '''
+
+        #setting pymc sampling for fitted parameters
+        if fit_params is None: fit_params=['Q','P','t0']
+        vals0={'P': self._t0P[1], 't0': self._t0P[0], 'Q':0}
+        vals1={}
+        priors={}
+        for p in ['P','t0','Q']:
+            if p in self.params: vals1[p]=self.params[p]
+            else: vals1[p]=vals0[p]
+            if p in fit_params:
+                priors[p]=_Prior("limuniform",lower=limits[p][0],upper=limits[p][1],name=p)
+
+        dims=len(fit_params)
+        if walkers==0: walkers=dims*2
+        elif walkers<dims * 2:
+            walkers=dims*2
+            warnings.warn('Numbers of walkers is smaller than two times number of free parameters. Auto-set to '+str(int(walkers))+'.')
+
+
+        def likeli(names, vals):
+            '''likelihood function for emcee'''
+            pp={n:v for n,v in zip(names,vals)}
+
+            if 'Q' in pp: Q=pp['Q']
+            else: Q=vals1['Q']
+            if 'P' in pp: P=pp['P']
+            else: P=vals1['P']
+            if 't0' in pp: t0=pp['t0']
+            else: t0=vals1['t0']
+
+            tC=t0+P*self.epoch+Q*self.epoch**2
+            chi=np.sum(((self.t-tC)/self.err)**2)
+
+            likeli=-0.5*chi
+            return likeli
+
+        def lnpostdf(values):
+            # Parameter-Value dictionary
+            ps = dict(zip(fit_params,values))
+            # Check prior information
+            prior_sum = 0
+            for name in fit_params: prior_sum += priors[name](ps, name)
+            # If log prior is negative infinity, parameters
+            # are out of range, so no need to evaluate the
+            # likelihood function at this step:
+            pdf = prior_sum
+            if pdf == -np.inf: return pdf
+            # Likelihood
+            pdf += likeli(fit_params, values)
+            return pdf
+
+        # Generate the sampler
+        emceeSampler=emcee.EnsembleSampler(walkers,dims,lnpostdf)
+
+        # Generate starting values
+        pos = []
+        for j in range(walkers):
+            pos.append(np.zeros(dims))
+            for i, n in enumerate(fit_params):
+                # Trial counter -- avoid values beyond restrictions
+                tc = 0
+                while True:
+                    if tc == 100:
+                        raise ValueError('Could not determine valid starting point for parameter: "'+n+'" due to its limits! Try to change the limits and/or step.')
+                    propval = np.random.normal(vals1[n],steps[n])
+                    if propval < limits[n][0]:
+                        tc += 1
+                        continue
+                    if propval > limits[n][1]:
+                        tc += 1
+                        continue
+                    break
+                pos[-1][i] = propval
+
+        # Default value for state
+        state = None
+
+        if burn>0:
+            # Run burn-in
+            pos,prob,state=emceeSampler.run_mcmc(pos,int(burn),progress=visible)
+            # Reset the chain to remove the burn-in samples.
+            emceeSampler.reset()
+
+        pos,prob,state=emceeSampler.run_mcmc(pos,int(n_iter),rstate0=state,thin=int(binn),progress=visible)
+
+        if not db is None:
+            sampleArgs={}
+            sampleArgs["burn"] = int(burn)
+            sampleArgs["binn"] = int(binn)
+            sampleArgs["iters"] = int(n_iter)
+            sampleArgs["nwalker"] = int(walkers)
+            np.savez_compressed(open(db,'wb'),chain=emceeSampler.chain,lnp=emceeSampler.lnprobability,                               pnames=list(fit_params),sampleArgs=sampleArgs)
+
+        self.params_err={} #remove errors of parameters
+
+        for p in ['Q','P','t0']:
+            #calculate values and errors of parameters and save them
+            if p in fit_params:
+                i=fit_params.index(p)
+                self.params[p]=np.mean(emceeSampler.flatchain[:,i])
+                self.params_err[p]=np.std(emceeSampler.flatchain[:,i])
+            else:
+                self.params[p]=vals1[p]
+                self.params_err[p]='---'
+
+        self.Epoch()
+        self.tC=self.t0+self.P*self.epoch+self.Q*self.epoch**2
+        self.new_oc=self.t-self.tC
+        self.model=self.oc+self.new_oc
+
+        self.chi=sum(((self.oc-self.model)/self.err)**2)
+
+        self._robust=False
+        self._mcmc=True
+
         return self.new_oc
 
     def FitMCMC_old(self,n_iter,limits,steps,fit_params=None,burn=0,binn=1,visible=True,db=None):
@@ -1005,13 +1278,12 @@ class ComplexFit():
             if eps: mpl.savefig(path+'ga-'+p+'.eps')
         mpl.close('all')
 
-    def InfoMCMC(self,db,eps=False,geweke=False):
+    def InfoMCMC(self,db,eps=False):
         '''statistics about GA fitting'''
         info=InfoMCClass(db)
         info.AllParams(eps)
 
         for p in info.pars: info.OneParam(p,eps)
-        if geweke: info.Geweke(eps)
 
 
     def LiTE(self,t,a_sin_i3,e3,w3,t03,P3):
