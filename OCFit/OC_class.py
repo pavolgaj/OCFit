@@ -655,7 +655,7 @@ class FitLinear(SimpleFit):
         db - name of database to save MCMC fitting details (could be analysed later using InfoMCMC function)
         '''
 
-        #setting pymc sampling for fitted parameters
+        #setting emcee priors for fitted parameters
         if fit_params is None: fit_params=['P','t0']
         vals0={'P': self._t0P[1], 't0': self._t0P[0]}
         vals1={}
@@ -942,7 +942,7 @@ class FitQuad(SimpleFit):
         db - name of database to save MCMC fitting details (could be analysed later using InfoMCMC function)
         '''
 
-        #setting pymc sampling for fitted parameters
+        #setting emcee priors for fitted parameters
         if fit_params is None: fit_params=['Q','P','t0']
         vals0={'P': self._t0P[1], 't0': self._t0P[0], 'Q':0}
         vals1={}
@@ -1312,9 +1312,11 @@ class OCFit(ComplexFit):
         self.t=np.array(t)
         self.oc=np.array(oc)
         if err is None:
-            #errors not given
-            self.err=np.ones(self.t.shape)
+            #if unknown (not given) errors of data
+            #note: should cause wrong performance of fitting using MC, rather use function CalcErr for obtained errors after GA fitting
+            self.err=np.ones(self.t.shape)/1440.
             self._set_err=False
+            warnings.warn('Not given reliable errors of input data should cause wrong performance of fitting using MC! Use function CalcErr for obtained errors after GA fitting.')
         else:
             #errors given
             self.err=np.array(err)
@@ -1758,6 +1760,104 @@ class OCFit(ComplexFit):
 
         return self.params
 
+    def FitMCMC(self,n_iter,burn=0,binn=1,walkers=0,visible=True,db=None):
+        '''fitting with Markov chain Monte Carlo using emcee
+        n_iter - number of MC iteration - should be at least 1e5
+        burn - number of removed steps before equilibrium - should be approx. 0.1-1% of n_iter
+        binn - binning size - should be around 10
+        walkers - number of walkers - should be at least 2-times number of fitted parameters
+        visible - display status of fitting
+        db - name of database to save MCMC fitting details (could be analysed later using InfoMCMC function)
+        '''
+
+        #setting emcee priors for fitted parameters
+        priors={}
+        for p in self.fit_params:
+            priors[p]=_Prior("limuniform",lower=self.limits[p][0],upper=self.limits[p][1],name=p)
+
+        dims=len(self.fit_params)
+        if walkers==0: walkers=dims*2
+        elif walkers<dims * 2:
+            walkers=dims*2
+            warnings.warn('Numbers of walkers is smaller than two times number of free parameters. Auto-set to '+str(int(walkers))+'.')
+
+
+        def likeli(names, vals):
+            '''likelihood function for emcee'''
+            pp={n:v for n,v in zip(names,vals)}
+
+            likeli=-0.5*self.Chi2(pp)
+            return likeli
+
+        def lnpostdf(values):
+            # Parameter-Value dictionary
+            ps = dict(zip(self.fit_params,values))
+            # Check prior information
+            prior_sum = 0
+            for name in self.fit_params: prior_sum += priors[name](ps, name)
+            # If log prior is negative infinity, parameters
+            # are out of range, so no need to evaluate the
+            # likelihood function at this step:
+            pdf = prior_sum
+            if pdf == -np.inf: return pdf
+            # Likelihood
+            pdf += likeli(self.fit_params, values)
+            return pdf
+
+        # Generate the sampler
+        emceeSampler=emcee.EnsembleSampler(walkers,dims,lnpostdf)
+
+        # Generate starting values
+        pos = []
+        for j in range(walkers):
+            pos.append(np.zeros(dims))
+            for i, n in enumerate(self.fit_params):
+                # Trial counter -- avoid values beyond restrictions
+                tc = 0
+                while True:
+                    if tc == 100:
+                        raise ValueError('Could not determine valid starting point for parameter: "'+n+'" due to its limits! Try to change the limits and/or step.')
+                    propval = np.random.normal(self.params[n],self.steps[n])
+                    if propval < self.limits[n][0]:
+                        tc += 1
+                        continue
+                    if propval > self.limits[n][1]:
+                        tc += 1
+                        continue
+                    break
+                pos[-1][i] = propval
+
+        # Default value for state
+        state = None
+
+        if burn>0:
+            # Run burn-in
+            pos,prob,state=emceeSampler.run_mcmc(pos,int(burn),progress=visible)
+            # Reset the chain to remove the burn-in samples.
+            emceeSampler.reset()
+
+        pos,prob,state=emceeSampler.run_mcmc(pos,int(n_iter),rstate0=state,thin=int(binn),progress=visible)
+
+        if not db is None:
+            sampleArgs={}
+            sampleArgs["burn"] = int(burn)
+            sampleArgs["binn"] = int(binn)
+            sampleArgs["iters"] = int(n_iter)
+            sampleArgs["nwalker"] = int(walkers)
+            np.savez_compressed(open(db,'wb'),chain=emceeSampler.chain,lnp=emceeSampler.lnprobability,                               pnames=list(self.fit_params),sampleArgs=sampleArgs)
+
+        self.params_err={} #remove errors of parameters
+        #remove some values calculated from old parameters
+        self.paramsMore={}
+        self.paramsMore_err={}
+
+        for p in self.fit_params:
+            #calculate values and errors of parameters and save them
+            i=self.fit_params.index(p)
+            self.params[p]=np.mean(emceeSampler.flatchain[:,i])
+            self.params_err[p]=np.std(emceeSampler.flatchain[:,i])
+
+        return self.params,self.params_err
 
     def FitMCMC_old(self,n_iter,burn=0,binn=1,visible=True,db=None):
         '''fitting with Markov chain Monte Carlo using pymc
