@@ -12,6 +12,7 @@ import threading
 import warnings
 
 import pickle
+import json
 
 #import matplotlib
 try:
@@ -74,6 +75,32 @@ class _Prior(object):
 
     def __init__(self, lnp, **kwargs):
         self._callDelegator = self._uniformLimit(**kwargs)
+
+class _NumpyEncoder(json.JSONEncoder):
+    """ Custom encoder for numpy data types """
+    def default(self, obj):
+        if isinstance(obj, (np.int_, np.intc, np.intp, np.int8,
+                            np.int16, np.int32, np.int64, np.uint8,
+                            np.uint16, np.uint32, np.uint64)):
+
+            return int(obj)
+
+        elif isinstance(obj, (np.float_, np.float16, np.float32, np.float64)):
+            return float(obj)
+
+        elif isinstance(obj, (np.complex_, np.complex64, np.complex128)):
+            return {'real': obj.real, 'imag': obj.imag}
+
+        elif isinstance(obj, (np.ndarray,)):
+            return obj.tolist()
+
+        elif isinstance(obj, (np.bool_)):
+            return bool(obj)
+
+        elif isinstance(obj, (np.void)):
+            return None
+
+        return json.JSONEncoder.default(self, obj)
 
 class SimpleFit():
     '''class with common function for FitLinear and FitQuad'''
@@ -1373,8 +1400,8 @@ class OCFit(ComplexFit):
         else: Display(model)
 
 
-    def Save(self,path):
-        '''saving data, model, parameters... to file'''
+    def Save(self,path,format='json'):
+        '''saving data, model, parameters... to file in JSON or using PICKLE (format="json" or "pickle")'''
         data={}
         data['t']=self.t
         data['oc']=self.oc
@@ -1398,26 +1425,39 @@ class OCFit(ComplexFit):
 
         path=path.replace('\\','/')   #change dirs in path (for Windows)
         if path.rfind('.')<=path.rfind('/'): path+='.ocf'   #without extesion
-        f=open(path,'wb')
-        pickle.dump(data,f,protocol=2)
+
+        if format=='pickle':
+            f=open(path,'wb')
+            pickle.dump(data,f,protocol=2)
+            f.close()
+        elif format=='json':
+            f=open(path,'w')
+            json.dump(data,f,cls=_NumpyEncoder)
+            f.close()
+        else: raise Exception('Unknown file format '+format+'! Use "json" or "pickle".')
         f.close()
 
     def Load(self,path):
         '''loading data, model, parameters... from file'''
         path=path.replace('\\','/')   #change dirs in path (for Windows)
         if path.rfind('.')<=path.rfind('/'): path+='.ocf'   #without extesion
-        f=open(path,'rb')
-        data=pickle.load(f,encoding='latin1')
+        f=open(path,'rb')  #detect if file is json or pickle
+        x=f.read(1)
         f.close()
 
-        self.t=data['t']
-        self.oc=data['oc']
-        self.err=data['err']
-        self._order=data['order']
+        f=open(path,'rb')
+        if x==b'{': data=json.load(f)
+        else: data=pickle.load(f,encoding='latin1')
+        f.close()
+
+        self.t=np.array(data['t'])
+        self.oc=np.array(data['oc'])
+        self.err=np.array(data['err'])
+        self._order=np.array(data['order'])
         self._set_err=data['set_err']
         self._corr_err=data['corr_err']
         self._calc_err=data['calc_err']
-        self._old_err=data['old_err']
+        self._old_err=np.array(data['old_err'])
         self.limits=data['limits']
         self.steps=data['steps']
         self.params=data['params']
@@ -1427,8 +1467,8 @@ class OCFit(ComplexFit):
         self.fit_params=data['fit_params']
         self.model=data['model']
         self._t0P=data['t0P']
-        self.epoch=data['epoch']
-        self._min_type=data['min_type']
+        self.epoch=np.array(data['epoch'])
+        self._min_type=np.array(data['min_type'])
 
 
     def AgolInPlanet(self,t,P,a,w,e,mu3,r3,w3,t03,P3):
