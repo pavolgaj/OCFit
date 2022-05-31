@@ -1792,32 +1792,9 @@ class OCFit(ComplexFit,Common):
         output in days
         '''
 
-        if not len(self.epoch)==len(t):
-            raise NameError('Epoch not callculated! Run function "Epoch" before it.')
+        dt=self.Apsidal(t,t0,P,w0,dw,e,min_type)
 
-        w=w0+dw*self.epoch   #position of pericenter
-        nu=-w+np.pi/2       #true anomaly
-        b=e/(1+np.sqrt(1-e**2))
-
-        sum1=0
-        sum2=0
-        tmp=0
-        for n in range(1,10):
-            tmp=(-b)**n*(1/n+np.sqrt(1-e**2))*np.sin(n*nu)
-            #primary
-            sum1+=tmp
-            #secondary
-            if n%2: sum2-=tmp
-            else: sum2+=tmp
-
-        oc1=P/np.pi*sum1
-        oc2=P/np.pi*sum2
-
-        dt=np.zeros(t.shape)
-        dt[np.where(min_type==0)]=oc1[np.where(min_type==0)]  #primary
-        dt[np.where(min_type==1)]=oc2[np.where(min_type==1)]  #secondary
-
-        return dt+(t0+P*self.epoch)-(self._t0P[0]+self._t0P[1]*self.epoch)+Q*self.epoch**2
+        return dt+Q*self.epoch**2
 
 
     def PhaseCurve(self,P,t0,plot=False):
