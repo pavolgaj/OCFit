@@ -2224,7 +2224,7 @@ class OCFit(ComplexFit,Common):
             elif x in self.fit_params: err.append('---')  #errors not calculated
             else: err.append('fixed')   #fixed params
             #add units
-            if x[0]=='a' or x[0]=='r': unit.append('AU')
+            if x[0]=='a' or x[0]=='r': unit.append('au')
             elif x[0]=='P':
                 unit.append('d')
                 #also in years
@@ -2266,7 +2266,7 @@ class OCFit(ComplexFit,Common):
             #add units
             if x[0]=='f' or x[0]=='M': unit.append('M_sun')
             elif x=='dM': unit.append('M_sun/yr')
-            elif x[0]=='a': unit.append('AU')
+            elif x[0]=='a': unit.append('au')
             elif x[0]=='P' or x[0]=='U':
                 unit.append('d')
                 #also in years
