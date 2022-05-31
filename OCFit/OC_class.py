@@ -2,8 +2,8 @@
 
 #main classes of OCFit package
 #version 0.2.1
-#update: 2021...
-# (c) Pavol Gajdos, 2018-2021
+#update: ?.?.2022
+# (c) Pavol Gajdos, 2018-2022
 
 from time import time
 import sys
@@ -31,6 +31,8 @@ from matplotlib import gridspec
 #mpl.style.use('classic')
 
 import numpy as np
+
+from scipy.optimize._differentialevolution import DifferentialEvolutionSolver
 
 try: import emcee
 except ModuleNotFoundError: warnings.warn('Module emcee not found! Using FitMC will not be possible!')
@@ -144,8 +146,7 @@ class SimpleFit():
         self.model=[]          #model O-C
         self.new_oc=[]         #new O-C (residue)
         self.chi=0
-        self._robust=False
-        self._mcmc=False
+        self._fit=''
         self.tC=[]
 
     def Epoch(self):
@@ -175,9 +176,7 @@ class SimpleFit():
             text.append(p.ljust(15,' ')+units[p].ljust(10,' ')+str(self.params[p]).ljust(30,' ')
                         +str(self.params_err[p]).ljust(30,' '))
         text.append('')
-        if self._robust: text.append('Fitting method: Robust regression')
-        elif self._mcmc: text.append('Fitting method: MCMC')
-        else: text.append('Fitting method: Standard regression')
+        text.append('Fitting method: '+self._fit)
         g=len(params)
         n=len(self.t)
         text.append('chi2 = '+str(self.chi))
@@ -625,8 +624,7 @@ class FitLinear(SimpleFit):
         return: new O-C'''
         self.FitLinear()
         for i in range(n_iter): self.FitLinear(robust=True)
-        self._robust=True
-        self._mcmc=False
+        self._fit='Robust regression'
         return self.new_oc
 
     def FitLinear(self,robust=False):
@@ -665,8 +663,7 @@ class FitLinear(SimpleFit):
         self.tC=self.t0+self.P*self.epoch
         self.new_oc=self.oc-self.model
 
-        self._robust=False
-        self._mcmc=False
+        self._fit='Standard regression'
         return self.new_oc
 
     def FitMCMC(self,n_iter,limits,steps,fit_params=None,burn=0,binn=1,walkers=0,visible=True,db=None):
@@ -791,8 +788,7 @@ class FitLinear(SimpleFit):
 
         self.chi=sum(((self.oc-self.model)/self.err)**2)
 
-        self._robust=False
-        self._mcmc=True
+        self._fit='MCMC'
 
         return self.new_oc
 
@@ -897,8 +893,7 @@ class FitLinear(SimpleFit):
 
         self.chi=sum(((self.oc-self.model)/self.err)**2)
 
-        self._robust=False
-        self._mcmc=True
+        self._fit='MCMC_old'
 
         return self.new_oc
 
@@ -911,8 +906,7 @@ class FitQuad(SimpleFit):
         return: new O-C'''
         self.FitQuad()
         for i in range(n_iter): self.FitQuad(robust=True)
-        self._robust=True
-        self._mcmc=False
+        self._fit='Robust regression'
         return self.new_oc
 
     def FitQuad(self,robust=False):
@@ -952,8 +946,7 @@ class FitQuad(SimpleFit):
         self.tC=self.t0+self.P*self.epoch+self.Q*self.epoch**2
         self.new_oc=self.oc-self.model
 
-        self._robust=False
-        self._mcmc=False
+        self._fit='Standard regression'
         return self.new_oc
 
     def FitMCMC(self,n_iter,limits,steps,fit_params=None,burn=0,binn=1,walkers=0,visible=True,db=None):
@@ -1080,8 +1073,7 @@ class FitQuad(SimpleFit):
 
         self.chi=sum(((self.oc-self.model)/self.err)**2)
 
-        self._robust=False
-        self._mcmc=True
+        self._fit='MCMC'
 
         return self.new_oc
 
@@ -1187,8 +1179,7 @@ class FitQuad(SimpleFit):
         self.model=self.oc+self.new_oc
         self.chi=sum(((self.oc-self.model)/self.err)**2)
 
-        self._robust=False
-        self._mcmc=True
+        self._fit='MCMC_old'
 
         return self.new_oc
 
@@ -1290,7 +1281,7 @@ class ComplexFit():
         return epoch
 
     def InfoGA(self,db,eps=False):
-        '''statistics about GA fitting'''
+        '''statistics about GA or DE fitting'''
         info=InfoGAClass(db)
         path=db.replace('\\','/')
         if path.rfind('/')>0: path=path[:path.rfind('/')+1]
@@ -1306,7 +1297,7 @@ class ComplexFit():
         mpl.close('all')
 
     def InfoMCMC(self,db,eps=False):
-        '''statistics about GA fitting'''
+        '''statistics about MCMC fitting'''
         info=InfoMCClass(db)
         info.AllParams(eps)
 
@@ -1369,7 +1360,8 @@ class OCFit(ComplexFit):
         self._t0P=[]            #linear ephemeris of binary
         self.epoch=[]           #epoch of binary
         self.res=[]             #residua = new O-C
-        self._min_type=[]        #type of minima (primary=0 / secondary=1)
+        self._fit=''            #used algorithm for fitting (GA/DE/MCMC)
+        self._min_type=[]       #type of minima (primary=0 / secondary=1)
         self.availableModels=['LiTE3','LiTE34','LiTE3Quad','LiTE34Quad',\
                               'AgolInPlanet','AgolInPlanetLin','AgolExPlanet',\
                               'AgolExPlanetLin','Apsidal']   #list of available models
@@ -1422,6 +1414,7 @@ class OCFit(ComplexFit):
         data['t0P']=self._t0P
         data['epoch']=self.epoch
         data['min_type']=self._min_type
+        data['fit']=self._fit
 
         path=path.replace('\\','/')   #change dirs in path (for Windows)
         if path.rfind('.')<=path.rfind('/'): path+='.ocf'   #without extesion
@@ -1469,6 +1462,10 @@ class OCFit(ComplexFit):
         self._t0P=data['t0P']
         self.epoch=np.array(data['epoch'])
         self._min_type=np.array(data['min_type'])
+
+        if 'fit' in data: self._fit=data['fit']
+        elif len(self.params_err)==0: self._fit='GA'
+        else: self._fit='MCMC'
 
 
     def AgolInPlanet(self,t,P,a,w,e,mu3,r3,w3,t03,P3):
@@ -1740,7 +1737,7 @@ class OCFit(ComplexFit):
         for gen in range(generation):
             #main loop of GA
             threads=[]
-            sys.stdout.write('gen: '+str(gen+1)+' / '+str(generation)+' in '+str(np.round(time()-tic,1))+' sec  ')
+            sys.stdout.write('Genetic Algorithms: '+str(gen+1)+' / '+str(generation)+' generations in '+str(np.round(time()-tic,1))+' sec  ')
             sys.stdout.flush()
             for t in range(n_thread):
                 #multithreading
@@ -1797,6 +1794,96 @@ class OCFit(ComplexFit):
         #remove some values calculated from old parameters
         self.paramsMore={}
         self.paramsMore_err={}
+        self._fit='GA'
+
+        return self.params
+
+    def FitDE(self,generation,size,plot_graph=False,visible=True,strategy='randtobest1bin',tol=0.01,mutation=(0.5, 1),recombination=0.7,workers=1,db=None):
+        '''fitting with Differential Evolution
+        generation - number of generations - should be approx. 100-200 x number of free parameters
+        size - number of individuals in one generation (size of population) - should be approx. 100-200 x number of free parameters
+        plot_graph - plot figure of best and mean solution found in each generation
+        visible - display status of fitting
+        strategy - differential evolution strategy to use
+        tol - relative tolerance for convergence
+        mutation - mutation constant
+        recombination - recombination constant (crossover probability)
+        workers - number of walkers for multiprocessing
+        db - name of database to save DE fitting details (could be analysed later using InfoGA function)
+        '''
+
+        limits=[]
+        for p in self.fit_params: limits.append(self.limits[p])
+
+        if plot_graph:
+            graph=[]
+            graph_mean=[]
+
+        def ObjFun(vals,*names):
+            '''Objective Function for DE'''
+            pp={n:v for n,v in zip(names,vals)}
+            return self.Chi2(pp)
+
+        if db is not None:
+            #saving DE fitting details
+            save_dat={}
+            save_dat['chi2']=[]
+            for par in self.fit_params: save_dat[par]=[]
+            path=db.replace('\\','/')   #change dirs in path (for Windows)
+            if path.rfind('/')>0:
+                path=path[:path.rfind('/')+1]  #find current dir of db file
+                if not os.path.isdir(path): os.mkdir(path) #create dir of db file, if not exist
+
+        solver=DifferentialEvolutionSolver(ObjFun,bounds=limits,args=self.fit_params,maxiter=generation,popsize=size,disp=visible,strategy=strategy,tol=tol,mutation=mutation,recombination=recombination,workers=workers)
+        solver.init_population_lhs()
+
+        tic=time()
+        for gen in range(generation):
+            #main loop of DE
+            solver.__next__()
+
+            if solver.disp:
+                sys.stdout.write('differential_evolution step %d: f(x)= %g in %.1f sec  ' % (gen+1,solver.population_energies[0],time()-tic))
+                sys.stdout.flush()
+
+            if plot_graph:
+                graph.append(np.min(solver.population_energies))
+                graph_mean.append(np.mean(solver.population_energies))
+
+            if db is not None:
+                save_dat['chi2'].append(list(solver.population_energies))
+                for i,par in enumerate(self.fit_params):
+                    save_dat[par].append(list(solver.population[:,i]*(limits[i][1]-limits[i][0])+limits[i][0]))
+
+            if solver.disp:
+                sys.stdout.write('\r')
+                sys.stdout.flush()
+
+            if solver.converged(): break
+
+        if visible: sys.stdout.write('\n')
+
+        if plot_graph:
+            mpl.figure()
+            mpl.plot(graph,'-')
+            mpl.xlabel('Number of generations')
+            mpl.ylabel(r'Minimal $\chi^2$')
+            mpl.plot(graph_mean,'--')
+            mpl.legend(['Best solution',r'Mean $\chi^2$ in generation'])
+
+        if db is not None:
+            #saving DE fitting details to file
+            for x in save_dat: save_dat[x]=np.array(save_dat[x])
+            f=open(db,'wb')
+            pickle.dump(save_dat,f,protocol=2)
+            f.close()
+
+        for i,p in enumerate(self.fit_params): self.params[p]=solver.x[i]   #save found parameters
+        self.params_err={}   #remove errors of parameters
+        #remove some values calculated from old parameters
+        self.paramsMore={}
+        self.paramsMore_err={}
+        self._fit='DE'
 
         return self.params
 
@@ -1896,6 +1983,7 @@ class OCFit(ComplexFit):
             i=self.fit_params.index(p)
             self.params[p]=np.mean(emceeSampler.flatchain[:,i])
             self.params_err[p]=np.std(emceeSampler.flatchain[:,i])
+        self._fit='MCMC'
 
         return self.params,self.params_err
 
@@ -1982,6 +2070,7 @@ class OCFit(ComplexFit):
             #hidden output
             sys.stdout=out
             f.close()
+        self._fit='MCMC_old'
 
         return self.params,self.params_err
 
@@ -2069,8 +2158,7 @@ class OCFit(ComplexFit):
             text.append(params[i].ljust(15,' ')+unit[i].ljust(10,' ')+vals[i].ljust(30,' ')+err[i].ljust(30,' '))
         text.append('')
         text.append('Model: '+self.model)
-        if len(self.params_err)==0: text.append('Fitting method: GA')
-        else: text.append('Fitting method: MCMC')
+        text.append('Fitting method: '+self._fit)
         chi=self.Chi2(self.params)
         n=len(self.t)
         g=len(self.fit_params)

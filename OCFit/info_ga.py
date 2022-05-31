@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#class for statistics about GA fitting
+#class for statistics about GA or DE fitting
 #version 0.1.1
 #update: 5.4.2017
 # (c) Pavol Gajdos, 2018
@@ -18,9 +18,9 @@ except:
 
 
 class InfoGA():
-    '''statistics about GA fitting from db file'''
+    '''statistics about GA or DE fitting from db file'''
     def __init__(self,dbfile):
-        '''load db file from GA'''
+        '''load db file from GA or DE'''
         f=open(dbfile,'rb')
         self.trace=load(f)
         f.close()
@@ -33,7 +33,7 @@ class InfoGA():
         self.info={'gen':gen,'size':size}
 
     def Info(self,name=None):
-        '''print basic info about GA'''
+        '''print basic info about GA or DE'''
         text=['Number of generations: '+str(self.info['gen']),
               'Size of generation: '+str(self.info['size']),
               'Number of fitted parameters: '+str(len(self.availableTrace)),
