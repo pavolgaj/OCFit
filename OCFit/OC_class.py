@@ -49,6 +49,7 @@ AU=149597870700 #astronomical unit in meters
 c=299792458     #velocity of light in meters per second
 day=86400.    #number of seconds in day
 minutes=1440. #number of minutes in day
+year=365.2425   #days in year
 
 def GetMax(x,n):
     '''return n max values in array x'''
@@ -104,7 +105,63 @@ class _NumpyEncoder(json.JSONEncoder):
 
         return json.JSONEncoder.default(self, obj)
 
-class SimpleFit():
+class Common():
+    def QuadTerm(self,M1=0,M2=2,M1_err=0,M2_err=0):
+        '''calculate some params for quadratic model'''
+        output={}
+        if not 'Q' in self.params: return output
+        if self.params['Q']==0: return output
+        self.paramsMore['dP']=2*self.params['Q']/self.params['P']
+        dP=2*self.params['Q']/self.params['P']**2
+        self.paramsMore['dP/P']=dP
+        output['dP']=self.paramsMore['dP']
+        output['dP/P']=self.paramsMore['dP/P']
+
+        if len(self.params_err)>0:
+            #calculate error of params
+            #get errors of params of model
+            if 'P' in self.params_err: P_err=self.params_err['P']
+            else: P_err=0
+            if 'Q' in self.params_err: Q_err=self.params_err['Q']
+            else: Q_err=0
+
+            self.paramsMore_err['dP']=self.paramsMore['dP']*np.sqrt((P_err/self.params['P'])**2+\
+                                      (Q_err/self.params['Q'])**2)
+            dP_err=dP*np.sqrt((2*P_err/self.params['P'])**2+(Q_err/self.params['Q'])**2)
+            self.paramsMore_err['dP/P']=dP_err
+
+            #if some errors = 0, del them; and return only non-zero errors
+            if self.paramsMore_err['dP']==0: del self.paramsMore_err['dP']
+            else: output['dP_err']=self.paramsMore_err['dP']
+            if self.paramsMore_err['dP/P']==0: del self.paramsMore_err['dP/P']
+            else: output['dP/P_err']=self.paramsMore_err['dP/P']
+
+        if M1*M2>0:
+            if M1<M2:
+                #change M1<->M2 (M1>M2)
+                mm=M1
+                M1=M2
+                M2=mm
+                mm=M1_err
+                M1_err=M2_err
+                M2_err=mm
+
+            self.paramsMore['dM']=M1*M2/(3*(M1-M2))*dP*year
+            output['dM']=self.paramsMore['dM']
+
+            if len(self.params_err)>0:
+                #calculate error of params
+                self.paramsMore_err['dM']=self.paramsMore['dM']*np.sqrt((dP_err/dP)**2+\
+                                          ((M1-M2-M1**2)*M1_err/M1)**2+((M1-M2+M2**2)*M2_err/M2)**2)
+
+                #if some errors = 0, del them; and return only non-zero errors
+                if self.paramsMore_err['dM']==0: del self.paramsMore_err['dM']
+                else: output['dM_err']=self.paramsMore_err['dM']
+
+        return output
+
+
+class SimpleFit(Common):
     '''class with common function for FitLinear and FitQuad'''
     def __init__(self,t,t0,P,oc=None,err=None):
         '''input: observed time, time of zeros epoch, period, (O-C values, errors)'''
@@ -143,6 +200,8 @@ class SimpleFit():
         self.Epoch()
         self.params={}         #values of parameters
         self.params_err={}     #errors of fitted parameters
+        self.paramsMore={}      #values of parameters calculated from model params
+        self.paramsMore_err={}  #errors of calculated parameters
         self.model=[]          #model O-C
         self.new_oc=[]         #new O-C (residue)
         self.chi=0
@@ -172,9 +231,41 @@ class SimpleFit():
         units={'t0':'JD','P':'d','Q':'d'}
 
         text=['parameter'.ljust(15,' ')+'unit'.ljust(10,' ')+'value'.ljust(30,' ')+'error']
+
         for p in sorted(params):
             text.append(p.ljust(15,' ')+units[p].ljust(10,' ')+str(self.params[p]).ljust(30,' ')
                         +str(self.params_err[p]).ljust(30,' '))
+
+        self.QuadTerm()
+        if len(self.paramsMore)>0: text.append('')
+        params=[]
+        vals=[]
+        err=[]
+        unit=[]
+        for x in sorted(self.paramsMore.keys()):
+            #names, units, values and errors of more params
+            params.append(x)
+            vals.append(str(self.paramsMore[x]))
+            if not len(self.paramsMore_err)==0:
+                #errors calculated
+                if x in self.paramsMore_err:
+                    err.append(str(self.paramsMore_err[x]))
+                else: err.append('---')   #errors not calculated
+            else: err.append('---')  #errors not calculated
+            #add units
+            if x=='dM': unit.append('M_sun/yr')
+            elif x=='dP':
+                unit.append('d/d')
+                #also in years
+                params.append(x)
+                vals.append(str(self.paramsMore[x]*year))
+                err.append(str(float(err[-1])*year))
+                unit.append('d/yr')
+            elif x=='dP/P': unit.append('1/d')
+
+        for i in range(len(params)):
+            text.append(params[i].ljust(15,' ')+unit[i].ljust(10,' ')+vals[i].ljust(30,' ')+err[i].ljust(30,' '))
+
         text.append('')
         text.append('Fitting method: '+self._fit)
         g=len(params)
@@ -664,6 +755,10 @@ class FitLinear(SimpleFit):
         self.new_oc=self.oc-self.model
 
         self._fit='Standard regression'
+        #remove some values calculated from old parameters
+        self.paramsMore={}
+        self.paramsMore_err={}
+
         return self.new_oc
 
     def FitMCMC(self,n_iter,limits,steps,fit_params=None,burn=0,binn=1,walkers=0,visible=True,db=None):
@@ -789,6 +884,9 @@ class FitLinear(SimpleFit):
         self.chi=sum(((self.oc-self.model)/self.err)**2)
 
         self._fit='MCMC'
+        #remove some values calculated from old parameters
+        self.paramsMore={}
+        self.paramsMore_err={}
 
         return self.new_oc
 
@@ -894,6 +992,9 @@ class FitLinear(SimpleFit):
         self.chi=sum(((self.oc-self.model)/self.err)**2)
 
         self._fit='MCMC_old'
+        #remove some values calculated from old parameters
+        self.paramsMore={}
+        self.paramsMore_err={}
 
         return self.new_oc
 
@@ -947,6 +1048,10 @@ class FitQuad(SimpleFit):
         self.new_oc=self.oc-self.model
 
         self._fit='Standard regression'
+        #remove some values calculated from old parameters
+        self.paramsMore={}
+        self.paramsMore_err={}
+
         return self.new_oc
 
     def FitMCMC(self,n_iter,limits,steps,fit_params=None,burn=0,binn=1,walkers=0,visible=True,db=None):
@@ -1074,6 +1179,9 @@ class FitQuad(SimpleFit):
         self.chi=sum(((self.oc-self.model)/self.err)**2)
 
         self._fit='MCMC'
+        #remove some values calculated from old parameters
+        self.paramsMore={}
+        self.paramsMore_err={}
 
         return self.new_oc
 
@@ -1180,6 +1288,9 @@ class FitQuad(SimpleFit):
         self.chi=sum(((self.oc-self.model)/self.err)**2)
 
         self._fit='MCMC_old'
+        #remove some values calculated from old parameters
+        self.paramsMore={}
+        self.paramsMore_err={}
 
         return self.new_oc
 
@@ -1323,7 +1434,7 @@ class ComplexFit():
         return dt/day
 
 
-class OCFit(ComplexFit):
+class OCFit(ComplexFit,Common):
     '''class for fitting O-C diagrams'''
     def __init__(self,t,oc,err=None):
         '''loading times, O-Cs, (errors)'''
@@ -1364,7 +1475,7 @@ class OCFit(ComplexFit):
         self._min_type=[]       #type of minima (primary=0 / secondary=1)
         self.availableModels=['LiTE3','LiTE34','LiTE3Quad','LiTE34Quad',\
                               'AgolInPlanet','AgolInPlanetLin','AgolExPlanet',\
-                              'AgolExPlanetLin','Apsidal']   #list of available models
+                              'AgolExPlanetLin','Apsidal','ApsidalQuad']   #list of available models
 
 
     def AvailableModels(self):
@@ -1377,13 +1488,16 @@ class OCFit(ComplexFit):
 
         def Display(model):
             s=model+': '
-            if 'Quad' in model: s+='t0, P, Q, '
+            if 'Quad' in model and not 'Apsidal' in model: s+='t0, P, Q, '
             if 'Lin' in model: s+='t0, '
             if 'LiTE' in model: s+='a_sin_i3, e3, w3, t03, P3, '
             if '4' in model: s+='a_sin_i4, e4, w4, t04, P4, '
             if 'InPlanet' in model: s+='P, a, w, e, mu3, r3, w3, t03, P3, '
             if 'ExPlanet' in model: s+='P, mu3, e3, t03, P3, '
-            if 'Apsidal' in model: s+='t0, P, w0, dw, e, '
+            if 'Apsidal' in model:
+                s+='t0, P,'
+                if 'Quad' in model: s+='Q, '
+                s+=' w0, dw, e, '
             print(s[:-2])
 
         if model is None: model=self.model
@@ -1664,6 +1778,46 @@ class OCFit(ComplexFit):
         dt[np.where(min_type==1)]=oc2[np.where(min_type==1)]  #secondary
 
         return dt+(t0+P*self.epoch)-(self._t0P[0]+self._t0P[1]*self.epoch)
+
+    def ApsidalQuad(self,t,t0,P,Q,w0,dw,e,min_type):
+        '''Apsidal motion on O-C diagram (Gimenez&Bastero,1995) with quadratic model
+        t0 - time of refernce minima [days]
+        P - period of eclipsing binary [days]
+        Q - quadratic term [days]
+        w0 - initial position of pericenter [rad]
+        dw - angular velocity of line of apsides [rad/period]
+        e - eccentricity
+        min_type - type of minimas [0 or 1]
+
+        output in days
+        '''
+
+        if not len(self.epoch)==len(t):
+            raise NameError('Epoch not callculated! Run function "Epoch" before it.')
+
+        w=w0+dw*self.epoch   #position of pericenter
+        nu=-w+np.pi/2       #true anomaly
+        b=e/(1+np.sqrt(1-e**2))
+
+        sum1=0
+        sum2=0
+        tmp=0
+        for n in range(1,10):
+            tmp=(-b)**n*(1/n+np.sqrt(1-e**2))*np.sin(n*nu)
+            #primary
+            sum1+=tmp
+            #secondary
+            if n%2: sum2-=tmp
+            else: sum2+=tmp
+
+        oc1=P/np.pi*sum1
+        oc2=P/np.pi*sum2
+
+        dt=np.zeros(t.shape)
+        dt[np.where(min_type==0)]=oc1[np.where(min_type==0)]  #primary
+        dt[np.where(min_type==1)]=oc2[np.where(min_type==1)]  #secondary
+
+        return dt+(t0+P*self.epoch)-(self._t0P[0]+self._t0P[1]*self.epoch)+Q*self.epoch**2
 
 
     def PhaseCurve(self,P,t0,plot=False):
@@ -2098,24 +2252,24 @@ class OCFit(ComplexFit):
                 unit.append('d')
                 #also in years
                 params.append(x)
-                vals.append(str(self.params[x]/365.2425))
-                try: err.append(str(float(err[-1])/365.2425)) #error calculated
-                except: err.append(err[-1])  #error not calculated
-                unit.append('y')
+                vals.append(str(self.params[x]/year))
+                if err[-1]=='---': err.append(err[-1])  #error not calculated
+                else: err.append(str(float(err[-1])/year)) #error calculated
+                unit.append('yr')
             elif x[0]=='Q': unit.append('d')
             elif x[0]=='t': unit.append('JD')
             elif x[0]=='e' or x[0]=='m': unit.append('')
             elif x[0]=='w' or x[1]=='w':
                 #transform to deg
                 vals[-1]=str(np.rad2deg(float(vals[-1])))
-                try: err[-1]=str(np.rad2deg(float(err[-1]))) #error calculated
-                except: pass  #error not calculated
+                if not err[-1]=='---': err[-1]=str(np.rad2deg(float(err[-1]))) #error calculated
                 unit.append('deg')
 
         #calculate some more parameters, if not calculated
         self.MassFun()
         self.Amplitude()
         self.ParamsApsidal()
+        self.QuadTerm()
 
         #make blank line
         params.append('')
@@ -2134,22 +2288,32 @@ class OCFit(ComplexFit):
             else: err.append('---')  #errors not calculated
             #add units
             if x[0]=='f' or x[0]=='M': unit.append('M_sun')
+            elif x=='dM': unit.append('M_sun/yr')
             elif x[0]=='a': unit.append('AU')
             elif x[0]=='P' or x[0]=='U':
                 unit.append('d')
                 #also in years
                 params.append(x)
-                vals.append(str(self.paramsMore[x]/365.2425))
-                try: err.append(str(float(err[-1])/365.2425)) #error calculated
-                except: err.append(err[-1])  #error not calculated
-                unit.append('y')
+                vals.append(str(self.paramsMore[x]/year))
+                if err[-1]=='---': err.append(err[-1])  #error not calculated
+                else: err.append(str(float(err[-1])/year)) #error calculated
+                unit.append('yr')
+            elif x=='dP':
+                unit.append('d/d')
+                #also in years
+                params.append(x)
+                vals.append(str(self.paramsMore[x]*year))
+                if err[-1]=='---': err.append(err[-1])  #error not calculated
+                else: err.append(str(float(err[-1])*year))  #error not calculated
+                unit.append('d/yr')
+            elif x=='dP/P': unit.append('1/d')
             elif x[0]=='K':
                 unit.append('s')
                 #also in minutes
                 params.append(x)
                 vals.append(str(self.paramsMore[x]/60.))
-                try: err.append(str(float(err[-1])/60.)) #error calculated
-                except: err.append(err[-1])  #error not calculated
+                if err[-1]=='---': err.append(err[-1])  #error not calculated
+                else: err.append(str(float(err[-1])/60.))  #error not calculated
                 unit.append('m')
 
         #generate text output
@@ -2372,8 +2536,7 @@ class OCFit(ComplexFit):
             else: output['Ps_err']=self.paramsMore_err['Ps']
             if self.paramsMore_err['U']==0: del self.paramsMore_err['U']
             else: output['U_err']=self.paramsMore_err['U']
-            return output
-
+        return output
 
     def MassFun(self):
         '''calculate Mass Function for LiTE models'''
@@ -2595,6 +2758,9 @@ class OCFit(ComplexFit):
         elif self.model=='Apsidal':
             if min_type is None: min_type=self._min_type
             model=self.Apsidal(t,param['t0'],param['P'],param['w0'],param['dw'],param['e'],min_type)
+        elif self.model=='ApsidalQuad':
+            if min_type is None: min_type=self._min_type
+            model=self.ApsidalQuad(t,param['t0'],param['P'],param['Q'],param['w0'],param['dw'],param['e'],min_type)
         else:
             raise ValueError('The model "'+self.model+'" does not exist!')
         return model
@@ -3199,29 +3365,7 @@ class OCFitLoad(OCFit):
     '''loading saved data, model... from OCFit class'''
     def __init__(self,path):
         '''loading data, model, parameters... from file'''
-        self._order=[]
-        self.t=[]    #times
-        self.oc=[]  #O-Cs
-        self.err=[]   #errors
-        self._set_err=False
+        super().__init__([0],[0],[0])
 
-        self.limits={}          #limits of parameters for fitting
-        self.steps={}           #steps (width of normal distibution) of parameters for fitting
-        self.params={}          #values of parameters, fixed values have to be set here
-        self.params_err={}      #errors of fitted parameters
-        self.paramsMore={}      #values of parameters calculated from model params
-        self.paramsMore_err={}  #errors of calculated parameters
-        self.fit_params=[]      #list of fitted parameters
-        self._calc_err=False    #errors were calculated
-        self._corr_err=False    #errors were corrected
-        self._old_err=[]        #given errors
-        self.model='LiTE3'      #used model of O-C
-        self._t0P=[]            #linear ephemeris of binary
-        self.epoch=[]           #epoch of binary
-        self.res=[]             #residua = new O-C
-        self._min_type=[]        #type of minima (primary=0 / secondary=1)
-        self.availableModels=['LiTE3','LiTE34','LiTE3Quad','LiTE34Quad',\
-                              'AgolInPlanet','AgolInPlanetLin','AgolExPlanet',\
-                              'AgolExPlanetLin','Apsidal']   #list of available models
         self.Load(path)
 
