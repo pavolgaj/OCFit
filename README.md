@@ -26,6 +26,7 @@ For install it, download/clone this repository or download suitable binary file 
 * python3
 * numpy
 * matplotlib
+* scipy (recommended)
 * emcee (recommended)
 * corner (recommended)
 
