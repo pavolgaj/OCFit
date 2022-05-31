@@ -16,7 +16,7 @@ dist=setup(name="OCFit",
           "Programming Language :: Python :: 3",
           "Topic :: Scientific/Engineering :: Astronomy"],
       url='https://github.com/pavolgaj/OCFit',
-      install_requires=['numpy>=1.10.2','matplotlib>=1.5.0','PyAstronomy>=0.9.0'],
-      extras_require={'MonteCarlo Fitting':  ['emcee>=3.0.0']},
+      install_requires=['numpy>=1.10.2','matplotlib>=1.5.0'],
+      extras_require={'MonteCarlo Fitting':  ['emcee>=3.0.0','corner','scipy>=1.5.0']},
       py_modules=["OCFit/__init__","OCFit/OC_class","OCFit/info_mc","OCFit/info_ga","OCFit/ga"]
 )
