@@ -105,6 +105,36 @@ class _NumpyEncoder(json.JSONEncoder):
 
         return json.JSONEncoder.default(self, obj)
 
+def DeltaEpoch(e,w):
+    '''calculate difference in epoch between primary and secondary minima'''
+
+    if e==0: return 0.5
+
+    w=np.deg2rad(w)
+    #eccentric anomaly
+    dEA=-2*np.arctan(2/np.cos(w)/(np.sqrt((1+e)/(1-e))-1))
+    EA01=-2*np.arctan(2*np.tan(w)/(np.sqrt((1+e)/(1-e))+1))
+
+    #mean anomaly
+    dMA=dEA-2*e*np.sin(dEA/2)*np.cos(EA01/2)
+
+    #epoch
+    dE=dMA/(2*np.pi)
+
+    return dE%1
+
+def Epoch(t,t0,P,dE=0.5):
+    '''calculate epoch with epoch diffence between minima dE'''
+    E_obs=(t-t0)/P  #observed epoch
+    f_obs=E_obs-np.round(E_obs)  #observed phase
+
+    secondary=np.where(np.abs(f_obs)>np.minimum(np.abs(f_obs-dE),np.abs(f_obs-dE+1)))
+    min_type=np.zeros(t.shape)
+    min_type[secondary]=1
+
+    E=np.round(E_obs-min_type*dE)+min_type*dE
+    return E,min_type
+
 class Common():
     def QuadTerm(self,M1=0,M2=2,M1_err=0,M2_err=0):
         '''calculate some params for quadratic model'''
@@ -163,7 +193,7 @@ class Common():
 
 class SimpleFit(Common):
     '''class with common function for FitLinear and FitQuad'''
-    def __init__(self,t,t0,P,oc=None,err=None):
+    def __init__(self,t,t0,P,oc=None,err=None,dE=0.5):
         '''input: observed time, time of zeros epoch, period, (O-C values, errors)'''
         self.t=np.array(t)     #times
 
@@ -171,6 +201,8 @@ class SimpleFit(Common):
         self.P=P
         self.t0=t0
         self._t0P=[t0,P]   #given linear ephemeris of binary
+
+        self.dE=dE   #diffence in epoch between primary and secondary minima
 
         if oc is None:
             #calculate O-C
@@ -196,6 +228,7 @@ class SimpleFit(Common):
         self.t=self.t[self._order]      #times
         self.oc=self.oc[self._order]    #O-Cs
         self.err=self.err[self._order]  #errors
+        self._min_type=[]       #type of minima (primary=0 / secondary=1)
 
         self.Epoch()
         self.params={}         #values of parameters
@@ -210,7 +243,7 @@ class SimpleFit(Common):
 
     def Epoch(self):
         '''calculate epoch'''
-        self.epoch=np.round((self.t-self.t0)/self.P*2)/2.
+        self.epoch,self._min_type=Epoch(self.t,self.t0,self.P,self.dE)
         return self.epoch
 
     def PhaseCurve(self,P,t0,plot=False):
@@ -449,8 +482,8 @@ class SimpleFit(Common):
 
         #primary / secondary minimum
         if min_type:
-            prim=np.where(np.round(self.epoch)==self.epoch)
-            sec=np.where(np.round(self.epoch)!=self.epoch)
+            prim=np.where(self._min_type==0)
+            sec=np.where(self._min_type==1)
         else:
             prim=np.arange(0,len(self.epoch),1)
             sec=np.array([])
@@ -593,8 +626,8 @@ class SimpleFit(Common):
 
         #primary / secondary minimum
         if min_type:
-            prim=np.where(np.round(self.epoch)==self.epoch)
-            sec=np.where(np.round(self.epoch)!=self.epoch)
+            prim=np.where(self._min_type==0)
+            sec=np.where(self._min_type==1)
         else:
             prim=np.arange(0,len(self.epoch),1)
             sec=np.array([])
@@ -1385,11 +1418,10 @@ class ComplexFit():
     def Epoch(self,t0,P,t=None):
         '''convert time to epoch'''
         if t is None: t=self.t
-        epoch=np.round((t-t0)/P*2)/2.
-        self.epoch=epoch
         self._t0P=[t0,P]
-        self._min_type=np.abs((2*(epoch-epoch.astype('int'))).astype('int'))
-        return epoch
+
+        self.epoch,self._min_type=Epoch(t,t0,P,self.dE)
+        return self.epoch
 
     def InfoGA(self,db,eps=False):
         '''statistics about GA or DE fitting'''
@@ -1436,7 +1468,7 @@ class ComplexFit():
 
 class OCFit(ComplexFit,Common):
     '''class for fitting O-C diagrams'''
-    def __init__(self,t,oc,err=None):
+    def __init__(self,t,oc,err=None,dE=0.5):
         '''loading times, O-Cs, (errors)'''
         self.t=np.array(t)
         self.oc=np.array(oc)
@@ -1456,6 +1488,8 @@ class OCFit(ComplexFit,Common):
         self.t=self.t[self._order]    #times
         self.oc=self.oc[self._order]  #O-Cs
         self.err=self.err[self._order]   #errors
+
+        self.dE=dE   #diffence in epoch between primary and secondary minima
 
         self.limits={}          #limits of parameters for fitting
         self.steps={}           #steps (width of normal distibution) of parameters for fitting
@@ -1529,6 +1563,7 @@ class OCFit(ComplexFit,Common):
         data['epoch']=self.epoch
         data['min_type']=self._min_type
         data['fit']=self._fit
+        data['dE']=self.dE
 
         path=path.replace('\\','/')   #change dirs in path (for Windows)
         if path.rfind('.')<=path.rfind('/'): path+='.ocf'   #without extesion
@@ -1580,6 +1615,9 @@ class OCFit(ComplexFit,Common):
         if 'fit' in data: self._fit=data['fit']
         elif len(self.params_err)==0: self._fit='GA'
         else: self._fit='MCMC'
+
+        if 'dE' in data: self.dE=data['dE']
+        else: self.dE=0.5
 
 
     def AgolInPlanet(self,t,P,a,w,e,mu3,r3,w3,t03,P3):
