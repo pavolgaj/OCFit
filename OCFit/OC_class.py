@@ -112,11 +112,12 @@ def DeltaEpoch(e,w):
 
     w=np.deg2rad(w)
     #eccentric anomaly
-    dEA=-2*np.arctan(2/np.cos(w)/(np.sqrt((1+e)/(1-e))-1))
-    EA01=-2*np.arctan(2*np.tan(w)/(np.sqrt((1+e)/(1-e))+1))
+    dEA=-2*np.arctan(np.sqrt(1-e**2)/(e*np.cos(w)))
+    #EA01=-2*np.arctan(np.sqrt(1-e**2)*np.tan(w))
 
     #mean anomaly
-    dMA=dEA-2*e*np.sin(dEA/2)*np.cos(EA01/2)
+    #dMA=dEA-2*e*np.sin(dEA/2)*np.cos(EA01/2)
+    dMA=dEA+2*e*np.cos(w)*np.sqrt(1-e**2)/(1-e**2*(np.sin(w))**2)
 
     #epoch
     dE=dMA/(2*np.pi)
