@@ -450,6 +450,17 @@ def load():
     bProc.configure(state=tk.DISABLED)
     bProc.configure(text='Process file')
 
+
+def deltaE():
+    #calculate phase/difference in epoch for secondary minima
+    tkinter.messagebox.showerror('Calculate delta Epoch','Not implemented, yet!')
+    return
+
+def system():
+    #set some general parameters of studied systems
+    tkinter.messagebox.showerror('System Params','Not implemented, yet!')
+    return
+
 def plot0():
     #plot O-Cs calculated according to initial ephemeris
     global data,weight
@@ -526,6 +537,11 @@ def save0():
 
     if not 'err' in data and 'w' in data: oc.SaveOC(f,weight=data['w'])
     else: oc.SaveOC(f)
+
+def fitParams0():
+    #define params of fitting (used method, its params etc.) for linear/quadratic fitting
+    tkinter.messagebox.showerror('Fit Params','Not implemented, yet!')
+    return
 
 def lin():
     #fitting O-Cs with a linear function
@@ -684,6 +700,15 @@ def saveRS():
     if not 'err' in data and 'w' in data: simple.SaveRes(f,weight=data['w'])
     else: simple.SaveRes(f)
 
+def saveAll0():
+    #run all saving functions
+    tkinter.messagebox.showerror('Save All','Not implemented, yet!')
+    return
+
+def update():
+    #update linear ephemeris
+    tkinter.messagebox.showerror('Update Ephem.','Not implemented, yet!')
+    return
 
 def initC():
     #main class (OCFit) initialization
@@ -789,6 +814,11 @@ def fitGA():
     bSum.config(state=tk.NORMAL)
     bSaveAll.config(state=tk.NORMAL)
 
+def fitDE():
+    #fitting using scipy differentional evolution
+    tkinter.messagebox.showerror('Fit DE','Not implemented, yet!')
+    return
+
 def fitMC():
     #fitting using Monte Carlo method
     for p in ocf.fit_params:
@@ -817,6 +847,16 @@ def fitMC():
     bSaveR.config(state=tk.NORMAL)
     bSum.config(state=tk.NORMAL)
     bSaveAll.config(state=tk.NORMAL)
+
+def infoMC():
+    #posterior info about MC/GA/DE fitting
+    tkinter.messagebox.showerror('Info MCMC/GA/DE','Not implemented, yet!')
+    return
+
+def corrErr():
+    #correction of errors level - sometimes useful before MCMC
+    tkinter.messagebox.showerror('Correct Errors','Not implemented, yet!')
+    return
 
 def fitParams():
     #setting parameters of GA and MC fitting
@@ -2862,8 +2902,8 @@ save=0
 #main window
 master=tk.Tk()
 #default scale of window - NOT change this values if you want to change size
-mwidth=329
-mheight=492
+mwidth=350
+mheight=560
 
 fixed=True   #fixed size to default
 
@@ -2873,7 +2913,7 @@ else:
     #set relatively to screen size
     height = master.winfo_screenheight()
     width = master.winfo_screenwidth()
-    screenheight = int(0.5*height)
+    screenheight = int(0.6*height)
     screenwidth = int(0.25*width)
     master.geometry('{}x{}'.format(screenwidth, screenheight))
 master.title('OCFit GUI')
@@ -2886,13 +2926,12 @@ lheight=23    #label
 l2height=18
 rheight=27      #radiobutton
 
-b1width=87
+b1width=90
 b2width=117
-b3width=90
-b4width=135
+b3width=95
+b4width=140
 b5width=100
 b6width=80
-b7width=95
 rwidth=75
 
 style=tkinter.ttk.Style()
@@ -2902,18 +2941,20 @@ style.layout('TNotebook.Tab',[])
 #variable for T0 and P
 t0Var=tk.StringVar(master)
 pVar=tk.StringVar(master)
+dEVar=tk.StringVar(master)
+dEVar.set('0.5')
 
 #button - load data from file
 bLoad=tk.Button(master)
-bLoad.place(relx=0.36,rely=0.01,relheight=b1height/mheight,relwidth=b1width/mwidth)
+bLoad.place(relx=0.5-b1width/mwidth/2,rely=5/mheight,relheight=b1height/mheight,relwidth=b1width/mwidth)
 bLoad.configure(command=load)
 bLoad.configure(text='Load Data')
 
 #frame for linear ephemeris
 Frame1=tk.Frame(master)
-f1height=74
-f1width=296
-Frame1.place(relx=0.06,rely=0.08,relheight=f1height/mheight,relwidth=f1width/mwidth)
+f1height=95
+f1width=316
+Frame1.place(relx=0.06,rely=40/mheight,relheight=f1height/mheight,relwidth=f1width/mwidth)
 Frame1.configure(relief=tk.GROOVE)
 Frame1.configure(borderwidth='2')
 Frame1.configure(relief=tk.GROOVE)
@@ -2921,54 +2962,71 @@ Frame1.configure(width=295)
 
 #labels
 Label1=tk.Label(Frame1)
-Label1.place(relx=0.07,rely=0.2,relheight=lheight/f1height,relwidth=0.15)
+Label1.place(relx=0.07,rely=15/f1height,relheight=lheight/f1height,relwidth=0.15)
 Label1.configure(anchor=tk.W)
 Label1.configure(text='T0')
 Label1.configure(font=('None',9))
 
+#input - T0
+Entry1=tk.Entry(Frame1)
+Entry1.place(relx=0.24,rely=15/f1height,relheight=iheight/f1height,relwidth=0.73)
+Entry1.configure(textvariable=t0Var)
+
 Label2=tk.Label(Frame1)
-Label2.place(relx=0.07,rely=0.53,relheight=lheight/f1height,relwidth=0.15)
+Label2.place(relx=0.07,rely=(15+24)/f1height,relheight=lheight/f1height,relwidth=0.15)
 Label2.configure(anchor=tk.W)
 Label2.configure(justify=tk.LEFT)
 Label2.configure(text='P')
 Label2.configure(font=('None',9))
 
-#input - T0
-Entry1=tk.Entry(Frame1)
-Entry1.place(relx=0.24,rely=0.13,relheight=iheight/f1height,relwidth=0.73)
-Entry1.configure(textvariable=t0Var)
-
 #input - P
 Entry2=tk.Entry(Frame1)
-Entry2.place(relx=0.24,rely=0.53,relheight=iheight/f1height,relwidth=0.73)
+Entry2.place(relx=0.24,rely=(15+24)/f1height,relheight=iheight/f1height,relwidth=0.73)
 Entry2.configure(textvariable=pVar)
+
+Label3=tk.Label(Frame1)
+Label3.place(relx=0.07,rely=(15+2*24)/f1height,relheight=lheight/f1height,relwidth=0.15)
+Label3.configure(anchor=tk.W)
+Label3.configure(justify=tk.LEFT)
+Label3.configure(text='dE')
+Label3.configure(font=('None',9))
+
+#input - dE
+Entry3=tk.Entry(Frame1)
+Entry3.place(relx=0.24,rely=(15+2*24)/f1height,relheight=iheight/f1height,relwidth=0.35)
+Entry3.configure(textvariable=dEVar)
+
+bdE=tk.Button(Frame1)
+bdE.place(relx=0.6,rely=(15+2*24)/f1height,relheight=iheight/f1height,relwidth=0.37)
+bdE.configure(command=deltaE)
+bdE.configure(text='Calculate')
 
 #button - Plot O-C
 bPlot0=tk.Button(master)
-bPlot0.place(relx=0.06,rely=0.24,relheight=b1height/mheight,relwidth=b7width/mwidth)
+bPlot0.place(relx=0.06,rely=140/mheight,relheight=b1height/mheight,relwidth=b5width/mwidth)
 bPlot0.configure(command=plot0)
 bPlot0.configure(state=tk.DISABLED)
 bPlot0.configure(text='Plot O-C')
 
+
 #button - Save O-C
 bSave0=tk.Button(master)
-bSave0.place(relx=0.365,rely=0.24,relheight=b1height/mheight,relwidth=b7width/mwidth)
+bSave0.place(relx=0.365,rely=140/mheight,relheight=b1height/mheight,relwidth=b5width/mwidth)
 bSave0.configure(command=save0)
 bSave0.configure(state=tk.DISABLED)
 bSave0.configure(text='Save O-C')
 
 #button - System Params
 bSyst=tk.Button(master)
-bSyst.place(relx=0.67,rely=0.24,relheight=b1height/mheight,relwidth=b7width/mwidth)
-#bSyst.configure(command=system)
-bSyst.configure(state=tk.DISABLED)
+bSyst.place(relx=0.67,rely=140/mheight,relheight=b1height/mheight,relwidth=b5width/mwidth)
+bSyst.configure(command=system)
 bSyst.configure(text='Sys.Params.')
 
 #frame for linear / quadratic fitting
 Frame2=tk.Frame(master)
 f2height=113
-f2width=296
-Frame2.place(relx=0.06,rely=0.32,relheight=f2height/mheight,relwidth=f2width/mwidth)
+f2width=316
+Frame2.place(relx=0.06,rely=177/mheight,relheight=f2height/mheight,relwidth=f2width/mwidth)
 Frame2.configure(relief=tk.GROOVE)
 Frame2.configure(borderwidth='2')
 Frame2.configure(relief=tk.GROOVE)
@@ -2976,72 +3034,72 @@ Frame2.configure(width=295)
 
 #button - fit params
 bFit0=tk.Button(Frame2)
-bFit0.place(relx=0.02,rely=0.08,relheight=b2height/f2height,relwidth=b3width/f2width)
-#bFit0.configure(command=fitParams0)
+bFit0.place(relx=0.02,rely=9/f2height,relheight=b2height/f2height,relwidth=b3width/f2width)
+bFit0.configure(command=fitParams0)
 bFit0.configure(state=tk.DISABLED)
 bFit0.configure(text='FitParams')
 
 #button - fit linear
 bLin=tk.Button(Frame2)
-bLin.place(relx=0.35,rely=0.08,relheight=b2height/f2height,relwidth=b3width/f2width)
+bLin.place(relx=0.35,rely=9/f2height,relheight=b2height/f2height,relwidth=b3width/f2width)
 bLin.configure(command=lin)
 bLin.configure(state=tk.DISABLED)
 bLin.configure(text='FitLinear')
 
 #button - fit quadratic
 bQuad=tk.Button(Frame2)
-bQuad.place(relx=0.68,rely=0.08,relheight=b2height/f2height,relwidth=b3width/f2width)
+bQuad.place(relx=0.68,rely=9/f2height,relheight=b2height/f2height,relwidth=b3width/f2width)
 bQuad.configure(command=quad)
 bQuad.configure(state=tk.DISABLED)
 bQuad.configure(text='FitQuad')
 
 #button - plot O-C
 bPlotS=tk.Button(Frame2)
-bPlotS.place(relx=0.02,rely=0.38,relheight=b2height/f2height,relwidth=b3width/f2width)
+bPlotS.place(relx=0.02,rely=(9+34)/f2height,relheight=b2height/f2height,relwidth=b3width/f2width)
 bPlotS.configure(command=plotS)
 bPlotS.configure(state=tk.DISABLED)
 bPlotS.configure(text='Plot O-C')
 
 #button - plot residual O-C
 bPlotRS=tk.Button(Frame2)
-bPlotRS.place(relx=0.35,rely=0.38,relheight=b2height/f2height,relwidth=b3width/f2width)
+bPlotRS.place(relx=0.35,rely=(9+34)/f2height,relheight=b2height/f2height,relwidth=b3width/f2width)
 bPlotRS.configure(command=plotRS)
 bPlotRS.configure(state=tk.DISABLED)
 bPlotRS.configure(text='Plot O-C res.')
 
 #button - summary
 bSumS=tk.Button(Frame2)
-bSumS.place(relx=0.68,rely=0.38,relheight=b2height/f2height,relwidth=b3width/f2width)
+bSumS.place(relx=0.68,rely=(9+34)/f2height,relheight=b2height/f2height,relwidth=b3width/f2width)
 bSumS.configure(command=sumS)
 bSumS.configure(state=tk.DISABLED)
 bSumS.configure(text='Summary')
 
 #button - save residual O-C
 bSaveRS=tk.Button(Frame2)
-bSaveRS.place(relx=0.02,rely=0.69,relheight=b2height/f2height,relwidth=b3width/f2width)
+bSaveRS.place(relx=0.02,rely=(9+2*34)/f2height,relheight=b2height/f2height,relwidth=b3width/f2width)
 bSaveRS.configure(command=saveRS)
 bSaveRS.configure(state=tk.DISABLED)
 bSaveRS.configure(text='Save O-C res.')
 
 #button - save all
 bSaveAll0=tk.Button(Frame2)
-bSaveAll0.place(relx=0.35,rely=0.69,relheight=b2height/f2height,relwidth=b3width/f2width)
-#bSaveAll0.configure(command=saveAll0)
+bSaveAll0.place(relx=0.35,rely=(9+2*34)/f2height,relheight=b2height/f2height,relwidth=b3width/f2width)
+bSaveAll0.configure(command=saveAll0)
 bSaveAll0.configure(state=tk.DISABLED)
 bSaveAll0.configure(text='Save all')
 
 #button - save residual O-C
 bUpd=tk.Button(Frame2)
-bUpd.place(relx=0.68,rely=0.69,relheight=b2height/f2height,relwidth=b3width/f2width)
-#bUpd.configure(command=update)
+bUpd.place(relx=0.68,rely=(9+2*34)/f2height,relheight=b2height/f2height,relwidth=b3width/f2width)
+bUpd.configure(command=update)
 bUpd.configure(state=tk.DISABLED)
 bUpd.configure(text='UpdateEph')
 
 #frame for O-C fitting
 Frame3=tk.Frame(master)
-f3height=187
-f3width=296
-Frame3.place(relx=0.06,rely=0.56,relheight=f3height/mheight,relwidth=f3width/mwidth)
+f3height=220
+f3width=316
+Frame3.place(relx=0.06,rely=300/mheight,relheight=f3height/mheight,relwidth=f3width/mwidth)
 Frame3.configure(relief=tk.GROOVE)
 Frame3.configure(borderwidth='2')
 Frame3.configure(relief=tk.GROOVE)
@@ -3049,104 +3107,124 @@ Frame3.configure(width=295)
 
 #button - class initialization
 bInit=tk.Button(Frame3)
-bInit.place(relx=0.02,rely=0.05,relheight=b1height/f3height,relwidth=b3width/f3width)
+bInit.place(relx=0.02,rely=9/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
 bInit.configure(command=initC)
 bInit.configure(state=tk.DISABLED)
 bInit.configure(text='Init class')
 
 #button - load class from file
 bLoadC=tk.Button(Frame3)
-bLoadC.place(relx=0.35,rely=0.05,relheight=b1height/f3height,relwidth=b3width/f3width)
+bLoadC.place(relx=0.35,rely=9/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
 bLoadC.configure(command=loadC)
 bLoadC.configure(text='Load Class')
 
 #button - set model parameters
 bParams=tk.Button(Frame3)
-bParams.place(relx=0.68,rely=0.05,relheight=b1height/f3height,relwidth=b3width/f3width)
+bParams.place(relx=0.68,rely=9/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
 bParams.configure(command=params)
 bParams.configure(state=tk.DISABLED)
 bParams.configure(text='Set Params')
 
 #button - set parameters of GA and MC fitting
 bFitParams=tk.Button(Frame3)
-bFitParams.place(relx=0.02,rely=0.24,relheight=b1height/f3height,relwidth=b3width/f3width)
+bFitParams.place(relx=0.02,rely=(9+35)/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
 bFitParams.configure(command=fitParams)
 bFitParams.configure(state=tk.DISABLED)
 bFitParams.configure(text='Fit. Params')
 
 #button - GA fitting
 bFitGA=tk.Button(Frame3)
-bFitGA.place(relx=0.35,rely=0.24,relheight=b1height/f3height,relwidth=b3width/f3width)
+bFitGA.place(relx=0.35,rely=(9+35)/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
 bFitGA.configure(command=fitGA)
 bFitGA.configure(state=tk.DISABLED)
 bFitGA.configure(text='Fit GA')
 
 #button - MC fitting
+bFitDE=tk.Button(Frame3)
+bFitDE.place(relx=0.68,rely=(9+35)/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
+bFitDE.configure(command=fitDE)
+bFitDE.configure(state=tk.DISABLED)
+bFitDE.configure(text='Fit DE')
+
+#button - MC fitting
+bCorr=tk.Button(Frame3)
+bCorr.place(relx=0.02,rely=(9+2*35)/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
+bCorr.configure(command=corrErr)
+bCorr.configure(state=tk.DISABLED)
+bCorr.configure(text='Corr. Err.')
+
+#button - MC fitting
 bFitMC=tk.Button(Frame3)
-bFitMC.place(relx=0.68,rely=0.24,relheight=b1height/f3height,relwidth=b3width/f3width)
+bFitMC.place(relx=0.35,rely=(9+2*35)/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
 bFitMC.configure(command=fitMC)
 bFitMC.configure(state=tk.DISABLED)
 bFitMC.configure(text='Fit MCMC')
 
+#button - info about MC/GA fitting
+bInfoMC=tk.Button(Frame3)
+bInfoMC.place(relx=0.68,rely=(9+2*35)/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
+bInfoMC.configure(command=infoMC)
+bInfoMC.configure(text='Info MC/GA')
+
 #button - plot O-C with model
 bPlot=tk.Button(Frame3)
-bPlot.place(relx=0.02,rely=0.43,relheight=b1height/f3height,relwidth=b3width/f3width)
+bPlot.place(relx=0.02,rely=(9+3*35)/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
 bPlot.configure(command=plot)
 bPlot.configure(state=tk.DISABLED)
 bPlot.configure(text='Plot O-C')
 
 #button - plot residual O-C
 bPlotR=tk.Button(Frame3)
-bPlotR.place(relx=0.35,rely=0.43,relheight=b1height/f3height,relwidth=b3width/f3width)
+bPlotR.place(relx=0.35,rely=(9+3*35)/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
 bPlotR.configure(command=plotR)
 bPlotR.configure(state=tk.DISABLED)
 bPlotR.configure(text='Plot O-C res.')
 
 #button - summary of fitting
 bSum=tk.Button(Frame3)
-bSum.place(relx=0.68,rely=0.43,relheight=b1height/f3height,relwidth=b3width/f3width)
+bSum.place(relx=0.68,rely=(9+3*35)/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
 bSum.configure(command=summary)
 bSum.configure(state=tk.DISABLED)
 bSum.configure(text='Summary')
 
 #button - save model O-C
 bSaveM=tk.Button(Frame3)
-bSaveM.place(relx=0.02,rely=0.62,relheight=b1height/f3height,relwidth=b3width/f3width)
+bSaveM.place(relx=0.02,rely=(9+4*35)/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
 bSaveM.configure(command=saveM)
 bSaveM.configure(state=tk.DISABLED)
 bSaveM.configure(text='Save model')
 
 #button - save residual O-C
 bSaveR=tk.Button(Frame3)
-bSaveR.place(relx=0.35,rely=0.62,relheight=b1height/f3height,relwidth=b3width/f3width)
+bSaveR.place(relx=0.35,rely=(9+4*35)/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
 bSaveR.configure(command=saveR)
 bSaveR.configure(state=tk.DISABLED)
 bSaveR.configure(text='Save O-C res.')
 
 #button - save class to file
 bSaveC=tk.Button(Frame3)
-bSaveC.place(relx=0.68,rely=0.62,relheight=b1height/f3height,relwidth=b3width/f3width)
+bSaveC.place(relx=0.68,rely=(9+4*35)/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
 bSaveC.configure(command=saveC)
 bSaveC.configure(state=tk.DISABLED)
 bSaveC.configure(text='Save class')
 
 #button - fitting on background
 bRunBG=tk.Button(Frame3)
-bRunBG.place(relx=0.02,rely=0.81,relheight=b1height/f3height,relwidth=b4width/f3width)
+bRunBG.place(relx=0.02,rely=(9+5*35)/f3height,relheight=b1height/f3height,relwidth=b4width/f3width)
 bRunBG.configure(command=runBG)
 bRunBG.configure(state=tk.DISABLED)
 bRunBG.configure(text='Fit on Background')
 
 #buttom - save all
 bSaveAll=tk.Button(Frame3)
-bSaveAll.place(relx=0.53, rely=0.81,relheight=b1height/f3height,relwidth=b4width/f3width)
+bSaveAll.place(relx=0.53,rely=(9+5*35)/f3height,relheight=b1height/f3height,relwidth=b4width/f3width)
 bSaveAll.configure(command=saveAll)
 bSaveAll.configure(state=tk.DISABLED)
 bSaveAll.configure(text='Save All')
 
 #label
 Label3=tk.Label(master)
-Label3.place(relx=0.09,rely=0.95,relheight=l2height/mheight,relwidth=0.9)
+Label3.place(relx=0.09,rely=1-24/mheight,relheight=l2height/mheight,relwidth=0.9)
 Label3.configure(text='(c) Pavol Gajdos, 2018 - 2022')
 Label3.configure(font=('None',9))
 
