@@ -20,7 +20,7 @@ import os,sys
 
 import OCFit
 
-t0P_old=[]
+tPQ=[]
 
 
 def load():
@@ -545,7 +545,7 @@ def fitParams0():
 
 def lin():
     #fitting O-Cs with a linear function
-    global data,simple,weight,t0P_old
+    global data,simple,weight,tPQ
 
     if len(t0Var.get())*len(pVar.get())==0:
         tkinter.messagebox.showerror('Fit Linear','Set linear ephemeris (T0, P)!')
@@ -555,11 +555,6 @@ def lin():
 
     t0=float(t0Var.get())
     P=float(pVar.get())
-
-    if len(t0P_old)==0: t0P_old=[t0,P]
-    else:
-        t0=t0P_old[0]
-        P=t0P_old[1]
 
     #setting errors
     if not 'err' in data and 'w' in data:
@@ -582,18 +577,18 @@ def lin():
     for x in data: data[x]=np.array(data[x])[simple._order]   #save sorted values
     data['oc']=simple.new_oc
     data['tC']=simple.tC
-    t0Var.set(simple.t0)
-    pVar.set(simple.P)
+    tPQ=[simple.t0,simple.P,0]
 
     #make some buttons available
     bPlotS.config(state=tk.NORMAL)
     bPlotRS.config(state=tk.NORMAL)
     bSumS.config(state=tk.NORMAL)
     bSaveRS.config(state=tk.NORMAL)
+    bUpd.config(state=tk.NORMAL)
 
 def quad():
     #fitting O-Cs with a quadratic function
-    global data,simple,weight,t0P_old
+    global data,simple,weight,tPQ
 
     if len(t0Var.get())*len(pVar.get())==0:
         tkinter.messagebox.showerror('Fit Linear','Set linear ephemeris (T0, P)!')
@@ -603,11 +598,6 @@ def quad():
 
     t0=float(t0Var.get())
     P=float(pVar.get())
-
-    if len(t0P_old)==0: t0P_old=[t0,P]
-    else:
-        t0=t0P_old[0]
-        P=t0P_old[1]
 
     #setting errors
     if not 'err' in data and 'w' in data:
@@ -629,14 +619,14 @@ def quad():
     for x in data: data[x]=np.array(data[x])[simple._order]   #save sorted values
     data['oc']=simple.new_oc
     data['tC']=simple.tC
-    t0Var.set(simple.t0)
-    pVar.set(simple.P)
+    tPQ=[simple.t0,simple.P,simple.Q]
 
     #make some buttons available
     bPlotS.config(state=tk.NORMAL)
     bPlotRS.config(state=tk.NORMAL)
     bSumS.config(state=tk.NORMAL)
     bSaveRS.config(state=tk.NORMAL)
+    bUpd.config(state=tk.NORMAL)
 
 def plotS():
     #plot O-Cs together with linear / quadratic fit
@@ -707,8 +697,8 @@ def saveAll0():
 
 def update():
     #update linear ephemeris
-    tkinter.messagebox.showerror('Update Ephem.','Not implemented, yet!')
-    return
+    t0Var.set(tPQ[0])
+    pVar.set(tPQ[1])
 
 def initC():
     #main class (OCFit) initialization
