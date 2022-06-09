@@ -20,6 +20,8 @@ import os,sys
 
 import OCFit
 
+t0P_old=[]
+
 
 def load():
     #loading data from file
@@ -527,7 +529,7 @@ def save0():
 
 def lin():
     #fitting O-Cs with a linear function
-    global data,simple,weight
+    global data,simple,weight,t0P_old
 
     if len(t0Var.get())*len(pVar.get())==0:
         tkinter.messagebox.showerror('Fit Linear','Set linear ephemeris (T0, P)!')
@@ -537,6 +539,11 @@ def lin():
 
     t0=float(t0Var.get())
     P=float(pVar.get())
+
+    if len(t0P_old)==0: t0P_old=[t0,P]
+    else:
+        t0=t0P_old[0]
+        P=t0P_old[1]
 
     #setting errors
     if not 'err' in data and 'w' in data:
@@ -570,7 +577,7 @@ def lin():
 
 def quad():
     #fitting O-Cs with a quadratic function
-    global data,simple,weight
+    global data,simple,weight,t0P_old
 
     if len(t0Var.get())*len(pVar.get())==0:
         tkinter.messagebox.showerror('Fit Linear','Set linear ephemeris (T0, P)!')
@@ -580,6 +587,11 @@ def quad():
 
     t0=float(t0Var.get())
     P=float(pVar.get())
+
+    if len(t0P_old)==0: t0P_old=[t0,P]
+    else:
+        t0=t0P_old[0]
+        P=t0P_old[1]
 
     #setting errors
     if not 'err' in data and 'w' in data:
@@ -2880,6 +2892,7 @@ b3width=90
 b4width=135
 b5width=100
 b6width=80
+b7width=95
 rwidth=75
 
 style=tkinter.ttk.Style()
@@ -2932,17 +2945,24 @@ Entry2.configure(textvariable=pVar)
 
 #button - Plot O-C
 bPlot0=tk.Button(master)
-bPlot0.place(relx=0.12,rely=0.24,relheight=b1height/mheight,relwidth=b2width/mwidth)
+bPlot0.place(relx=0.06,rely=0.24,relheight=b1height/mheight,relwidth=b7width/mwidth)
 bPlot0.configure(command=plot0)
 bPlot0.configure(state=tk.DISABLED)
 bPlot0.configure(text='Plot O-C')
 
 #button - Save O-C
 bSave0=tk.Button(master)
-bSave0.place(relx=0.55,rely=0.24,relheight=b1height/mheight,relwidth=b2width/mwidth)
+bSave0.place(relx=0.365,rely=0.24,relheight=b1height/mheight,relwidth=b7width/mwidth)
 bSave0.configure(command=save0)
 bSave0.configure(state=tk.DISABLED)
 bSave0.configure(text='Save O-C')
+
+#button - System Params
+bSyst=tk.Button(master)
+bSyst.place(relx=0.67,rely=0.24,relheight=b1height/mheight,relwidth=b7width/mwidth)
+#bSyst.configure(command=system)
+bSyst.configure(state=tk.DISABLED)
+bSyst.configure(text='Sys.Params.')
 
 #frame for linear / quadratic fitting
 Frame2=tk.Frame(master)
@@ -2954,47 +2974,68 @@ Frame2.configure(borderwidth='2')
 Frame2.configure(relief=tk.GROOVE)
 Frame2.configure(width=295)
 
+#button - fit params
+bFit0=tk.Button(Frame2)
+bFit0.place(relx=0.02,rely=0.08,relheight=b2height/f2height,relwidth=b3width/f2width)
+#bFit0.configure(command=fitParams0)
+bFit0.configure(state=tk.DISABLED)
+bFit0.configure(text='FitParams')
+
 #button - fit linear
 bLin=tk.Button(Frame2)
-bLin.place(relx=0.05,rely=0.08,relheight=b2height/f2height,relwidth=b2width/f2width)
+bLin.place(relx=0.35,rely=0.08,relheight=b2height/f2height,relwidth=b3width/f2width)
 bLin.configure(command=lin)
 bLin.configure(state=tk.DISABLED)
-bLin.configure(text='Fit Linear')
+bLin.configure(text='FitLinear')
+
+#button - fit quadratic
+bQuad=tk.Button(Frame2)
+bQuad.place(relx=0.68,rely=0.08,relheight=b2height/f2height,relwidth=b3width/f2width)
+bQuad.configure(command=quad)
+bQuad.configure(state=tk.DISABLED)
+bQuad.configure(text='FitQuad')
 
 #button - plot O-C
 bPlotS=tk.Button(Frame2)
-bPlotS.place(relx=0.05,rely=0.38,relheight=b2height/f2height,relwidth=b2width/f2width)
+bPlotS.place(relx=0.02,rely=0.38,relheight=b2height/f2height,relwidth=b3width/f2width)
 bPlotS.configure(command=plotS)
 bPlotS.configure(state=tk.DISABLED)
 bPlotS.configure(text='Plot O-C')
 
-#button - summary
-bSumS=tk.Button(Frame2)
-bSumS.place(relx=0.05,rely=0.69,relheight=b2height/f2height,relwidth=b2width/f2width)
-bSumS.configure(command=sumS)
-bSumS.configure(state=tk.DISABLED)
-bSumS.configure(text='Summary')
-
-#button - fit quadratic
-bQuad=tk.Button(Frame2)
-bQuad.place(relx=0.54,rely=0.08,relheight=b2height/f2height,relwidth=b2width/f2width)
-bQuad.configure(command=quad)
-bQuad.configure(state=tk.DISABLED)
-bQuad.configure(text='Fit Quadratic')
-
 #button - plot residual O-C
 bPlotRS=tk.Button(Frame2)
-bPlotRS.place(relx=0.54,rely=0.38,relheight=b2height/f2height,relwidth=b2width/f2width)
+bPlotRS.place(relx=0.35,rely=0.38,relheight=b2height/f2height,relwidth=b3width/f2width)
 bPlotRS.configure(command=plotRS)
 bPlotRS.configure(state=tk.DISABLED)
 bPlotRS.configure(text='Plot O-C res.')
 
+#button - summary
+bSumS=tk.Button(Frame2)
+bSumS.place(relx=0.68,rely=0.38,relheight=b2height/f2height,relwidth=b3width/f2width)
+bSumS.configure(command=sumS)
+bSumS.configure(state=tk.DISABLED)
+bSumS.configure(text='Summary')
+
 #button - save residual O-C
 bSaveRS=tk.Button(Frame2)
-bSaveRS.place(relx=0.54,rely=0.69,relheight=b2height/f2height,relwidth=b2width/f2width)
+bSaveRS.place(relx=0.02,rely=0.69,relheight=b2height/f2height,relwidth=b3width/f2width)
 bSaveRS.configure(command=saveRS)
 bSaveRS.configure(state=tk.DISABLED)
 bSaveRS.configure(text='Save O-C res.')
+
+#button - save all
+bSaveAll0=tk.Button(Frame2)
+bSaveAll0.place(relx=0.35,rely=0.69,relheight=b2height/f2height,relwidth=b3width/f2width)
+#bSaveAll0.configure(command=saveAll0)
+bSaveAll0.configure(state=tk.DISABLED)
+bSaveAll0.configure(text='Save all')
+
+#button - save residual O-C
+bUpd=tk.Button(Frame2)
+bUpd.place(relx=0.68,rely=0.69,relheight=b2height/f2height,relwidth=b3width/f2width)
+#bUpd.configure(command=update)
+bUpd.configure(state=tk.DISABLED)
+bUpd.configure(text='UpdateEph')
 
 #frame for O-C fitting
 Frame3=tk.Frame(master)
