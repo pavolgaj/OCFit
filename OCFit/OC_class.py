@@ -264,7 +264,14 @@ class SimpleFit(Common):
         params=list(self.params.keys())
         units={'t0':'JD','P':'d','Q':'d'}
 
-        text=['parameter'.ljust(15,' ')+'unit'.ljust(10,' ')+'value'.ljust(30,' ')+'error']
+        text=['original ephemeris']
+        text.append('------------------------------------')
+        text.append('parameter'.ljust(15,' ')+'unit'.ljust(10,' ')+'value')
+        text.append('P'.ljust(15,' ')+'d'.ljust(10,' ')+str(self._t0P[1]))
+        text.append('t0'.ljust(15,' ')+'JD'.ljust(10,' ')+str(self._t0P[0]))
+        text.append('------------------------------------\n')
+
+        text.append('parameter'.ljust(15,' ')+'unit'.ljust(10,' ')+'value'.ljust(30,' ')+'error')
 
         for p in sorted(params):
             text.append(p.ljust(15,' ')+units[p].ljust(10,' ')+str(self.params[p]).ljust(30,' ')
@@ -424,6 +431,36 @@ class SimpleFit(Common):
                        fmt=["%14.7f",'%10.3f',"%+12.10f"],delimiter="    ",
                        header='Time'.ljust(14,' ')+'    '+'Epoch'.ljust(10,' ')
                        +'    new O-C')
+        f.close()
+
+    def SaveModel(self,name,E_min=None,E_max=None,n=1000):
+        '''save model curve of O-C to file
+        name - name of output file
+        E_min - minimal value of epoch
+        E_max - maximal value of epoch
+        n - number of data points
+        '''
+        #same interval of epoch like in plot
+        if len(self.epoch)<1000: dE=50*(self.epoch[-1]-self.epoch[0])/1000.
+        else: dE=0.05*(self.epoch[-1]-self.epoch[0])
+
+        if E_min is None: E_min=min(self.epoch)-dE
+        if E_max is None: E_max=max(self.epoch)+dE
+
+        E=np.linspace(E_min,E_max,n)
+
+        tC=self._t0P[0]+self._t0P[1]*E
+        p=[]
+        if 'Q' in self.params:
+            #Quad Model
+            p.append(self.params['Q'])
+        p+=[self.params['P']-self._t0P[1],self.params['t0']-self._t0P[0]]
+        new=np.polyval(p,E)
+
+        f=open(name,'w')
+        np.savetxt(f,np.column_stack((tC+new,E,new)),fmt=["%14.7f",'%10.3f',"%+12.10f"]
+                   ,delimiter='    ',header='Obs. Time'.ljust(14,' ')+'    '+'Epoch'.ljust(10,' ')
+                   +'    model O-C')
         f.close()
 
     def PlotRes(self,name=None,no_plot=0,no_plot_err=0,eps=False,oc_min=True,

@@ -461,7 +461,7 @@ def system():
     tkinter.messagebox.showerror('System Params','Not implemented, yet!')
     return
 
-def plot0():
+def plot0(f=None):
     #plot O-Cs calculated according to initial ephemeris
     global data,weight
 
@@ -496,10 +496,10 @@ def plot0():
     if data['tO'][0]<2e6: trans=False
     else: trans=True
 
-    if not 'err' in data and 'w' in data: oc.Plot(trans=trans,weight=data['w'],min_type=True)
-    else: oc.Plot(trans=trans,min_type=True)
+    if not 'err' in data and 'w' in data: oc.Plot(name=f,trans=trans,weight=data['w'],min_type=True)
+    else: oc.Plot(name=f,trans=trans,min_type=True)
 
-def save0():
+def save0(f=None):
     #save O-Cs calculated according to initial ephemeris
     global data,weight
 
@@ -532,8 +532,9 @@ def save0():
 
     for x in data: data[x]=np.array(data[x])[oc._order]   #save sorted values
 
-    f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save O-C to file',filetypes=[('Data files','*.dat *.txt'),('All files','*.*')],defaultextension='.dat')
-    if len(f)==0: return
+    if f is None:
+        f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save O-C to file',filetypes=[('Data files','*.dat *.txt'),('All files','*.*')],defaultextension='.dat')
+        if len(f)==0: return
 
     if not 'err' in data and 'w' in data: oc.SaveOC(f,weight=data['w'])
     else: oc.SaveOC(f)
@@ -585,6 +586,7 @@ def lin():
     bSumS.config(state=tk.NORMAL)
     bSaveRS.config(state=tk.NORMAL)
     bUpd.config(state=tk.NORMAL)
+    bSaveAll0.config(state=tk.NORMAL)
 
 def quad():
     #fitting O-Cs with a quadratic function
@@ -627,23 +629,24 @@ def quad():
     bSumS.config(state=tk.NORMAL)
     bSaveRS.config(state=tk.NORMAL)
     bUpd.config(state=tk.NORMAL)
+    bSaveAll0.config(state=tk.NORMAL)
 
-def plotS():
+def plotS(f=None):
     #plot O-Cs together with linear / quadratic fit
     if data['tO'][0]<2e6: trans=False
     else: trans=True
 
-    if not 'err' in data and 'w' in data: simple.Plot(trans=trans,weight=data['w'],min_type=True)
-    else: simple.Plot(trans=trans,min_type=True)
+    if not 'err' in data and 'w' in data: simple.Plot(name=f,trans=trans,weight=data['w'],min_type=True)
+    else: simple.Plot(name=f,trans=trans,min_type=True)
 
 
-def plotRS():
+def plotRS(f=None):
     #plot residual O-Cs after linear / quadratic fit
     if data['tO'][0]<2e6: trans=False
     else: trans=True
 
-    if not 'err' in data and 'w' in data: simple.PlotRes(trans=trans,weight=data['w'],min_type=True)
-    else: simple.PlotRes(trans=trans,min_type=True)
+    if not 'err' in data and 'w' in data: simple.PlotRes(name=f,trans=trans,weight=data['w'],min_type=True)
+    else: simple.PlotRes(name=f,trans=trans,min_type=True)
 
 class IORedirector(object):
     '''A general class for redirecting I/O to this Text widget.'''
@@ -656,8 +659,11 @@ class StdoutRedirector(IORedirector):
         self.text_area.insert(tk.END,str)
 
 
-def sumS():
+def sumS(f=None):
     #summary for linear / quadratic fit
+    if f is not None:
+        simple.Summary(f)
+        return
 
     #create new window
     sumW=tk.Toplevel(master)
@@ -683,17 +689,29 @@ def sumS():
     sys.stdout=old
 
 
-def saveRS():
+def saveRS(f=None):
     #save residual O-Cs to file
-    f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save new O-C to file',filetypes=[('Data files','*.dat *.txt'),('All files','*.*')],defaultextension='.dat')
+    if f is None:
+        f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save new O-C to file',filetypes=[('Data files','*.dat *.txt'),('All files','*.*')],defaultextension='.dat')
     if len(f)==0: return
     if not 'err' in data and 'w' in data: simple.SaveRes(f,weight=data['w'])
     else: simple.SaveRes(f)
 
 def saveAll0():
     #run all saving functions
-    tkinter.messagebox.showerror('Save All','Not implemented, yet!')
-    return
+    #run all saving functions
+    f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save all to file',filetypes=[('All files','*.*')])
+    if len(f)==0: return
+
+    if '.' in f[-5:]: f=f[:f.rfind('.')]
+
+    save0(f+'_oc.dat')
+    saveRS(f+'_res.dat')
+    sumS(f+'_summary.txt')
+    plot0(f+'_oc')
+    plotS(f)
+    plotRS(f+'_res')
+    simple.SaveModel(f+'_model.dat')
 
 def update():
     #update linear ephemeris
