@@ -38,6 +38,10 @@ files and go to new-created folder. Running script ``setup.py`` the installation
 
 Or using pip:
 
+``pip install .``
+
+or
+
 ``pip install git+https://github.com/pavolgaj/OCFit.git@dev``
 
 [//]: # (``pip install OCFit``)
