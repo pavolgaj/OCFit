@@ -471,6 +471,7 @@ def plot0(f=None):
 
     t0=float(t0Var.get())
     P=float(pVar.get())
+    dE=float(dEVar.get())
 
     if not 'tO' in data:
         if not 'tC' in data:
@@ -490,7 +491,7 @@ def plot0(f=None):
         weight=True
         err=[1 for x in range(len(data['tO']))]
 
-    oc=OCFit.FitLinear(data['tO'],t0,P,err=err)
+    oc=OCFit.FitLinear(data['tO'],t0,P,err=err,dE=dE)
     if weight: oc._set_err=False
 
     if data['tO'][0]<2e6: trans=False
@@ -556,6 +557,7 @@ def lin():
 
     t0=float(t0Var.get())
     P=float(pVar.get())
+    dE=float(dEVar.get())
 
     #setting errors
     if not 'err' in data and 'w' in data:
@@ -569,7 +571,7 @@ def lin():
         err=[1 for x in range(len(data['tO']))]
 
 
-    simple=OCFit.FitLinear(data['tO'],t0,P,err=err)
+    simple=OCFit.FitLinear(data['tO'],t0,P,err=err,dE=dE)
     if weight: simple._set_err=False
 
     simple.FitLinear()
@@ -600,6 +602,7 @@ def quad():
 
     t0=float(t0Var.get())
     P=float(pVar.get())
+    dE=float(dEVar.get())
 
     #setting errors
     if not 'err' in data and 'w' in data:
@@ -612,7 +615,7 @@ def quad():
         weight=True
         err=[1 for x in range(len(data['tO']))]
 
-    simple=OCFit.FitQuad(data['tO'],t0,P,err=err)
+    simple=OCFit.FitQuad(data['tO'],t0,P,err=err,dE=dE)
     if weight: simple._set_err=False
 
     simple.FitQuad()
@@ -728,10 +731,11 @@ def initC():
 
     t0=float(t0Var.get())
     P=float(pVar.get())
+    dE=float(dEVar.get())
 
     #calculationg O-Cs
     if not 'oc' in data:
-        lin=OCFit.FitLinear(data['tO'],t0,P)
+        lin=OCFit.FitLinear(data['tO'],t0,P,dE=dE)
         for x in data: data[x]=np.array(data[x])[lin._order]   #save sorted values
         data['oc']=lin.oc
 
@@ -751,7 +755,7 @@ def initC():
         err=[1 for x in range(len(data['tO']))]
     else: err=data['err']
 
-    ocf=OCFit.OCFit(data['tO'],data['oc'],err)
+    ocf=OCFit.OCFit(data['tO'],data['oc'],err,dE=dE)
 
     ocf.Epoch(float(t0Var.get()),float(pVar.get()))   #calculate epochs
 
@@ -2868,10 +2872,12 @@ def saveAll():
 
     if '.' in f[-5:]: f=f[:f.rfind('.')]
 
+    save0(f+'_oc.dat')
     saveM(f+'_model.dat')
     saveR(f+'_res.dat')
     saveC(f+'.ocf')
     summary(f+'_summary.txt')
+    plot0(f+'_oc')
     plot(f)
     plotR(f+'_res')
 
