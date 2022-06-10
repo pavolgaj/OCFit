@@ -911,6 +911,15 @@ def fitParams():
     burnVar=tk.StringVar(tFitPar,value='0')
     binnVar=tk.StringVar(tFitPar,value='1')
 
+    if len(ga)>0:
+        genVar.set(ga['gen'])
+        sizeVar.set(ga['size'])
+    if len(mc)>0:
+        nVar.set(mc['n'])
+        burnVar.set(mc['burn'])
+        binnVar.set(mc['binn'])
+    saveChVar.set(save)
+
     #button process file
     bOK=tk.Button(tFitPar)
     bOK.place(relx=0.35,rely=0.88,relheight=b1height/theight,relwidth=b3width/twidth)
@@ -2949,8 +2958,7 @@ style.layout('TNotebook.Tab',[])
 #variable for T0 and P
 t0Var=tk.StringVar(master)
 pVar=tk.StringVar(master)
-dEVar=tk.StringVar(master)
-dEVar.set('0.5')
+dEVar=tk.StringVar(master,value='0.5')
 
 #button - load data from file
 bLoad=tk.Button(master)
