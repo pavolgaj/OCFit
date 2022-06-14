@@ -510,6 +510,7 @@ def save0(f=None):
 
     t0=float(t0Var.get())
     P=float(pVar.get())
+    dE=float(dEVar.get())
 
     if not 'tO' in data:
         if not 'tC' in data:
@@ -528,7 +529,7 @@ def save0(f=None):
         weight=True
         err=[1 for x in range(len(data['tO']))]
 
-    oc=OCFit.FitLinear(data['tO'],t0,P,err=err)
+    oc=OCFit.FitLinear(data['tO'],t0,P,err=err,dE=dE)
     if weight: oc._set_err=False
 
     for x in data: data[x]=np.array(data[x])[oc._order]   #save sorted values
