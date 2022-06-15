@@ -28,7 +28,7 @@ except:
         import matplotlib.pyplot as mpl
 
 from matplotlib import gridspec
-#mpl.style.use('classic')
+#mpl.style.use('classic')   #classic style (optional)
 
 import numpy as np
 
@@ -137,7 +137,7 @@ def Epoch(t,t0,P,dE=0.5):
     return E,min_type
 
 class Common():
-    def QuadTerm(self,M1=0,M2=2,M1_err=0,M2_err=0):
+    def QuadTerm(self,M1=0,M2=0,M1_err=0,M2_err=0):
         '''calculate some params for quadratic model'''
         output={}
         if not 'Q' in self.params: return output
@@ -166,6 +166,12 @@ class Common():
             else: output['dP_err']=self.paramsMore_err['dP']
             if self.paramsMore_err['dP/P']==0: del self.paramsMore_err['dP/P']
             else: output['dP/P_err']=self.paramsMore_err['dP/P']
+
+        if M1*M2==0 and hasattr(self,'systemParams'):
+            if 'M1' in self.systemParams: M1=self.systemParams['M1']
+            if 'M2' in self.systemParams: M2=self.systemParams['M2']
+            if 'M1_err' in self.systemParams: M1_err=self.systemParams['M1_err']
+            if 'M2_err' in self.systemParams: M2_err=self.systemParams['M2_err']
 
         if M1*M2>0:
             if M1<M2:
@@ -1536,6 +1542,7 @@ class OCFit(ComplexFit,Common):
         self.paramsMore={}      #values of parameters calculated from model params
         self.paramsMore_err={}  #errors of calculated parameters
         self.fit_params=[]      #list of fitted parameters
+        self.systemParams={}    #additional parameters of the system (M1,M2,M,i3+errors)
         self._calc_err=False    #errors were calculated
         self._corr_err=False    #errors were corrected
         self._old_err=[]        #given errors
@@ -1602,6 +1609,7 @@ class OCFit(ComplexFit,Common):
         data['min_type']=self._min_type
         data['fit']=self._fit
         data['dE']=self.dE
+        data['system']=self.systemParams
 
         path=path.replace('\\','/')   #change dirs in path (for Windows)
         if path.rfind('.')<=path.rfind('/'): path+='.ocf'   #without extesion
@@ -1656,6 +1664,9 @@ class OCFit(ComplexFit,Common):
 
         if 'dE' in data: self.dE=data['dE']
         else: self.dE=0.5
+
+        if 'system' in data: self.systemParams=data['system']
+        else: self.systemParams={}
 
 
     def AgolInPlanet(self,t,P,a,w,e,mu3,r3,w3,t03,P3):
@@ -2323,6 +2334,25 @@ class OCFit(ComplexFit,Common):
         self.Amplitude()
         self.ParamsApsidal()
         self.QuadTerm()
+
+        M=0
+        M_err=0
+        i=90
+        i_err=0
+        if 'M' in self.systemParams:
+            M=self.systemParams['M']
+            if 'M_err' in self.systemParams: M_err=self.systemParams['M_err']
+        elif 'M1' in self.systemParams:
+            M=self.systemParams['M1']
+            if 'M1_err' in self.systemParams: M_err=self.systemParams['M1_err']
+            if 'M2' in self.systemParams:
+                M+=self.systemParams['M2']
+                if 'M2_err' in self.systemParams: M_err+=self.systemParams['M2_err']
+        if 'i3' in self.systemParams:
+            i=self.systemParams['i3']
+            if 'i3_err' in self.systemParams: i_err=self.systemParams['i3_err']
+
+        if M>0: self.AbsoluteParam(M,i,M_err,i_err)
 
         #make blank line
         params.append('')

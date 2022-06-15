@@ -24,6 +24,59 @@ import OCFit
 
 tPQ=[]
 
+class AutoScroll(object):
+    '''Configure the scrollbars for a widget.'''
+    def __init__(self,master):
+        vsb=tkinter.ttk.Scrollbar(master,orient='vertical',command=self.yview)
+        #except: pass
+        hsb=tkinter.ttk.Scrollbar(master,orient='horizontal',command=self.xview)
+
+        self.configure(yscrollcommand=self._autoscroll(vsb))
+        #except: pass
+        self.configure(xscrollcommand=self._autoscroll(hsb))
+
+        self.grid(column=0,row=0,sticky='nsew')
+        vsb.grid(column=1,row=0,sticky='ns')
+        #except: pass
+        hsb.grid(column=0,row=1,sticky='ew')
+
+        master.grid_columnconfigure(0,weight=1)
+        master.grid_rowconfigure(0,weight=1)
+
+        methods=tk.Pack.__dict__.keys() | tk.Grid.__dict__.keys() | tk.Place.__dict__.keys()
+
+        for meth in methods:
+            if meth[0] != '_' and meth not in ('config','configure'): setattr(self,meth,getattr(master,meth))
+
+    @staticmethod
+    def _autoscroll(sbar):
+        '''Hide and show scrollbar as needed.'''
+        def wrapped(first,last):
+            first,last=float(first),float(last)
+            if first <= 0 and last >= 1: sbar.grid_remove()
+            else: sbar.grid()
+            sbar.set(first,last)
+        return wrapped
+
+    def __str__(self):
+        return str(self.master)
+
+def _create_container(func):
+    '''Creates a ttk Frame with a given master,and use this new frame to
+    place the scrollbars and the widget.'''
+    def wrapped(cls,master,**kw):
+        container=tkinter.ttk.Frame(master)
+        return func(cls,container,**kw)
+    return wrapped
+
+class ScrolledText(AutoScroll,tk.Text):
+    '''A standard Tkinter Text widget with scrollbars that will
+    automatically show/hide as needed.'''
+    @_create_container
+    def __init__(self,master,**kw):
+        tk.Text.__init__(self,master,**kw)
+        AutoScroll.__init__(self,master)
+
 
 def load():
     #loading data from file
@@ -483,6 +536,10 @@ def deltaE():
     global systemParams
 
     def estimate():
+        if len(t0Var.get())*len(pVar.get())==0:
+            tkinter.messagebox.showerror('Delta Epoch','Set linear ephemeris (T0, P)!')
+            return
+
         t0=float(t0Var.get())
         P=float(pVar.get())
 
@@ -514,6 +571,10 @@ def deltaE():
         return dE
 
     def calculate():
+        if len(eVar.get())*len(wVar.get())==0:
+            tkinter.messagebox.showerror('Delta Epoch','Set eccentricity and argument of pericenter!')
+            return
+
         e=float(eVar.get())
         w=float(wVar.get())
 
@@ -597,8 +658,156 @@ def deltaE():
 
 def system():
     #set some general parameters of studied systems
-    tkinter.messagebox.showerror('System Params','Not implemented, yet!')
-    return
+    global systemParams,ocf
+
+    def sumMass():
+        if len(M1Var.get())==0:
+            tkinter.messagebox.showerror('System Parameters','Add mass of primary star M1!')
+            return
+        else: M1=float(M1Var.get())
+
+        M1e=0
+        if len(M1errVar.get())>0: M1e=float(M1errVar.get())
+
+        M2=0
+        M2e=0
+        if len(M2Var.get())>0:
+            M2=float(M2Var.get())
+            if len(M2errVar.get())>0: M2e=float(M2errVar.get())
+
+        MVar.set(M1+M2)
+        MerrVar.set(M1e+M2e)
+
+    def saveSys():
+        global systemParams,ocf
+
+        if len(M1Var.get())>0:
+            systemParams['M1']=float(M1Var.get())
+            systemParams['M1_err']=float(M1errVar.get())
+        elif 'M1' in systemParams: del(systemParams['M1'])
+        if len(M2Var.get())>0:
+            systemParams['M2']=float(M2Var.get())
+            systemParams['M2_err']=float(M2errVar.get())
+        elif 'M2' in systemParams: del(systemParams['M2'])
+        if len(MVar.get())>0:
+            systemParams['M']=float(MVar.get())
+            systemParams['M_err']=float(MerrVar.get())
+        elif 'M' in systemParams: del(systemParams['M'])
+        if len(i3Var.get())>0:
+            systemParams['i3']=float(i3Var.get())
+            systemParams['i3_err']=float(i3errVar.get())
+        elif 'i3' in systemParams: del(systemParams['i3'])
+
+        if 'ocf' in globals():
+            if hasattr(ocf,'systemParams'): ocf.systemParams=systemParams
+
+        tSys.destroy()
+
+    #create window
+    tSys=tk.Toplevel(master)
+    #default scale of window - NOT change this values if you want to change size
+    twidth=500
+    theight=310
+    if fixed:
+        tSys.geometry(str(twidth)+'x'+str(theight))   #modif. this line to change size - e.g. master.geometry('400x500')
+    else:
+        #set relatively to screen size
+        tSys.geometry('{}x{}'.format(int(twidth/mwidth*screenwidth), int(theight/mheight*screenheight)))
+    tSys.title('System Parameters')
+
+    #variables
+    M1Var=tk.StringVar(tSys,value='')
+    M2Var=tk.StringVar(tSys,value='')
+    M1errVar=tk.StringVar(tSys,value='0')
+    M2errVar=tk.StringVar(tSys,value='0')
+    MVar=tk.StringVar(tSys,value='')
+    MerrVar=tk.StringVar(tSys,value='0')
+    i3Var=tk.StringVar(tSys,value='')
+    i3errVar=tk.StringVar(tSys,value='0')
+
+    if len(systemParams)>0:
+        if 'M1' in systemParams:
+            M1Var.set(systemParams['M1'])
+            M1errVar.set(systemParams['M1_err'])
+        if 'M2' in systemParams:
+            M2Var.set(systemParams['M2'])
+            M2errVar.set(systemParams['M2_err'])
+        if 'M' in systemParams:
+            MVar.set(systemParams['M'])
+            MerrVar.set(systemParams['M_err'])
+        if 'i3' in systemParams:
+            i3Var.set(systemParams['i3'])
+            i3errVar.set(systemParams['i3_err'])
+
+    Label1=tk.Label(tSys)
+    Label1.place(relx=0.24,rely=0.06,relheight=lheight/theight,relwidth=0.35)
+    Label1.configure(text='Value')
+
+    Label2=tk.Label(tSys)
+    Label2.place(relx=0.62,rely=0.06,relheight=lheight/theight,relwidth=0.35)
+    Label2.configure(text='Error')
+
+    Label3=tk.Label(tSys)
+    Label3.place(relx=0.02,rely=0.13,relheight=lheight/theight,relwidth=0.22)
+    Label3.configure(anchor=tk.W)
+    Label3.configure(text='Mass M1')
+
+    Entry1=tk.Entry(tSys)
+    Entry1.place(relx=0.24,rely=0.13,relheight=iheight/theight,relwidth=0.35)
+    Entry1.configure(textvariable=M1Var)
+
+    Entry2=tk.Entry(tSys)
+    Entry2.place(relx=0.62,rely=0.13,relheight=iheight/theight,relwidth=0.35)
+    Entry2.configure(textvariable=M1errVar)
+
+    Label4=tk.Label(tSys)
+    Label4.place(relx=0.02,rely=0.26,relheight=lheight/theight,relwidth=0.22)
+    Label4.configure(anchor=tk.W)
+    Label4.configure(text='Mass M2')
+
+    Entry3=tk.Entry(tSys)
+    Entry3.place(relx=0.24,rely=0.26,relheight=iheight/theight,relwidth=0.35)
+    Entry3.configure(textvariable=M2Var)
+
+    Entry4=tk.Entry(tSys)
+    Entry4.place(relx=0.62,rely=0.26,relheight=iheight/theight,relwidth=0.35)
+    Entry4.configure(textvariable=M2errVar)
+
+    Label5=tk.Label(tSys)
+    Label5.place(relx=0.02,rely=0.45,relheight=lheight/theight,relwidth=0.22)
+    Label5.configure(anchor=tk.W)
+    Label5.configure(text='M=M1+M2')
+
+    Entry5=tk.Entry(tSys)
+    Entry5.place(relx=0.24,rely=0.45,relheight=iheight/theight,relwidth=0.35)
+    Entry5.configure(textvariable=MVar)
+
+    Entry6=tk.Entry(tSys)
+    Entry6.place(relx=0.62,rely=0.45,relheight=iheight/theight,relwidth=0.35)
+    Entry6.configure(textvariable=MerrVar)
+
+    Button1=tk.Button(tSys)
+    Button1.place(relx=0.24,rely=0.36,relheight=b1height/theight,relwidth=b2width/twidth)
+    Button1.configure(text='Calculate')
+    Button1.configure(command=sumMass)
+
+    Label6=tk.Label(tSys)
+    Label6.place(relx=0.02,rely=0.71,relheight=lheight/theight,relwidth=0.22)
+    Label6.configure(anchor=tk.W)
+    Label6.configure(text='Inclin. i3')
+
+    Entry7=tk.Entry(tSys)
+    Entry7.place(relx=0.24,rely=0.71,relheight=iheight/theight,relwidth=0.35)
+    Entry7.configure(textvariable=i3Var)
+
+    Entry8=tk.Entry(tSys)
+    Entry8.place(relx=0.62,rely=0.71,relheight=iheight/theight,relwidth=0.35)
+    Entry8.configure(textvariable=i3errVar)
+
+    Button2=tk.Button(tSys)
+    Button2.place(relx=0.5-b2width/twidth/2,rely=0.84,relheight=b1height/theight,relwidth=b2width/twidth)
+    Button2.configure(text='Save')
+    Button2.configure(command=saveSys)
 
 def plot0(f=None):
     #plot O-Cs calculated according to initial ephemeris
@@ -821,8 +1030,21 @@ def sumS(f=None):
     sumW.title('Summary')
 
     #text field
-    text=tk.Text(sumW)
+    text=ScrolledText(sumW)
     text.place(relx=0.02,rely=0.02,relheight=0.96,relwidth=0.96)
+    text.configure(wrap=tk.NONE)
+
+    M1=0
+    M2=0
+    M1_err=0
+    M2_err=0
+    if len(systemParams)>0:
+        if 'M1' in systemParams: M1=systemParams['M1']
+        if 'M2' in systemParams: M2=systemParams['M2']
+        if 'M1_err' in systemParams: M1_err=systemParams['M1_err']
+        if 'M2_err' in systemParams: M2_err=systemParams['M2_err']
+
+    simple.QuadTerm(M1,M2,M1_err,M2_err)
 
     old=sys.stdout
     #redirect output to text field
@@ -898,6 +1120,7 @@ def initC():
     else: err=data['err']
 
     ocf=OCFit.OCFit(data['tO'],data['oc'],err,dE=dE)
+    ocf.systemParams=systemParams
 
     ocf.Epoch(float(t0Var.get()),float(pVar.get()))   #calculate epochs
 
@@ -929,10 +1152,12 @@ def saveC(f=None):
 
 def loadC():
     #load class from file
-    global ocf
+    global ocf,systemParams
     f=tkinter.filedialog.askopenfilename(parent=master,title='Load class from file',filetypes=[('OCFit files','*.ocf'),('All files','*.*')])
     if len(f)==0: return
     ocf=OCFit.OCFitLoad(f)
+
+    systemParams=ocf.systemParams
 
     #make some buttons available
     bSaveC.config(state=tk.NORMAL)
@@ -3046,8 +3271,9 @@ def summary(f=None):
     sumW.title('Summary')
 
     #text field
-    text=tk.Text(sumW)
+    text=ScrolledText(sumW)
     text.place(relx=0.02,rely=0.02,relheight=0.96,relwidth=0.96)
+    text.configure(wrap=tk.NONE)
 
     old=sys.stdout
     #redirect output to text field
