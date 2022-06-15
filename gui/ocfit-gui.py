@@ -12,6 +12,8 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as mpl
 
+mpl.style.use('classic')    #classic style (optional)
+
 import numpy as np
 
 import subprocess
@@ -26,7 +28,7 @@ tPQ=[]
 def load():
     #loading data from file
 
-    global data
+    global data,systemParams
 
     def openFile():
         #create OpenFile dialog
@@ -48,6 +50,43 @@ def load():
             subprocess.call(['xdg-open',path])
         else:
             os.startfile(path)
+
+    def closeLoad():
+        #close window and make some buttons on main window available
+        global systemParams
+
+        tLoad.destroy()
+        bPlot0.config(state=tk.NORMAL)
+        bSave0.config(state=tk.NORMAL)
+        bInit.config(state=tk.NORMAL)
+        bLin.config(state=tk.NORMAL)
+        bQuad.config(state=tk.NORMAL)
+
+        bPlotS.config(state=tk.DISABLED)
+        bPlotRS.config(state=tk.DISABLED)
+        bSumS.config(state=tk.DISABLED)
+        bSaveRS.config(state=tk.DISABLED)
+        bSaveAll0.config(state=tk.DISABLED)
+        bUpd.config(state=tk.DISABLED)
+        bParams.config(state=tk.DISABLED)
+        bFitParams.config(state=tk.DISABLED)
+        bFitGA.config(state=tk.DISABLED)
+        bFitDE.config(state=tk.DISABLED)
+        bCorr.config(state=tk.DISABLED)
+        bFitMC.config(state=tk.DISABLED)
+        bPlot.config(state=tk.DISABLED)
+        bPlotR.config(state=tk.DISABLED)
+        bSum.config(state=tk.DISABLED)
+        bSaveM.config(state=tk.DISABLED)
+        bSaveR.config(state=tk.DISABLED)
+        bSaveC.config(state=tk.DISABLED)
+        bRunBG.config(state=tk.DISABLED)
+        bSaveAll.config(state=tk.DISABLED)
+
+        systemParams={}
+        t0Var.set('')
+        pVar.set('')
+        dEVar.set(0.5)
 
 
     def procFile():
@@ -141,12 +180,8 @@ def load():
                 for i in range(len(data['met'])): data[c].append(metDic[data['met'][i]])
 
                 tMet.destroy()
-                tLoad.destroy()
-                bPlot0.config(state=tk.NORMAL)
-                bSave0.config(state=tk.NORMAL)
-                bInit.config(state=tk.NORMAL)
-                bLin.config(state=tk.NORMAL)
-                bQuad.config(state=tk.NORMAL)
+                closeLoad()
+
 
             #create window
             tMet=tk.Toplevel(tLoad)
@@ -206,15 +241,7 @@ def load():
             Button1.configure(text='OK')
             Button1.config(state=tk.DISABLED)
 
-        else:
-            #close window and make some buttons on main window available
-            tLoad.destroy()
-            bPlot0.config(state=tk.NORMAL)
-            bSave0.config(state=tk.NORMAL)
-            bInit.config(state=tk.NORMAL)
-            bLin.config(state=tk.NORMAL)
-            bQuad.config(state=tk.NORMAL)
-
+        else: closeLoad()
 
     #create window
     tLoad=tk.Toplevel(master)
@@ -453,8 +480,120 @@ def load():
 
 def deltaE():
     #calculate phase/difference in epoch for secondary minima
-    tkinter.messagebox.showerror('Calculate delta Epoch','Not implemented, yet!')
-    return
+    global systemParams
+
+    def estimate():
+        t0=float(t0Var.get())
+        P=float(pVar.get())
+
+        if not 'tO' in data:
+            if not 'tC' in data:
+                if not 'E' in data: data['E']=range(len(data['oc']))
+                data['tC']=[t0+P*data['E'][i] for i in range(len(data['oc']))]
+            data['tO']=[data['tC'][i]+data['oc'][i] for i in range(len(data['oc']))]
+
+
+        #setting errors
+        if not 'err' in data and 'w' in data: err=[1./x for x in data['w']]
+        elif 'err' in data: err=data['err']
+        else: err=[1 for x in range(len(data['tO']))]
+
+        oc=OCFit.FitLinear(data['tO'],t0,P,err=err)
+
+        prim=np.where(oc._min_type==0)   #primary minima
+        sec=np.where(oc._min_type==1)    #secondary minima
+
+        ocP=np.average(oc.oc[prim],weights=oc.err[prim])
+        ocS=np.average(oc.oc[sec],weights=oc.err[sec])
+
+        dt=ocS-ocP   #difference between O-Cs
+
+        dE=0.5+dt/P  #phase/differnce in epoch for secondary minima
+        dEVar0.set(dE)
+
+        return dE
+
+    def calculate():
+        e=float(eVar.get())
+        w=float(wVar.get())
+
+        dE=OCFit.DeltaEpoch(e,w)
+        dEVar0.set(dE)
+
+        return dE
+
+    def updateDE():
+        dEVar.set(dEVar0.get())
+        systemParams['e']=float(eVar.get())
+        systemParams['w']=float(wVar.get())
+        systemParams['dE']=float(dEVar0.get())
+        tE.destroy()
+
+    #create window
+    tE=tk.Toplevel(master)
+    #default scale of window - NOT change this values if you want to change size
+    twidth=350
+    theight=240
+    if fixed:
+        tE.geometry(str(twidth)+'x'+str(theight))   #modif. this line to change size - e.g. master.geometry('400x500')
+    else:
+        #set relatively to screen size
+        tE.geometry('{}x{}'.format(int(twidth/mwidth*screenwidth), int(theight/mheight*screenheight)))
+    tE.title('Delta Epoch')
+
+    #variables
+    eVar=tk.StringVar(tE,value='0')
+    wVar=tk.StringVar(tE,value='0')
+    dEVar0=tk.StringVar(tE,value='0.5')
+
+    if len(systemParams)>0:
+        if 'e' in systemParams:
+            eVar.set(systemParams['e'])
+            wVar.set(systemParams['w'])
+        if 'dE' in systemParams: dEVar0.set(systemParams['dE'])
+
+    Label1=tk.Label(tE)
+    Label1.place(relx=0.06,rely=0.13,relheight=lheight/theight,relwidth=0.4)
+    Label1.configure(anchor=tk.W)
+    Label1.configure(text='Eccentricity')
+
+    Entry1=tk.Entry(tE)
+    Entry1.place(relx=0.46,rely=0.13,relheight=iheight/theight,relwidth=0.48)
+    Entry1.configure(textvariable=eVar)
+
+    Label2=tk.Label(tE)
+    Label2.place(relx=0.06,rely=0.26,relheight=lheight/theight,relwidth=0.4)
+    Label2.configure(anchor=tk.W)
+    Label2.configure(text='Arg.Pericen.[deg]')
+
+    Entry2=tk.Entry(tE)
+    Entry2.place(relx=0.46,rely=0.26,relheight=iheight/theight,relwidth=0.48)
+    Entry2.configure(textvariable=wVar)
+
+    Button1=tk.Button(tE)
+    Button1.place(relx=0.25-b5width/twidth/2,rely=0.43,relheight=b1height/theight,relwidth=b5width/twidth)
+    Button1.configure(text='Calculate')
+    Button1.configure(command=calculate)
+
+    Button2=tk.Button(tE)
+    Button2.place(relx=0.75-b5width/twidth/2,rely=0.43,relheight=b1height/theight,relwidth=b5width/twidth)
+    Button2.configure(text='Estimate')
+    Button2.configure(command=estimate)
+
+    Label3=tk.Label(tE)
+    Label3.place(relx=0.06,rely=0.64,relheight=lheight/theight,relwidth=0.4)
+    Label3.configure(anchor=tk.W)
+    Label3.configure(text='Delta Epoch')
+
+    Entry3=tk.Entry(tE)
+    Entry3.place(relx=0.46,rely=0.64,relheight=iheight/theight,relwidth=0.48)
+    Entry3.configure(textvariable=dEVar0)
+
+    Button3=tk.Button(tE)
+    Button3.place(relx=0.5-b5width/twidth/2,rely=0.81,relheight=b1height/theight,relwidth=b5width/twidth)
+    Button3.configure(text='Use value')
+    Button3.configure(command=updateDE)
+
 
 def system():
     #set some general parameters of studied systems
@@ -719,8 +858,10 @@ def saveAll0():
 
 def update():
     #update linear ephemeris
-    t0Var.set(tPQ[0])
-    pVar.set(tPQ[1])
+    ans=tk.messagebox.askyesno('Update linear ephemeris','Update linear ephemeris from fit result ('+str(tPQ[0])+' and '+str(tPQ[1])+')?')
+    if ans:
+        t0Var.set(tPQ[0])
+        pVar.set(tPQ[1])
 
 def initC():
     #main class (OCFit) initialization
@@ -2922,6 +3063,8 @@ data={}
 ga={}
 mc={}
 save=0
+
+systemParams={}
 
 #main window
 master=tk.Tk()
