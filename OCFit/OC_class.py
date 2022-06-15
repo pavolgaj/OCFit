@@ -197,6 +197,46 @@ class Common():
 
         return output
 
+    def SaveOC(self,name,t0=None,P=None,weight=None):
+        '''saving O-C calculated from given ephemeris to file
+        name - name of file
+        t0 - time of zeros epoch (necessary if not given in model or epoch not calculated)
+        P - period (necessary if not given in model or epoch not calculated)
+        weight - weight of data
+        warning: weights have to be in same order as input date!
+        '''
+
+        #get linear ephemeris
+        if len(self.epoch)==len(self.t): t0=self._t0P[0]
+        elif t0 is None: raise TypeError('t0 is not given!')
+
+        if len(self.epoch)==len(self.t): P=self._t0P[1]
+        elif P is None: raise TypeError('P is not given!')
+
+        old_epoch=self.epoch
+        if not len(self.epoch)==len(self.t): self.Epoch(self.t,t0,P)
+
+        f=open(name,'w')
+        if weight is not None:
+            np.savetxt(f,np.column_stack((self.t,self.epoch,self.oc,np.array(weight)[self._order])),
+                       fmt=["%14.7f",'%10.3f',"%+12.10f","%.10f"],delimiter="    ",
+                       header='Time'.ljust(14,' ')+'    '+'Epoch'.ljust(10,' ')
+                       +'    '+'O-C'.ljust(12,' ')+'    '+'Weight')
+        elif self._set_err:
+            if self._corr_err: err=self._old_err
+            else: err=self.err
+            np.savetxt(f,np.column_stack((self.t,self.epoch,self.oc,err)),
+                       fmt=["%14.7f",'%10.3f',"%+12.10f","%.10f"],delimiter="    ",
+                       header='Time'.ljust(14,' ')+'    '+'Epoch'.ljust(10,' ')
+                       +'    '+'O-C'.ljust(12,' ')+'    '+'Error')
+        else:
+            np.savetxt(f,np.column_stack((self.t,self.epoch,self.oc)),
+                       fmt=["%14.7f",'%10.3f',"%+12.10f"],delimiter="    ",
+                       header='Time'.ljust(14,' ')+'    '+'Epoch'.ljust(10,' ')
+                       +'    '+'O-C')
+        f.close()
+        self.epoch=old_epoch
+
 
 class SimpleFit(Common):
     '''class with common function for FitLinear and FitQuad'''
@@ -384,33 +424,6 @@ class SimpleFit(Common):
         self._set_err=False
         self.err=err
         return err
-
-
-    def SaveOC(self,name,weight=None):
-        '''saving O-C calculated from given ephemeris to file
-        name - name of file
-        weight - weight of data
-        warning: weights have to be in same order as input date!
-        '''
-        f=open(name,'w')
-        if weight is not None:
-            np.savetxt(f,np.column_stack((self.t,self.epoch,self.oc,np.array(weight)[self._order])),
-                       fmt=["%14.7f",'%10.3f',"%+12.10f","%.10f"],delimiter="    ",
-                       header='Time'.ljust(14,' ')+'    '+'Epoch'.ljust(10,' ')
-                       +'    '+'O-C'.ljust(12,' ')+'    '+'Weight')
-        elif self._set_err:
-            if self._corr_err: err=self._old_err
-            else: err=self.err
-            np.savetxt(f,np.column_stack((self.t,self.epoch,self.oc,err)),
-                       fmt=["%14.7f",'%10.3f',"%+12.10f","%.10f"],delimiter="    ",
-                       header='Time'.ljust(14,' ')+'    '+'Epoch'.ljust(10,' ')
-                       +'    '+'O-C'.ljust(12,' ')+'    '+'Error')
-        else:
-            np.savetxt(f,np.column_stack((self.t,self.epoch,self.oc)),
-                       fmt=["%14.7f",'%10.3f',"%+12.10f"],delimiter="    ",
-                       header='Time'.ljust(14,' ')+'    '+'Epoch'.ljust(10,' ')
-                       +'    '+'O-C')
-        f.close()
 
 
     def SaveRes(self,name,weight=None):
@@ -2680,8 +2693,10 @@ class OCFit(ComplexFit,Common):
             self.paramsMore['M3']=root/(3.*2.**(1./3.))-2.**(1./3.)*(-f**2-6.*f*M)/(3.*root)+f/3.
             self.paramsMore['a3']=self.paramsMore['a12']*M/self.paramsMore['M3']
             self.paramsMore['a']=self.paramsMore['a12']+self.paramsMore['a3']
+            self.paramsMore['M3_sin_i3']=self.paramsMore['M3']*np.sin(np.deg2rad(i))
 
             output['M3']=self.paramsMore['M3']
+            output['M3_sin_i3']=self.paramsMore['M3_sin_i3']
             output['a12']=self.paramsMore['a12']
             output['a3']=self.paramsMore['a3']
             output['a']=self.paramsMore['a']
@@ -2708,6 +2723,7 @@ class OCFit(ComplexFit,Common):
                 #calculate errors of params
                 self.paramsMore_err['a12']=self.paramsMore['a12']*np.sqrt((a_err/self.params['a_sin_i3'])**2+(np.deg2rad(i_err)/np.tan(np.deg2rad(i)))**2)
                 self.paramsMore_err['M3']=np.sqrt((dM*M_err)**2+(df*f_err)**2)
+                self.paramsMore_err['M3_sin_i3']=np.sqrt((dM*M_err)**2+(df*self.paramsMore['f_m3']*np.sqrt((f3_err/self.paramsMore['f_m3'])**2))**2)
                 self.paramsMore_err['a3']=self.paramsMore['a3']*np.sqrt((self.paramsMore_err['a12']/self.paramsMore['a12'])**2+\
                                         (M_err/M)**2+(self.paramsMore_err['M3']/self.paramsMore['M3'])**2)
                 self.paramsMore_err['a']=self.paramsMore_err['a12']+self.paramsMore_err['a3']
@@ -2715,6 +2731,8 @@ class OCFit(ComplexFit,Common):
                 #if some errors = 0, del them; and return only non-zero errors
                 if self.paramsMore_err['M3']==0: del self.paramsMore_err['M3']
                 else: output['M3_err']=self.paramsMore_err['M3']
+                if self.paramsMore_err['M3_sin_i3']==0: del self.paramsMore_err['M3_sin_i3']
+                else: output['M3_sin_i3_err']=self.paramsMore_err['M3_sin_i3']
                 if self.paramsMore_err['a12']==0: del self.paramsMore_err['a12']
                 else: output['a12_err']=self.paramsMore_err['a12']
                 if self.paramsMore_err['a3']==0: del self.paramsMore_err['a3']
@@ -2738,8 +2756,10 @@ class OCFit(ComplexFit,Common):
             self.paramsMore['M4']=root/(3*2**(1./3.))-2**(1./3.)*(-f**2-6*f*M)/(3*root)+f/3.
             self.paramsMore['a4']=self.paramsMore['a12']*M/self.paramsMore['M4']
             self.paramsMore['a']=self.paramsMore['a12']+self.paramsMore['a4']
+            self.paramsMore['M4_sin_i4']=self.paramsMore['M4']*np.sin(np.deg2rad(i))
 
             output['M4']=self.paramsMore['M4']
+            output['M4_sin_i4']=self.paramsMore['M4_sin_i4']
             output['a123']=self.paramsMore['a123']
             output['a4']=self.paramsMore['a4']
             output['a']=self.paramsMore['a']
@@ -2768,6 +2788,7 @@ class OCFit(ComplexFit,Common):
                 #calculate errors of params
                 self.paramsMore_err['a123']=self.paramsMore['a123']*np.sqrt((a_err/self.params['a_sin_i4'])**2+(np.deg2rad(i_err)/np.tan(np.deg2rad(i)))**2)
                 self.paramsMore_err['M4']=np.sqrt((dM*M_err)**2+(df*f_err)**2)
+                self.paramsMore_err['M4_sin_i4']=np.sqrt((dM*M_err)**2+(df*self.paramsMore['f_m4']*np.sqrt((f4_err/self.paramsMore['f_m4'])**2))**2)
                 self.paramsMore_err['a4']=self.paramsMore['a4']*np.sqrt((self.paramsMore_err['a123']/self.paramsMore['a123'])**2+\
                                         (M_err/M)**2+(self.paramsMore_err['M4']/self.paramsMore['M4'])**2)
                 self.paramsMore_err['a']=self.paramsMore_err['a123']+self.paramsMore_err['a4']
@@ -2775,6 +2796,8 @@ class OCFit(ComplexFit,Common):
                 #if some errors = 0, del them; and return only non-zero errors
                 if self.paramsMore_err['M4']==0: del self.paramsMore_err['M4']
                 else: output['M4_err']=self.paramsMore_err['M4']
+                if self.paramsMore_err['M4_sin_i4']==0: del self.paramsMore_err['M4_sin_i4']
+                else: output['M4_sin_i4_err']=self.paramsMore_err['M4_sin_i4']
                 if self.paramsMore_err['a123']==0: del self.paramsMore_err['a123']
                 else: output['a123_err']=self.paramsMore_err['a123']
                 if self.paramsMore_err['a4']==0: del self.paramsMore_err['a4']

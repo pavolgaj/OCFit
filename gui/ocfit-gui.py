@@ -814,7 +814,7 @@ def plot0(f=None):
     global data,weight
 
     if len(t0Var.get())*len(pVar.get())==0:
-        tkinter.messagebox.showerror('Fit Linear','Set linear ephemeris (T0, P)!')
+        tkinter.messagebox.showerror('Plot O-C','Set linear ephemeris (T0, P)!')
         return
 
     t0=float(t0Var.get())
@@ -853,7 +853,7 @@ def save0(f=None):
     global data,weight
 
     if len(t0Var.get())*len(pVar.get())==0:
-        tkinter.messagebox.showerror('Fit Linear','Set linear ephemeris (T0, P)!')
+        tkinter.messagebox.showerror('Save O-C','Set linear ephemeris (T0, P)!')
         return
 
     t0=float(t0Var.get())
@@ -3240,12 +3240,22 @@ def saveAll():
 
     if '.' in f[-5:]: f=f[:f.rfind('.')]
 
-    save0(f+'_oc.dat')
+    try:
+        t0=None
+        P=None
+        if not len(ocf.epoch)==len(ocf.t):
+            if not (len(t0Var.get())*len(pVar.get())==0):
+                 t0=float(t0Var.get())
+                 P=float(pVar.get())
+
+        if not 'err' in data and 'w' in data: ocf.SaveOC(f+'_oc.dat',weight=data['w'],t0=t0,P=P)
+        else: ocf.SaveOC(f+'_oc.dat',t0=t0,P=P)
+    except TypeError: tkinter.messagebox.showerror('Save O-C','Set linear ephemeris (T0, P)!')
+
     saveM(f+'_model.dat')
     saveR(f+'_res.dat')
     saveC(f+'.ocf')
     summary(f+'_summary.txt')
-    plot0(f+'_oc')
     plot(f)
     plotR(f+'_res')
 
