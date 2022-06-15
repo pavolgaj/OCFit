@@ -917,6 +917,7 @@ def initC():
     bSum.config(state=tk.DISABLED)
     bSaveAll.config(state=tk.DISABLED)
 
+
 def saveC(f=None):
     #save class to file
     if f is None:
@@ -2920,7 +2921,7 @@ def plot(f=None):
             if min(w)==max(w): ocf.Plot(name=f,trans=trans,weight=w,min_type=True)
             else: ocf.Plot(name=f,trans=trans,weight=w,trans_weight=True,min_type=True)
         else: ocf.Plot(name=f,trans=trans,min_type=True)
-    except:
+    except KeyError:
         mpl.close()
         tkinter.messagebox.showerror('Plot O-C','Fit the model!')
 
@@ -2945,7 +2946,7 @@ def plotR(f=None):
             if min(w)==max(w): ocf.PlotRes(name=f,trans=trans,weight=w,min_type=True)
             else: ocf.PlotRes(name=f,trans=trans,weight=w,trans_weight=True,min_type=True)
         else: ocf.PlotRes(name=f,trans=trans,min_type=True)
-    except:
+    except KeyError:
         mpl.close()
         tkinter.messagebox.showerror('Plot new O-C','Fit the model!')
 
@@ -2994,7 +2995,7 @@ def saveM(f=None):
     if len(f)==0: return
 
     try: ocf.SaveModel(f)
-    except: tkinter.messagebox.showerror('Save model','Fit the model!')
+    except KeyError: tkinter.messagebox.showerror('Save model','Fit the model!')
 
 def saveR(f=None):
     #save residual O-Cs
@@ -3005,7 +3006,7 @@ def saveR(f=None):
     try:
         if not 'err' in data and 'w' in data: ocf.SaveRes(f,weight=data['w'])
         else: ocf.SaveRes(f)
-    except: tkinter.messagebox.showerror('Save new O-C','Fit the model!')
+    except KeyError: tkinter.messagebox.showerror('Save new O-C','Fit the model!')
 
 def saveAll():
     #run all saving functions
@@ -3028,7 +3029,7 @@ def summary(f=None):
 
     if f is not None:
         try: ocf.Summary(f)
-        except: tkinter.messagebox.showerror('Summary','Fit the model!')
+        except KeyError: tkinter.messagebox.showerror('Summary','Fit the model!')
         return
 
 
@@ -3053,7 +3054,7 @@ def summary(f=None):
     sys.stdout=StdoutRedirector(text)
 
     try: ocf.Summary()
-    except:
+    except KeyError:
         sumW.destroy()
         tkinter.messagebox.showerror('Summary','Fit the model!')
 
