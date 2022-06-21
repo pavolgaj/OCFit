@@ -320,8 +320,10 @@ class SimpleFit(Common):
         text.append('parameter'.ljust(15,' ')+'unit'.ljust(10,' ')+'value'.ljust(30,' ')+'error')
 
         for p in sorted(params):
-            text.append(p.ljust(15,' ')+units[p].ljust(10,' ')+str(self.params[p]).ljust(30,' ')
-                        +str(self.params_err[p]).ljust(30,' '))
+            if p in self.params_err: err=str(self.params_err[p])
+            else: err='fixed'  #fixed params
+
+            text.append(p.ljust(15,' ')+units[p].ljust(10,' ')+str(self.params[p]).ljust(30,' ')+err.ljust(30,' '))
 
         self.QuadTerm()
         if len(self.paramsMore)>0: text.append('')
@@ -964,7 +966,7 @@ class FitLinear(SimpleFit):
                 self.params_err[p]=np.std(emceeSampler.flatchain[:,i])
             else:
                 self.params[p]=vals1[p]
-                self.params_err[p]='---'
+                #self.params_err[p]='---'
 
         self.Epoch()
         self.tC=self.params['t0']+self.params['P']*self.epoch
@@ -1066,7 +1068,7 @@ class FitLinear(SimpleFit):
                 self.params_err[p]=np.std(pars[p].trace())
             else:
                 self.params[p]=vals[p]
-                self.params_err[p]='---'
+                #self.params_err[p]='---'
 
 
         if not visible:
@@ -1259,7 +1261,7 @@ class FitQuad(SimpleFit):
                 self.params_err[p]=np.std(emceeSampler.flatchain[:,i])
             else:
                 self.params[p]=vals1[p]
-                self.params_err[p]='---'
+                #self.params_err[p]='---'
 
         self.Epoch()
         self.tC=self.t0+self.P*self.epoch+self.Q*self.epoch**2
@@ -1363,7 +1365,7 @@ class FitQuad(SimpleFit):
                 self.params_err[p]=np.std(pars[p].trace())
             else:
                 self.params[p]=vals[p]
-                self.params_err[p]='---'
+                #self.params_err[p]='---'
 
 
         if not visible:
@@ -2330,7 +2332,7 @@ class OCFit(ComplexFit,Common):
                 #also in years
                 params.append(x)
                 vals.append(str(self.params[x]/year))
-                if err[-1]=='---': err.append(err[-1])  #error not calculated
+                if err[-1]=='---' or err[-1]=='fixed': err.append(err[-1])  #error not calculated
                 else: err.append(str(float(err[-1])/year)) #error calculated
                 unit.append('yr')
             elif x[0]=='Q': unit.append('d')
@@ -2339,7 +2341,7 @@ class OCFit(ComplexFit,Common):
             elif x[0]=='w' or x[1]=='w':
                 #transform to deg
                 vals[-1]=str(np.rad2deg(float(vals[-1])))
-                if not err[-1]=='---': err[-1]=str(np.rad2deg(float(err[-1]))) #error calculated
+                if not (err[-1]=='---' or err[-1]=='fixed'): err[-1]=str(np.rad2deg(float(err[-1]))) #error calculated
                 unit.append('deg')
 
         #calculate some more parameters, if not calculated
@@ -3121,7 +3123,7 @@ class OCFit(ComplexFit,Common):
             color='r'
             lw=1
 
-        if self.model=='Apsidal':
+        if 'Apsidal' in self.model:
             #primary
             model_long=self.Model(t1,params,min_type=np.zeros(t1.shape))
             if epoch and not double_ax: ax1.plot(E,model_long*k,color,linewidth=lw,label=legend[1],zorder=2)
@@ -3389,7 +3391,7 @@ class OCFit(ComplexFit,Common):
         self.epoch=np.linspace(E_min,E_max,n)
         t=t0+P*self.epoch
 
-        if self.model=='Apsidal':
+        if 'Apsidal' in self.model:
             typeA=np.append(np.zeros(t.shape),np.ones(t.shape))
             t=np.append(t,t)
             self.epoch=np.append(self.epoch,self.epoch)

@@ -77,6 +77,15 @@ class ScrolledText(AutoScroll,tk.Text):
         tk.Text.__init__(self,master,**kw)
         AutoScroll.__init__(self,master)
 
+class IORedirector(object):
+    '''A general class for redirecting I/O to this Text widget.'''
+    def __init__(self,text_area):
+        self.text_area=text_area
+
+class StdoutRedirector(IORedirector):
+    '''A class for redirecting stdout to this Text widget.'''
+    def write(self,str):
+        self.text_area.insert(tk.END,str)
 
 def load():
     #loading data from file
@@ -1000,16 +1009,6 @@ def plotRS(f=None):
     if not 'err' in data and 'w' in data: simple.PlotRes(name=f,trans=trans,weight=data['w'],min_type=True)
     else: simple.PlotRes(name=f,trans=trans,min_type=True)
 
-class IORedirector(object):
-    '''A general class for redirecting I/O to this Text widget.'''
-    def __init__(self,text_area):
-        self.text_area=text_area
-
-class StdoutRedirector(IORedirector):
-    '''A class for redirecting stdout to this Text widget.'''
-    def write(self,str):
-        self.text_area.insert(tk.END,str)
-
 
 def sumS(f=None):
     #summary for linear / quadratic fit
@@ -1614,6 +1613,16 @@ def params():
             if len(dwMin.get())*len(dwMax.get())>0: ocf.limits['dw']=[float(dwMin.get()),float(dwMax.get())]
             if len(eMin.get())*len(eMax.get())>0: ocf.limits['e']=[float(eMin.get()),float(eMax.get())]
 
+            if 'Quad' in model:
+                #checking if params will be fitted
+                if QFit.get()==1: ocf.fit_params.append('Q')
+                #get values of params
+                if len(QVal.get())>0: ocf.params['Q']=float(QVal.get())
+                #get params steps
+                if len(QStep.get())>0: ocf.steps['Q']=float(QStep.get())
+                #get limits for params
+                if len(QMin.get())*len(QMax.get())>0: ocf.limits['Q']=[float(QMin.get()),float(QMax.get())]
+
         #close window
         tParams.destroy()
         bFitParams.config(state=tk.NORMAL)
@@ -1675,6 +1684,10 @@ def params():
         elif 'Apsid' in model:
             #model of apsidal motion (Apsidal)
             tNTB.select(3)
+            if 'Quad' in model:
+                for i in range(5): QA[i].config(state=tk.NORMAL)
+            else:
+                for i in range(5): QA[i].config(state=tk.DISABLED)
 
 
     def init_vars():
@@ -1977,7 +1990,7 @@ def params():
     model.place(relx=0.15,rely=0.02,relheight=0.04,relwidth=0.4)
     model.configure(textvariable=modelVar)
     model.configure(state='readonly')
-    model['values']=('LiTE3','LiTE34','LiTE3Quad','LiTE34Quad','AgolInPlanet','AgolInPlanetLin','AgolExPlanet','AgolExPlanetLin','Apsidal')
+    model['values']=('LiTE3','LiTE34','LiTE3Quad','LiTE34Quad','AgolInPlanet','AgolInPlanetLin','AgolExPlanet','AgolExPlanetLin','Apsidal','ApsidalQuad')
     model.current(0)
     model.bind('<<ComboboxSelected>>',change)
 
@@ -2992,20 +3005,26 @@ def params():
     Label3.configure(font=('None',9))
     Label3.configure(anchor=tk.W)
 
+    Label15=tk.Label(fAps)
+    Label15.place(relx=0.02,rely=0.24,relheight=l2height/nheight,relwidth=0.12)
+    Label15.configure(text='Q')
+    Label15.configure(anchor=tk.W)
+    Label15.configure(font=('None',9))
+
     Label14=tk.Label(fAps)
-    Label14.place(relx=0.02,rely=0.24,relheight=l2height/nheight,relwidth=0.12)
+    Label14.place(relx=0.02,rely=0.31,relheight=l2height/nheight,relwidth=0.12)
     Label14.configure(text='w0')
     Label14.configure(font=('None',9))
     Label14.configure(anchor=tk.W)
 
     Label4=tk.Label(fAps)
-    Label4.place(relx=0.02,rely=0.31,relheight=l2height/nheight,relwidth=0.12)
+    Label4.place(relx=0.02,rely=0.38,relheight=l2height/nheight,relwidth=0.12)
     Label4.configure(text='dw')
     Label4.configure(font=('None',9))
     Label4.configure(anchor=tk.W)
 
     Label5=tk.Label(fAps)
-    Label5.place(relx=0.02,rely=0.38,relheight=l2height/nheight,relwidth=0.12)
+    Label5.place(relx=0.02,rely=0.45,relheight=l2height/nheight,relwidth=0.12)
     Label5.configure(text='e')
     Label5.configure(font=('None',9))
     Label5.configure(anchor=tk.W)
@@ -3054,69 +3073,91 @@ def params():
     PA[-1].configure(justify=tk.LEFT)
     PA[-1].configure(variable=PFit)
 
+    #input objects for param Q
+    QA=[tk.Entry(fAps)]
+    QA[-1].place(relx=0.15,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
+    QA[-1].configure(textvariable=QVal)
+
+    QA.append(tk.Entry(fAps))
+    QA[-1].place(relx=0.35,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
+    QA[-1].configure(textvariable=QMin)
+
+    QA.append(tk.Entry(fAps))
+    QA[-1].place(relx=0.55,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
+    QA[-1].configure(textvariable=QMax)
+
+    QA.append(tk.Entry(fAps))
+    QA[-1].place(relx=0.75,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
+    QA[-1].configure(textvariable=QStep)
+
+    QA.append(tk.Checkbutton(fAps))
+    QA[-1].place(relx=0.95,rely=0.23,relheight=0.06,relwidth=0.04)
+    QA[-1].configure(justify=tk.LEFT)
+    QA[-1].configure(variable=QFit)
+
     #input objects for param w0
     w0A=[tk.Entry(fAps)]
-    w0A[-1].place(relx=0.15,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
+    w0A[-1].place(relx=0.15,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
     w0A[-1].configure(textvariable=w0Val)
 
     w0A.append(tk.Entry(fAps))
-    w0A[-1].place(relx=0.35,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
+    w0A[-1].place(relx=0.35,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
     w0A[-1].configure(textvariable=w0Min)
 
     w0A.append(tk.Entry(fAps))
-    w0A[-1].place(relx=0.55,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
+    w0A[-1].place(relx=0.55,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
     w0A[-1].configure(textvariable=w0Max)
 
     w0A.append(tk.Entry(fAps))
-    w0A[-1].place(relx=0.75,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
+    w0A[-1].place(relx=0.75,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
     w0A[-1].configure(textvariable=w0Step)
 
     w0A.append(tk.Checkbutton(fAps))
-    w0A[-1].place(relx=0.95,rely=0.23,relheight=0.06,relwidth=0.04)
+    w0A[-1].place(relx=0.95,rely=0.30,relheight=0.06,relwidth=0.04)
     w0A[-1].configure(justify=tk.LEFT)
     w0A[-1].configure(variable=w0Fit)
 
     #input objects for param dw
     dwA=[tk.Entry(fAps)]
-    dwA[-1].place(relx=0.15,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
+    dwA[-1].place(relx=0.15,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
     dwA[-1].configure(textvariable=dwVal)
 
     dwA.append(tk.Entry(fAps))
-    dwA[-1].place(relx=0.35,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
+    dwA[-1].place(relx=0.35,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
     dwA[-1].configure(textvariable=dwMin)
 
     dwA.append(tk.Entry(fAps))
-    dwA[-1].place(relx=0.55,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
+    dwA[-1].place(relx=0.55,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
     dwA[-1].configure(textvariable=dwMax)
 
     dwA.append(tk.Entry(fAps))
-    dwA[-1].place(relx=0.75,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
+    dwA[-1].place(relx=0.75,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
     dwA[-1].configure(textvariable=dwStep)
 
     dwA.append(tk.Checkbutton(fAps))
-    dwA[-1].place(relx=0.95,rely=0.30,relheight=0.06,relwidth=0.04)
+    dwA[-1].place(relx=0.95,rely=0.37,relheight=0.06,relwidth=0.04)
     dwA[-1].configure(justify=tk.LEFT)
     dwA[-1].configure(variable=dwFit)
 
     #input objects for param e
     eA=[tk.Entry(fAps)]
-    eA[-1].place(relx=0.15,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
+    eA[-1].place(relx=0.15,rely=0.44,relheight=iheight/nheight,relwidth=0.19)
     eA[-1].configure(textvariable=eVal)
 
     eA.append(tk.Entry(fAps))
-    eA[-1].place(relx=0.35,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
+    eA[-1].place(relx=0.35,rely=0.44,relheight=iheight/nheight,relwidth=0.19)
     eA[-1].configure(textvariable=eMin)
 
     eA.append(tk.Entry(fAps))
-    eA[-1].place(relx=0.55,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
+    eA[-1].place(relx=0.55,rely=0.44,relheight=iheight/nheight,relwidth=0.19)
     eA[-1].configure(textvariable=eMax)
 
     eA.append(tk.Entry(fAps))
-    eA[-1].place(relx=0.75,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
+    eA[-1].place(relx=0.75,rely=0.44,relheight=iheight/nheight,relwidth=0.19)
     eA[-1].configure(textvariable=eStep)
 
     eA.append(tk.Checkbutton(fAps))
-    eA[-1].place(relx=0.95,rely=0.37,relheight=0.06,relwidth=0.04)
+    eA[-1].place(relx=0.95,rely=0.44,relheight=0.06,relwidth=0.04)
     eA[-1].configure(justify=tk.LEFT)
     eA[-1].configure(variable=eFit)
 
