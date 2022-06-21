@@ -84,6 +84,11 @@ class InfoMC():
         if eps: mpl.savefig(self.path+'dev.eps')
         mpl.close('all')
 
+        self.CorrTab()
+
+        gc.collect()  #cleaning RAM...
+
+    def CorrTab(self):
         #correlation table
         if len(self.pars)>1:
             f=open(self.path+'corr.tbl','w')
@@ -101,11 +106,25 @@ class InfoMC():
                 f.write('\n')
             f.write("-" * len(head))
             f.close()
-        gc.collect()  #cleaning RAM...
 
 
     def OneParam(self,name,eps=False):  #todo
         '''plots and info-files for one parameter from MCMC fitting'''
+        self.Stats(name)
+
+        self.Trace(name)
+        mpl.savefig(self.path+name+'_trace.png')
+        if eps: mpl.savefig(self.path+name+'_trace.eps')
+        mpl.close('all')
+
+        self.MultiPlot(name)
+        mpl.savefig(self.path+name+'_all.png')
+        if eps: mpl.savefig(self.path+name+'_all.eps')
+        mpl.close('all')
+
+        gc.collect() #cleaning RAM...
+
+    def Stats(self,name):
         f=open(self.path+name+'_stat.txt','w')
 
         sampleArgs=self.ta['sampleArgs'].item()
@@ -127,17 +146,6 @@ class InfoMC():
         f.write('3sigma - 99%: '+str(np.quantile(self.flat[:,i],1-0.9973))+' ... '+str(np.quantile(self.flat[:,i],0.9973))+'\n')
         f.close()
 
-        self.Trace(name)
-        mpl.savefig(self.path+name+'_trace.png')
-        if eps: mpl.savefig(self.path+name+'_trace.eps')
-        mpl.close('all')
-
-        self.MultiPlot(name)
-        mpl.savefig(self.path+name+'_all.png')
-        if eps: mpl.savefig(self.path+name+'_all.eps')
-        mpl.close('all')
-
-        gc.collect() #cleaning RAM...
 
     def Corner(self,params=None):
         '''plot corner plot'''

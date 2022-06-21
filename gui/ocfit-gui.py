@@ -1232,6 +1232,102 @@ def infoMC():
     tkinter.messagebox.showerror('Info MCMC/GA/DE','Not implemented, yet!')
     return
 
+    #create new window
+    tIMC=tk.Toplevel(master)
+    #default scale of window - NOT change this values if you want to change size
+    twidth=335
+    theight=480
+    if fixed:
+        tIMC.geometry(str(twidth)+'x'+str(theight))   #modif. this line to change size - e.g. master.geometry('400x500')
+    else:
+        #set relatively to screen size
+        tIMC.geometry('{}x{}'.format(int(twidth/mwidth*screenwidth), int(theight/mheight*screenheight)))
+    tIMC.title('Info MCMC/GA/DE')
+
+    Button1=tk.Button(tIMC)
+    Button1.place(relx=0.39,rely=0.04,height=29,width=88)
+    Button1.configure(text='Open File')
+
+    Radiobutton1=tk.Radiobutton(tIMC)
+    Radiobutton1.place(relx=0.36,rely=0.13,relheight=0.05,relwidth=0.21)
+    Radiobutton1.configure(text='GA/DE')
+
+    Label1=tk.Label(tIMC)
+    Label1.place(relx=0.09,rely=0.13,height=21,width=64)
+    Label1.configure(text='File Type')
+
+    Radiobutton2=tk.Radiobutton(tIMC)
+    Radiobutton2.place(relx=0.66,rely=0.13,relheight=0.05,relwidth=0.21)
+    Radiobutton2.configure(text='MCMC')
+
+    Labelframe1=tk.LabelFrame(tIMC)
+    Labelframe1.place(relx=0.06,rely=0.19,relheight=0.66,relwidth=0.9)
+    Labelframe1.configure(text='Generated Outputs')
+
+    Checkbutton1=tk.Checkbutton(Labelframe1)
+    Checkbutton1.place(relx=0.03,rely=0.17,relheight=0.07,relwidth=0.33)
+    Checkbutton1.configure(text='Corner plot')
+
+    Checkbutton2=tk.Checkbutton(Labelframe1)
+    Checkbutton2.place(relx=0.03,rely=0.26,relheight=0.07,relwidth=0.33)
+    Checkbutton2.configure(text='Correl. plot')
+
+    Checkbutton3=tk.Checkbutton(Labelframe1)
+    Checkbutton3.place(relx=0.03,rely=0.36,relheight=0.07,relwidth=0.33)
+    Checkbutton3.configure(text='Confid. plot')
+
+    Checkbutton4=tk.Checkbutton(Labelframe1)
+    Checkbutton4.place(relx=0.53,rely=0.17,relheight=0.07,relwidth=0.33)
+    Checkbutton4.configure(text='Histograms')
+
+    Checkbutton5=tk.Checkbutton(Labelframe1)
+    Checkbutton5.place(relx=0.5,rely=0.26,relheight=0.07,relwidth=0.33)
+    Checkbutton5.configure(text='Deviance')
+
+    Checkbutton6=tk.Checkbutton(Labelframe1)
+    Checkbutton6.place(relx=0.53,rely=0.36,relheight=0.07,relwidth=0.4)
+    Checkbutton6.configure(text='Correl. table')
+
+    Checkbutton7=tk.Checkbutton(Labelframe1)
+    Checkbutton7.place(relx=0.03,rely=0.7,relheight=0.07,relwidth=0.33)
+    Checkbutton7.configure(text='Statistics')
+
+    Checkbutton8=tk.Checkbutton(Labelframe1)
+    Checkbutton8.place(relx=0.03,rely=0.79,relheight=0.07,relwidth=0.33)
+    Checkbutton8.configure(text='Multi plot')
+
+    Checkbutton9=tk.Checkbutton(Labelframe1)
+    Checkbutton9.place(relx=0.03,rely=0.89,relheight=0.07,relwidth=0.33)
+    Checkbutton9.configure(text='Trace plot')
+
+    Label2=tk.Label(Labelframe1)
+    Label2.place(relx=0.07,rely=0.1,height=21,width=256)
+    Label2.configure(text='Common (one for all params)')
+
+    Label3=tk.Label(Labelframe1)
+    Label3.place(relx=0.03,rely=0.6,height=21,width=256)
+    Label3.configure(text='Individual (one for each param)')
+
+    Checkbutton10=tk.Checkbutton(Labelframe1)
+    Checkbutton10.place(relx=0.53,rely=0.7,relheight=0.07,relwidth=0.33)
+    Checkbutton10.configure(text='Histogram')
+
+    Checkbutton11=tk.Checkbutton(Labelframe1)
+    Checkbutton11.place(relx=0.53,rely=0.79,relheight=0.07,relwidth=0.33)
+    Checkbutton11.configure(text='Deviance')
+
+    Checkbutton12=tk.Checkbutton(Labelframe1)
+    Checkbutton12.place(relx=0.53,rely=0.89,relheight=0.07,relwidth=0.33)
+    Checkbutton12.configure(text='Autocorrel.')
+
+    Checkbutton13=tk.Checkbutton(Labelframe1)
+    Checkbutton13.place(relx=0.03,rely=0.46,relheight=0.07,relwidth=0.33)
+    Checkbutton13.configure(text='Chi2 plot')
+
+    Button2=tk.Button(tIMC)
+    Button2.place(relx=0.39,rely=0.9,height=29,width=86)
+    Button2.configure(text='Generate')
+
 def corrErr():
     #correction of errors level - sometimes useful before MCMC
     tkinter.messagebox.showerror('Correct Errors','Not implemented, yet!')
