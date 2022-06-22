@@ -2,7 +2,7 @@
 
 #class for statistics about MC fitting from emcee package
 #version 0.2.1
-#update: 11.5.2022
+#update: 22.6.2022
 # (c) Pavol Gajdos, 2018-2022
 
 import gc #cleaning var from RAM
@@ -88,10 +88,11 @@ class InfoMC():
 
         gc.collect()  #cleaning RAM...
 
-    def CorrTab(self):
+    def CorrTab(self,path=None):
         #correlation table
+        if path is None: path=self.path
         if len(self.pars)>1:
-            f=open(self.path+'corr.tbl','w')
+            f=open(path+'corr.tbl','w')
             colWidth = {}
             for p in self.pars: colWidth[p]=max(len(p),9)
             head=(" "*(max(colWidth.values())+1))+"|"
@@ -124,8 +125,9 @@ class InfoMC():
 
         gc.collect() #cleaning RAM...
 
-    def Stats(self,name):
-        f=open(self.path+name+'_stat.txt','w')
+    def Stats(self,name,path=None):
+        if path is None: path=self.path
+        f=open(path+name+'_stat.txt','w')
 
         sampleArgs=self.ta['sampleArgs'].item()
 

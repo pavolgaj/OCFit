@@ -1488,12 +1488,12 @@ class ComplexFit():
         path=db.replace('\\','/')
         if path.rfind('/')>0: path=path[:path.rfind('/')+1]
         else: path=''
-        info.Info(path+'ga-info.txt')
+        info.Stats()
         info.PlotChi2()
         mpl.savefig(path+'ga-chi2.png')
         if eps: mpl.savefig(path+'ga-chi2.eps')
         for p in info.availableTrace:
-            info.Plot(p)
+            info.Trace(p)
             mpl.savefig(path+'ga-'+p+'.png')
             if eps: mpl.savefig(path+'ga-'+p+'.eps')
         mpl.close('all')

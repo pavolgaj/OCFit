@@ -22,6 +22,8 @@ import os,sys
 
 import OCFit
 
+import pickle
+
 tPQ=[]
 
 class AutoScroll(object):
@@ -364,9 +366,7 @@ def load():
     f1width=265
     Frame1.place(relx=0.07,rely=0.17,relheight=f1height/theight,relwidth=f1width/twidth)
     Frame1.configure(relief=tk.GROOVE)
-    Frame1.configure(borderwidth='2')
-    Frame1.configure(relief=tk.GROOVE)
-    Frame1.configure(width=265)
+    Frame1.configure(borderwidth=2)
 
     #label
     Label3=tk.Label(Frame1)
@@ -401,9 +401,8 @@ def load():
     f2width=265
     Frame2.place(relx=0.07,rely=0.34,relheight=f2height/theight,relwidth=f2width/twidth)
     Frame2.configure(relief=tk.GROOVE)
-    Frame2.configure(borderwidth='2')
-    Frame2.configure(relief=tk.GROOVE)
-    Frame2.configure(width=265)
+    Frame2.configure(borderwidth=2)
+
 
     #labels
     Label2=tk.Label(Frame2)
@@ -546,7 +545,7 @@ def deltaE():
 
     def estimate():
         if len(t0Var.get())*len(pVar.get())==0:
-            tkinter.messagebox.showerror('Delta Epoch','Set linear ephemeris (T0, P)!')
+            tkinter.messagebox.showerror('Delta Epoch','Set linear ephemeris (T0, P)!',parent=tE)
             return
 
         t0=float(t0Var.get())
@@ -581,7 +580,7 @@ def deltaE():
 
     def calculate():
         if len(eVar.get())*len(wVar.get())==0:
-            tkinter.messagebox.showerror('Delta Epoch','Set eccentricity and argument of pericenter!')
+            tkinter.messagebox.showerror('Delta Epoch','Set eccentricity and argument of pericenter!',parent=tE)
             return
 
         e=float(eVar.get())
@@ -671,7 +670,7 @@ def system():
 
     def sumMass():
         if len(M1Var.get())==0:
-            tkinter.messagebox.showerror('System Parameters','Add mass of primary star M1!')
+            tkinter.messagebox.showerror('System Parameters','Add mass of primary star M1!',parent=tSys)
             return
         else: M1=float(M1Var.get())
 
@@ -1229,14 +1228,146 @@ def fitMC():
 
 def infoMC():
     #posterior info about MC/GA/DE fitting
-    tkinter.messagebox.showerror('Info MCMC/GA/DE','Not implemented, yet!')
-    return
+
+    def change():
+        if dbType.get()==0:
+            Checkbutton1.configure(state=tk.DISABLED)
+            Checkbutton2.configure(state=tk.DISABLED)
+            Checkbutton3.configure(state=tk.DISABLED)
+            Checkbutton13.configure(state=tk.NORMAL)
+            Checkbutton6.configure(state=tk.DISABLED)
+            Checkbutton14.configure(state=tk.NORMAL)
+
+            Checkbutton7.configure(state=tk.DISABLED)
+            Checkbutton8.configure(state=tk.DISABLED)
+            Checkbutton12.configure(state=tk.DISABLED)
+        else:
+            Checkbutton1.configure(state=tk.NORMAL)
+            Checkbutton2.configure(state=tk.NORMAL)
+            Checkbutton3.configure(state=tk.NORMAL)
+            Checkbutton13.configure(state=tk.DISABLED)
+            Checkbutton6.configure(state=tk.NORMAL)
+
+            Checkbutton7.configure(state=tk.NORMAL)
+            Checkbutton8.configure(state=tk.NORMAL)
+            Checkbutton12.configure(state=tk.NORMAL)
+
+    def load():
+        #create OpenFile dialog
+        global dbfile
+
+        dbfile=tkinter.filedialog.askopenfilename(parent=tIMC,filetypes=[('Tmp files','*.tmp'),('Data files','*.dat *.txt'),('All files','*.*')],title='Open file')
+        dbfile=dbfile.replace('\\','/')
+
+        if len(dbfile)>0:
+            if os.path.isfile(dbfile):
+                #test if file exists -> if yes, make buttons available
+                Button2.configure(state=tk.NORMAL)
+
+    def generate():
+        path=tkinter.filedialog.askdirectory(parent=tIMC,title='Output folder',initialdir=dbfile[:dbfile.rfind('/')],mustexist=tk.FALSE)
+        if len(path)==0: return
+        if not os.path.isdir(path):
+            if os.path.isdir(path[:path.rfind('/')]): os.mkdir(path)
+            else: return
+        path+='/'
+
+        if dbType.get()==0:
+            #GA/DE
+            try: info=OCFit.info_ga.InfoGA(dbfile)
+            except KeyError:
+                tkinter.messagebox.showerror('Info MCMC/GA/DE','Incorrect input DB file! Try to change "file type".',parent=tIMC)
+                return
+            except pickle.UnpicklingError:
+                tkinter.messagebox.showerror('Info MCMC/GA/DE','Incorrect input DB file! Try to change "file type".',parent=tIMC)
+                return
+
+            if chiVar.get():
+                info.PlotChi2()
+                mpl.savefig(path+'chi2.png')
+                mpl.close()
+            if histsVar.get():
+                info.Hists()
+                mpl.savefig(path+'hist.png')
+                mpl.close()
+            if devsVar.get():
+                info.Devs()
+                mpl.savefig(path+'dev.png')
+                mpl.close()
+            if gstatVar.get(): info.Stats(path)
+            for p in info.pars:
+                if trVar.get():
+                    info.Trace(p)
+                    mpl.savefig(path+p+'_trace.png')
+                    mpl.close()
+                if histVar.get():
+                    info.Hist(p)
+                    mpl.savefig(path+p+'_hist.png')
+                    mpl.close()
+                if devVar.get():
+                    info.Dev(p)
+                    mpl.savefig(path+p+'_dev.png')
+                    mpl.close()
+
+        else:
+            #MCMC
+            try: info=OCFit.info_mc.InfoMC(dbfile)
+            except KeyError:
+                tkinter.messagebox.showerror('Info MCMC/GA/DE','Incorrect input DB file! Try to change "file type". PYMC files are not supported!',parent=tIMC)
+                return
+
+            if cornVar.get():
+                info.Corner()
+                mpl.savefig(path+'corner.png')
+                mpl.close()
+            if corrVar.get():
+                info.Corr()
+                mpl.savefig(path+'corr.png')
+                mpl.close()
+            if confVar.get():
+                info.ConfidInt(points=info.flat.shape[0]<1000)  #only if not many points
+                mpl.savefig(path+'conf.png')
+                mpl.close()
+            if histsVar.get():
+                info.Hists()
+                mpl.savefig(path+'hist.png')
+                mpl.close()
+            if devsVar.get():
+                info.Devs()
+                mpl.savefig(path+'dev.png')
+                mpl.close()
+            if corrTVar.get(): info.CorrTab(path)
+            for p in info.pars:
+                if statVar.get(): info.Stats(p,path)
+                if mulVar.get():
+                    info.MultiPlot(p)
+                    mpl.savefig(path+p+'_all.png')
+                    mpl.close()
+                if trVar.get():
+                    info.Trace(p)
+                    mpl.savefig(path+p+'_trace.png')
+                    mpl.close()
+                if histVar.get():
+                    info.Hist(p)
+                    mpl.savefig(path+p+'_hist.png')
+                    mpl.close()
+                if devVar.get():
+                    info.Dev(p)
+                    mpl.savefig(path+p+'_dev.png')
+                    mpl.close()
+                if acorVar.get():
+                    info.Acorr(p)
+                    mpl.savefig(path+p+'_acorr.png')
+                    mpl.close()
+
+        tkinter.messagebox.showinfo('Info MCMC/GA/DE','All files generated!',parent=tIMC)
+
 
     #create new window
     tIMC=tk.Toplevel(master)
     #default scale of window - NOT change this values if you want to change size
     twidth=335
-    theight=480
+    theight=440
     if fixed:
         tIMC.geometry(str(twidth)+'x'+str(theight))   #modif. this line to change size - e.g. master.geometry('400x500')
     else:
@@ -1244,89 +1375,154 @@ def infoMC():
         tIMC.geometry('{}x{}'.format(int(twidth/mwidth*screenwidth), int(theight/mheight*screenheight)))
     tIMC.title('Info MCMC/GA/DE')
 
-    Button1=tk.Button(tIMC)
-    Button1.place(relx=0.39,rely=0.04,height=29,width=88)
-    Button1.configure(text='Open File')
+    dbType=tk.IntVar(tIMC,value=1)   #variable for radiobuttons GA /MC
+    cornVar=tk.IntVar(tIMC)
+    corrVar=tk.IntVar(tIMC)
+    confVar=tk.IntVar(tIMC)
+    chiVar=tk.IntVar(tIMC)
+    histsVar=tk.IntVar(tIMC)
+    devsVar=tk.IntVar(tIMC)
+    corrTVar=tk.IntVar(tIMC)
+    gstatVar=tk.IntVar(tIMC)
 
-    Radiobutton1=tk.Radiobutton(tIMC)
-    Radiobutton1.place(relx=0.36,rely=0.13,relheight=0.05,relwidth=0.21)
-    Radiobutton1.configure(text='GA/DE')
+    statVar=tk.IntVar(tIMC)
+    mulVar=tk.IntVar(tIMC)
+    trVar=tk.IntVar(tIMC)
+    histVar=tk.IntVar(tIMC)
+    devVar=tk.IntVar(tIMC)
+    acorVar=tk.IntVar(tIMC)
+
+    Button1=tk.Button(tIMC)
+    Button1.place(relx=0.5-b1width/twidth/2,rely=0.02,relheight=b2height/theight,relwidth=b1width/twidth)
+    Button1.configure(text='Open File')
+    Button1.configure(command=load)
 
     Label1=tk.Label(tIMC)
-    Label1.place(relx=0.09,rely=0.13,height=21,width=64)
+    Label1.place(relx=0.06,rely=0.10,relheight=lheight/theight,relwidth=0.3)
     Label1.configure(text='File Type')
+    Label1.configure(anchor=tk.W)
+
+    Radiobutton1=tk.Radiobutton(tIMC)
+    Radiobutton1.place(relx=0.36,rely=0.10,relheight=iheight/theight,relwidth=0.3)
+    Radiobutton1.configure(text='GA/DE')
+    Radiobutton1.configure(justify=tk.LEFT)
+    Radiobutton1.configure(variable=dbType)
+    Radiobutton1.configure(value=0)
+    Radiobutton1.configure(command=change)
 
     Radiobutton2=tk.Radiobutton(tIMC)
-    Radiobutton2.place(relx=0.66,rely=0.13,relheight=0.05,relwidth=0.21)
+    Radiobutton2.place(relx=0.66,rely=0.10,relheight=iheight/theight,relwidth=0.3)
     Radiobutton2.configure(text='MCMC')
+    Radiobutton2.configure(justify=tk.LEFT)
+    Radiobutton2.configure(variable=dbType)
+    Radiobutton2.configure(value=1)
+    Radiobutton2.configure(command=change)
 
     Labelframe1=tk.LabelFrame(tIMC)
-    Labelframe1.place(relx=0.06,rely=0.19,relheight=0.66,relwidth=0.9)
+    fheight=310
+    fwidth=300
+    Labelframe1.place(relx=0.06,rely=0.18,relheight=fheight/theight,relwidth=fwidth/twidth)
     Labelframe1.configure(text='Generated Outputs')
 
-    Checkbutton1=tk.Checkbutton(Labelframe1)
-    Checkbutton1.place(relx=0.03,rely=0.17,relheight=0.07,relwidth=0.33)
-    Checkbutton1.configure(text='Corner plot')
-
-    Checkbutton2=tk.Checkbutton(Labelframe1)
-    Checkbutton2.place(relx=0.03,rely=0.26,relheight=0.07,relwidth=0.33)
-    Checkbutton2.configure(text='Correl. plot')
-
-    Checkbutton3=tk.Checkbutton(Labelframe1)
-    Checkbutton3.place(relx=0.03,rely=0.36,relheight=0.07,relwidth=0.33)
-    Checkbutton3.configure(text='Confid. plot')
-
-    Checkbutton4=tk.Checkbutton(Labelframe1)
-    Checkbutton4.place(relx=0.53,rely=0.17,relheight=0.07,relwidth=0.33)
-    Checkbutton4.configure(text='Histograms')
-
-    Checkbutton5=tk.Checkbutton(Labelframe1)
-    Checkbutton5.place(relx=0.5,rely=0.26,relheight=0.07,relwidth=0.33)
-    Checkbutton5.configure(text='Deviance')
-
-    Checkbutton6=tk.Checkbutton(Labelframe1)
-    Checkbutton6.place(relx=0.53,rely=0.36,relheight=0.07,relwidth=0.4)
-    Checkbutton6.configure(text='Correl. table')
-
-    Checkbutton7=tk.Checkbutton(Labelframe1)
-    Checkbutton7.place(relx=0.03,rely=0.7,relheight=0.07,relwidth=0.33)
-    Checkbutton7.configure(text='Statistics')
-
-    Checkbutton8=tk.Checkbutton(Labelframe1)
-    Checkbutton8.place(relx=0.03,rely=0.79,relheight=0.07,relwidth=0.33)
-    Checkbutton8.configure(text='Multi plot')
-
-    Checkbutton9=tk.Checkbutton(Labelframe1)
-    Checkbutton9.place(relx=0.03,rely=0.89,relheight=0.07,relwidth=0.33)
-    Checkbutton9.configure(text='Trace plot')
-
     Label2=tk.Label(Labelframe1)
-    Label2.place(relx=0.07,rely=0.1,height=21,width=256)
+    Label2.place(relx=0,rely=0.03,relheight=lheight/fheight,relwidth=1)
     Label2.configure(text='Common (one for all params)')
 
-    Label3=tk.Label(Labelframe1)
-    Label3.place(relx=0.03,rely=0.6,height=21,width=256)
-    Label3.configure(text='Individual (one for each param)')
+    Checkbutton1=tk.Checkbutton(Labelframe1)
+    Checkbutton1.place(relx=0.03,rely=0.13,relheight=iheight/fheight,relwidth=0.45)
+    Checkbutton1.configure(text='Corner plot')
+    Checkbutton1.configure(anchor=tk.W)
+    Checkbutton1.configure(variable=cornVar)
 
-    Checkbutton10=tk.Checkbutton(Labelframe1)
-    Checkbutton10.place(relx=0.53,rely=0.7,relheight=0.07,relwidth=0.33)
-    Checkbutton10.configure(text='Histogram')
+    Checkbutton2=tk.Checkbutton(Labelframe1)
+    Checkbutton2.place(relx=0.03,rely=0.23,relheight=iheight/fheight,relwidth=0.45)
+    Checkbutton2.configure(text='Correl. plot')
+    Checkbutton2.configure(anchor=tk.W)
+    Checkbutton2.configure(variable=corrVar)
 
-    Checkbutton11=tk.Checkbutton(Labelframe1)
-    Checkbutton11.place(relx=0.53,rely=0.79,relheight=0.07,relwidth=0.33)
-    Checkbutton11.configure(text='Deviance')
-
-    Checkbutton12=tk.Checkbutton(Labelframe1)
-    Checkbutton12.place(relx=0.53,rely=0.89,relheight=0.07,relwidth=0.33)
-    Checkbutton12.configure(text='Autocorrel.')
+    Checkbutton3=tk.Checkbutton(Labelframe1)
+    Checkbutton3.place(relx=0.03,rely=0.33,relheight=iheight/fheight,relwidth=0.45)
+    Checkbutton3.configure(text='Confid. plot')
+    Checkbutton3.configure(anchor=tk.W)
+    Checkbutton3.configure(variable=confVar)
 
     Checkbutton13=tk.Checkbutton(Labelframe1)
-    Checkbutton13.place(relx=0.03,rely=0.46,relheight=0.07,relwidth=0.33)
+    Checkbutton13.place(relx=0.03,rely=0.43,relheight=iheight/fheight,relwidth=0.45)
     Checkbutton13.configure(text='Chi2 plot')
+    Checkbutton13.configure(anchor=tk.W)
+    Checkbutton13.configure(state=tk.DISABLED)
+    Checkbutton13.configure(variable=chiVar)
+
+    Checkbutton4=tk.Checkbutton(Labelframe1)
+    Checkbutton4.place(relx=0.53,rely=0.13,relheight=iheight/fheight,relwidth=0.45)
+    Checkbutton4.configure(text='Histograms')
+    Checkbutton4.configure(anchor=tk.W)
+    Checkbutton4.configure(variable=histsVar)
+
+    Checkbutton5=tk.Checkbutton(Labelframe1)
+    Checkbutton5.place(relx=0.53,rely=0.23,relheight=iheight/fheight,relwidth=0.45)
+    Checkbutton5.configure(text='Deviance')
+    Checkbutton5.configure(anchor=tk.W)
+    Checkbutton5.configure(variable=devsVar)
+
+    Checkbutton6=tk.Checkbutton(Labelframe1)
+    Checkbutton6.place(relx=0.53,rely=0.33,relheight=iheight/fheight,relwidth=0.45)
+    Checkbutton6.configure(text='Correl. table')
+    Checkbutton6.configure(anchor=tk.W)
+    Checkbutton6.configure(variable=corrTVar)
+
+    Checkbutton14=tk.Checkbutton(Labelframe1)
+    Checkbutton14.place(relx=0.53,rely=0.43,relheight=iheight/fheight,relwidth=0.45)
+    Checkbutton14.configure(text='Global Stats.')
+    Checkbutton14.configure(anchor=tk.W)
+    Checkbutton14.configure(state=tk.DISABLED)
+    Checkbutton14.configure(variable=gstatVar)
+
+    Label3=tk.Label(Labelframe1)
+    Label3.place(relx=0,rely=0.59,relheight=lheight/fheight,relwidth=1)
+    Label3.configure(text='Individual (one for each param)')
+
+    Checkbutton7=tk.Checkbutton(Labelframe1)
+    Checkbutton7.place(relx=0.03,rely=0.69,relheight=iheight/fheight,relwidth=0.45)
+    Checkbutton7.configure(text='Statistics')
+    Checkbutton7.configure(anchor=tk.W)
+    Checkbutton7.configure(variable=statVar)
+
+    Checkbutton8=tk.Checkbutton(Labelframe1)
+    Checkbutton8.place(relx=0.03,rely=0.79,relheight=iheight/fheight,relwidth=0.45)
+    Checkbutton8.configure(text='Multi plot')
+    Checkbutton8.configure(anchor=tk.W)
+    Checkbutton8.configure(variable=mulVar)
+
+    Checkbutton9=tk.Checkbutton(Labelframe1)
+    Checkbutton9.place(relx=0.03,rely=0.89,relheight=iheight/fheight,relwidth=0.45)
+    Checkbutton9.configure(text='Trace plot')
+    Checkbutton9.configure(anchor=tk.W)
+    Checkbutton9.configure(variable=trVar)
+
+    Checkbutton10=tk.Checkbutton(Labelframe1)
+    Checkbutton10.place(relx=0.53,rely=0.7,relheight=iheight/fheight,relwidth=0.45)
+    Checkbutton10.configure(text='Histogram')
+    Checkbutton10.configure(anchor=tk.W)
+    Checkbutton10.configure(variable=histVar)
+
+    Checkbutton11=tk.Checkbutton(Labelframe1)
+    Checkbutton11.place(relx=0.53,rely=0.79,relheight=iheight/fheight,relwidth=0.45)
+    Checkbutton11.configure(text='Deviance')
+    Checkbutton11.configure(anchor=tk.W)
+    Checkbutton11.configure(variable=devVar)
+
+    Checkbutton12=tk.Checkbutton(Labelframe1)
+    Checkbutton12.place(relx=0.53,rely=0.89,relheight=iheight/fheight,relwidth=0.45)
+    Checkbutton12.configure(text='Autocorrel.')
+    Checkbutton12.configure(anchor=tk.W)
+    Checkbutton12.configure(variable=acorVar)
 
     Button2=tk.Button(tIMC)
-    Button2.place(relx=0.39,rely=0.9,height=29,width=86)
+    Button2.place(relx=0.5-b1width/twidth/2,rely=0.9,relheight=b2height/theight,relwidth=b1width/twidth)
     Button2.configure(text='Generate')
+    Button2.configure(command=generate)
+    Button2.configure(state=tk.DISABLED)
 
 def corrErr():
     #correction of errors level - sometimes useful before MCMC
@@ -1411,9 +1607,7 @@ def fitParams():
     f1height=95
     f1width=250
     Labelframe1.place(relx=0.07,rely=0.03,relheight=f1height/theight,relwidth=f1width/twidth)
-    Labelframe1.configure(relief=tk.GROOVE)
     Labelframe1.configure(text='FitGA')
-    Labelframe1.configure(width=250)
 
     #labels
     Label2=tk.Label(Labelframe1)
@@ -1443,9 +1637,7 @@ def fitParams():
     f2height=127
     f2width=250
     Labelframe2.place(relx=0.07,rely=0.35,relheight=f2height/theight,relwidth=f2width/twidth)
-    Labelframe2.configure(relief=tk.GROOVE)
     Labelframe2.configure(text='FitMCMC')
-    Labelframe2.configure(width=250)
 
     #labels
     Label4=tk.Label(Labelframe2)
@@ -3496,9 +3688,8 @@ f1height=95
 f1width=316
 Frame1.place(relx=0.06,rely=40/mheight,relheight=f1height/mheight,relwidth=f1width/mwidth)
 Frame1.configure(relief=tk.GROOVE)
-Frame1.configure(borderwidth='2')
-Frame1.configure(relief=tk.GROOVE)
-Frame1.configure(width=295)
+Frame1.configure(borderwidth=2)
+
 
 #labels
 Label1=tk.Label(Frame1)
@@ -3568,9 +3759,8 @@ f2height=113
 f2width=316
 Frame2.place(relx=0.06,rely=177/mheight,relheight=f2height/mheight,relwidth=f2width/mwidth)
 Frame2.configure(relief=tk.GROOVE)
-Frame2.configure(borderwidth='2')
-Frame2.configure(relief=tk.GROOVE)
-Frame2.configure(width=295)
+Frame2.configure(borderwidth=2)
+
 
 #button - fit params
 bFit0=tk.Button(Frame2)
@@ -3641,9 +3831,8 @@ f3height=220
 f3width=316
 Frame3.place(relx=0.06,rely=300/mheight,relheight=f3height/mheight,relwidth=f3width/mwidth)
 Frame3.configure(relief=tk.GROOVE)
-Frame3.configure(borderwidth='2')
-Frame3.configure(relief=tk.GROOVE)
-Frame3.configure(width=295)
+Frame3.configure(borderwidth=2)
+
 
 #button - class initialization
 bInit=tk.Button(Frame3)
