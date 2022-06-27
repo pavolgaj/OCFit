@@ -1215,8 +1215,8 @@ def fitMC():
     if save==1:
         f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save MCMC fitting to file',filetypes=[('Temp files','*.tmp'),('All files','*.*')],defaultextension='.tmp')
         if len(f)==0: return
-        ocf.FitMCMC(mc['n'],mc['burn'],mc['binn'],db=f)
-    else: ocf.FitMCMC(mc['n'],mc['burn'],mc['binn'])
+        ocf.FitMCMC(mc['n'],mc['burn'],mc['binn'],mc['walkers'],db=f)
+    else: ocf.FitMCMC(mc['n'],mc['burn'],mc['binn'],mc['walkers'])
 
     #make some buttons available
     bPlot.config(state=tk.NORMAL)
@@ -1537,6 +1537,13 @@ def fitParams():
         #save values
         global ga,mc,save
 
+        if int(walkVar.get())%2==1:
+            tkinter.messagebox.showerror('Parameters of Fitting','The number of walkers must be even!',parent=tFitPar)
+            return
+        elif int(walkVar.get())<2*len(ocf.fit_params):
+            tkinter.messagebox.showerror('Parameters of Fitting','Numbers of walkers should be more than two times number of free parameters!',parent=tFitPar)
+            return
+
         save=saveChVar.get()
 
         ga['gen']=int(genVar.get())
@@ -1545,6 +1552,7 @@ def fitParams():
         mc['n']=float(nVar.get())
         mc['burn']=float(burnVar.get())
         mc['binn']=float(binnVar.get())
+        mc['walkers']=int(walkVar.get())
 
         tFitPar.destroy()
 
@@ -1558,7 +1566,7 @@ def fitParams():
     tFitPar=tk.Toplevel(master)
     #default scale of window - NOT change this values if you want to change size
     twidth=288
-    theight=316
+    theight=330
     if fixed:
         tFitPar.geometry(str(twidth)+'x'+str(theight))   #modif. this line to change size - e.g. master.geometry('400x500')
     else:
@@ -1573,6 +1581,7 @@ def fitParams():
     nVar=tk.StringVar(tFitPar,value='1000')
     burnVar=tk.StringVar(tFitPar,value='0')
     binnVar=tk.StringVar(tFitPar,value='1')
+    walkVar=tk.IntVar(tFitPar,value=2)
 
     if len(ga)>0:
         genVar.set(ga['gen'])
@@ -1581,46 +1590,41 @@ def fitParams():
         nVar.set(mc['n'])
         burnVar.set(mc['burn'])
         binnVar.set(mc['binn'])
+        walkVar.set(mc['walkers'])
     saveChVar.set(save)
+    if 2*len(ocf.fit_params)>walkVar.get(): walkVar.set(2*len(ocf.fit_params))
 
     #button process file
     bOK=tk.Button(tFitPar)
-    bOK.place(relx=0.35,rely=0.88,relheight=b1height/theight,relwidth=b3width/twidth)
+    bOK.place(relx=0.35,rely=295/theight,relheight=b1height/theight,relwidth=b3width/twidth)
     bOK.configure(command=ok)
     bOK.configure(text='OK')
 
-    #label
-    Label1=tk.Label(tFitPar)
-    Label1.place(relx=0.07,rely=0.79,relheight=l2height/theight,relwidth=0.4)
-    Label1.configure(text='Save fitting to file')
-    Label1.configure(anchor=tk.W)
-    Label1.configure(font=('None',9))
-
     #check - save fitting sample to file
     saveCh=tk.Checkbutton(tFitPar)
-    saveCh.place(relx=0.5,rely=0.78,relheight=0.06,relwidth=0.09)
+    saveCh.place(relx=0.07,rely=265/theight,relheight=0.06,relwidth=0.9)
     saveCh.configure(justify=tk.LEFT)
+    saveCh.configure(anchor=tk.W)
+    saveCh.configure(text=' Save fitting to file')
     saveCh.configure(variable=saveChVar)
 
     #frame for GA
     Labelframe1=tk.LabelFrame(tFitPar)
     f1height=95
     f1width=250
-    Labelframe1.place(relx=0.07,rely=0.03,relheight=f1height/theight,relwidth=f1width/twidth)
-    Labelframe1.configure(text='FitGA')
+    Labelframe1.place(relx=0.07,rely=9/theight,relheight=f1height/theight,relwidth=f1width/twidth)
+    Labelframe1.configure(text='FitGA/DE')
 
     #labels
     Label2=tk.Label(Labelframe1)
-    Label2.place(relx=0.08,rely=0.26,relheight=l2height/f1height,relwidth=0.3)
+    Label2.place(relx=0.08,rely=0.25,relheight=l2height/f1height,relwidth=0.3)
     Label2.configure(text='generation')
     Label2.configure(anchor=tk.W)
-    Label2.configure(font=('None',9))
 
     Label3=tk.Label(Labelframe1)
     Label3.place(relx=0.08,rely=0.61,relheight=l2height/f1height,relwidth=0.3)
     Label3.configure(text='size')
     Label3.configure(anchor=tk.W)
-    Label3.configure(font=('None',9))
 
     #input - number of generations
     gen=tk.Entry(Labelframe1)
@@ -1634,44 +1638,53 @@ def fitParams():
 
     #frame for MC
     Labelframe2=tk.LabelFrame(tFitPar)
-    f2height=127
+    f2height=145
     f2width=250
-    Labelframe2.place(relx=0.07,rely=0.35,relheight=f2height/theight,relwidth=f2width/twidth)
+    Labelframe2.place(relx=0.07,rely=110/theight,relheight=f2height/theight,relwidth=f2width/twidth)
     Labelframe2.configure(text='FitMCMC')
 
     #labels
     Label4=tk.Label(Labelframe2)
-    Label4.place(relx=0.08,rely=0.16,relheight=l2height/f2height,relwidth=0.3)
+    Label4.place(relx=0.08,rely=20/f2height,relheight=l2height/f2height,relwidth=0.3)
     Label4.configure(text='n_iter')
     Label4.configure(anchor=tk.W)
-    Label4.configure(font=('None',9))
 
     Label5=tk.Label(Labelframe2)
-    Label5.place(relx=0.08,rely=0.43,relheight=l2height/f2height,relwidth=0.3)
+    Label5.place(relx=0.08,rely=55/f2height,relheight=l2height/f2height,relwidth=0.3)
     Label5.configure(text='burn')
     Label5.configure(anchor=tk.W)
-    Label5.configure(font=('None',9))
 
     Label6=tk.Label(Labelframe2)
-    Label6.place(relx=0.08,rely=0.69,relheight=l2height/f2height,relwidth=0.3)
+    Label6.place(relx=0.08,rely=90/f2height,relheight=l2height/f2height,relwidth=0.3)
     Label6.configure(text='binn')
     Label6.configure(anchor=tk.W)
-    Label6.configure(font=('None',9))
+
+    Label7=tk.Label(Labelframe2)
+    Label7.place(relx=0.08,rely=125/f2height,relheight=l2height/f2height,relwidth=0.3)
+    Label7.configure(text='walkers')
+    Label7.configure(anchor=tk.W)
 
     #input - number of MC steps
     n=tk.Entry(Labelframe2)
-    n.place(relx=0.4,rely=0.1,relheight=iheight/f2height,relwidth=0.56)
+    n.place(relx=0.4,rely=13/f2height,relheight=iheight/f2height,relwidth=0.56)
     n.configure(textvariable=nVar)
 
     #input - number of removed steps
     burn=tk.Entry(Labelframe2)
-    burn.place(relx=0.4,rely=0.36,relheight=iheight/f2height,relwidth=0.56)
+    burn.place(relx=0.4,rely=48/f2height,relheight=iheight/f2height,relwidth=0.56)
     burn.configure(textvariable=burnVar)
 
     #input - binning size
     binn=tk.Entry(Labelframe2)
-    binn.place(relx=0.4,rely=0.63,relheight=iheight/f2height,relwidth=0.56)
+    binn.place(relx=0.4,rely=83/f2height,relheight=iheight/f2height,relwidth=0.56)
     binn.configure(textvariable=binnVar)
+
+    #input - walkers size
+    walk=tkinter.ttk.Spinbox(Labelframe2)
+    walk.place(relx=0.4,rely=118/f2height,relheight=iheight/f2height,relwidth=0.56)
+    walk.configure(textvariable=walkVar)
+    walk.configure(from_=2*len(ocf.fit_params),to=10000,increment=2)
+
 
 
 def params():
