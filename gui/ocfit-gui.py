@@ -1550,7 +1550,6 @@ def infoMC():
 
 def corrErr():
     #correction of errors level - sometimes useful before MCMC
-    tkinter.messagebox.showerror('Correct Errors','Not implemented, yet!')
     ans=tk.messagebox.askyesno('Correct Errors','Correct values of O-C errors (their mean level) according to current fitted model?')
     if ans:
         try: ocf.CorrectErr()
