@@ -1194,8 +1194,28 @@ def fitGA():
 
 def fitDE():
     #fitting using scipy differentional evolution
-    tkinter.messagebox.showerror('Fit DE','Not implemented, yet!')
-    return
+    for p in ocf.fit_params:
+        if not p in ocf.limits:
+            tkinter.messagebox.showerror('Fit DE','Set limits of parameter "'+p+'"!')
+            return
+        if not p in ocf.steps:
+            tkinter.messagebox.showerror('Fit DE','Set step of parameter "'+p+'"!')
+            return
+
+    if save==1:
+        f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save DE fitting to file',filetypes=[('Temp files','*.tmp'),('All files','*.*')],defaultextension='.tmp')
+        if len(f)==0: return
+        ocf.FitDE(ga['gen'],ga['size'],db=f)
+    else: ocf.FitDE(ga['gen'],ga['size'])
+
+    #make some buttons available
+    bPlot.config(state=tk.NORMAL)
+    bPlotR.config(state=tk.NORMAL)
+    bSaveM.config(state=tk.NORMAL)
+    bSaveR.config(state=tk.NORMAL)
+    bSum.config(state=tk.NORMAL)
+    bSaveAll.config(state=tk.NORMAL)
+
 
 def fitMC():
     #fitting using Monte Carlo method
@@ -1560,6 +1580,7 @@ def fitParams():
         bRunBG.config(state=tk.NORMAL)
         bFitGA.config(state=tk.NORMAL)
         bFitMC.config(state=tk.NORMAL)
+        bFitDE.config(state=tk.NORMAL)
 
 
     #create new window
