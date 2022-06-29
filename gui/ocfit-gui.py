@@ -89,6 +89,22 @@ class StdoutRedirector(IORedirector):
     def write(self,str):
         self.text_area.insert(tk.END,str)
 
+def disableChildren(parent):
+    for child in parent.winfo_children():
+        wtype = child.winfo_class()
+        if wtype not in ('Frame','Labelframe'):
+            child.configure(state=tk.DISABLED)
+        else:
+            disableChildren(child)
+
+def enableChildren(parent):
+    for child in parent.winfo_children():
+        wtype = child.winfo_class()
+        if wtype not in ('Frame','Labelframe'):
+            child.configure(state=tk.NORMAL)
+        else:
+            enableChildren(child)
+
 def load():
     #loading data from file
 
@@ -120,6 +136,7 @@ def load():
         global systemParams
 
         tLoad.destroy()
+        bFit0.config(state=tk.NORMAL)
         bPlot0.config(state=tk.NORMAL)
         bSave0.config(state=tk.NORMAL)
         bInit.config(state=tk.NORMAL)
@@ -900,7 +917,231 @@ def save0(f=None):
 def fitParams0():
     #define params of fitting (used method, its params etc.) for linear/quadratic fitting
     tkinter.messagebox.showerror('Fit Params','Not implemented, yet!')
-    return
+    #return
+
+    def change():
+        met=metType.get()
+        if met==0:
+            disableChildren(fRob)
+            disableChildren(fMCMC)
+        elif met==1:
+            enableChildren(fRob)
+            disableChildren(fMCMC)
+        elif met==2:
+            disableChildren(fRob)
+            enableChildren(fMCMC)
+
+    def save():
+        tFit0.destroy()
+
+    #create window
+    tFit0=tk.Toplevel(master)
+    #default scale of window - NOT change this values if you want to change size
+    twidth=600
+    theight=450
+    if fixed:
+        tFit0.geometry(str(twidth)+'x'+str(theight))   #modif. this line to change size - e.g. master.geometry('400x500')
+    else:
+        #set relatively to screen size
+        tFit0.geometry('{}x{}'.format(int(twidth/mwidth*screenwidth), int(theight/mheight*screenheight)))
+    tFit0.title('Fit Params')
+
+    metType=tk.IntVar(tFit0,value=0)   #variable for radiobuttons methods
+
+    Label1=tk.Label(tFit0)
+    Label1.place(relx=0.02,rely=0.04,relheight=lheight/theight,relwidth=0.1)
+    Label1.configure(text='Method')
+    Label1.configure(anchor=tk.W)
+
+    Radiobutton1=tk.Radiobutton(tFit0)
+    Radiobutton1.place(relx=0.15,rely=0.04,relheight=0.05,relwidth=0.28)
+    Radiobutton1.configure(variable=metType)
+    Radiobutton1.configure(value=0)
+    Radiobutton1.configure(justify=tk.LEFT)
+    Radiobutton1.configure(anchor=tk.W)
+    Radiobutton1.configure(text='Linear Regression')
+    Radiobutton1.configure(command=change)
+
+    Radiobutton2=tk.Radiobutton(tFit0)
+    Radiobutton2.place(relx=0.43,rely=0.04,relheight=0.05,relwidth=0.28)
+    Radiobutton2.configure(variable=metType)
+    Radiobutton2.configure(value=1)
+    Radiobutton2.configure(justify=tk.LEFT)
+    Radiobutton2.configure(anchor=tk.W)
+    Radiobutton2.configure(text='Robust Regression')
+    Radiobutton2.configure(command=change)
+
+    Radiobutton3=tk.Radiobutton(tFit0)
+    Radiobutton3.place(relx=0.71,rely=0.04,relheight=0.05,relwidth=0.28)
+    Radiobutton3.configure(variable=metType)
+    Radiobutton3.configure(value=2)
+    Radiobutton3.configure(justify=tk.LEFT)
+    Radiobutton3.configure(anchor=tk.W)
+    Radiobutton3.configure(text='Monte Carlo')
+    Radiobutton3.configure(command=change)
+
+    fRob=tk.LabelFrame(tFit0)
+    fRheight=80
+    fRwidth=580
+    fRob.place(relx=0.02,rely=0.11,relheight=fRheight/theight,relwidth=fRwidth/twidth)
+    fRob.configure(text='Robust Regression')
+
+    Label2=tk.Label(fRob)
+    Label2.place(relx=0.02,rely=0.3,relheight=lheight/fRheight,relwidth=0.2)
+    Label2.configure(text='Iterations')
+    Label2.configure(anchor=tk.W)
+
+    Entry1=tk.Entry(fRob)
+    Entry1.place(relx=0.24,rely=0.3,relheight=iheight/fRheight,relwidth=0.3)
+
+    fMCMC=tk.LabelFrame(tFit0)
+    fMCheight=270
+    fMCwidth=580
+    fMCMC.place(relx=0.02,rely=0.3,relheight=fMCheight/theight,relwidth=fMCwidth/twidth)
+    fMCMC.configure(text='Monte Carlo')
+
+    Label3=tk.Label(fMCMC)
+    Label3.place(relx=0.02,rely=0.05,relheight=lheight/fMCheight,relwidth=0.2)
+    Label3.configure(text='n_iter')
+    Label3.configure(anchor=tk.W)
+
+    Label4=tk.Label(fMCMC)
+    Label4.place(relx=0.02,rely=0.15,relheight=lheight/fMCheight,relwidth=0.2)
+    Label4.configure(text='burn')
+    Label4.configure(anchor=tk.W)
+
+    Label5=tk.Label(fMCMC)
+    Label5.place(relx=0.5,rely=0.05,relheight=lheight/fMCheight,relwidth=0.2)
+    Label5.configure(text='binn')
+    Label5.configure(anchor=tk.W)
+
+    Label6=tk.Label(fMCMC)
+    Label6.place(relx=0.5,rely=0.15,relheight=lheight/fMCheight,relwidth=0.2)
+    Label6.configure(text='walkers')
+    Label6.configure(anchor=tk.W)
+
+    Entry2=tk.Entry(fMCMC)
+    Entry2.place(relx=0.15,rely=0.05,relheight=iheight/fMCheight,relwidth=0.3)
+
+    Entry3=tk.Entry(fMCMC)
+    Entry3.place(relx=0.15,rely=0.15,relheight=iheight/fMCheight,relwidth=0.3)
+
+    Entry4=tk.Entry(fMCMC)
+    Entry4.place(relx=0.63,rely=0.05,relheight=iheight/fMCheight,relwidth=0.3)
+
+    Spinbox1=tkinter.ttk.Spinbox(fMCMC)
+    Spinbox1.place(relx=0.63,rely=0.15,relheight=iheight/fMCheight,relwidth=0.3)
+    Spinbox1.configure(from_=2)
+    Spinbox1.configure(increment=2)
+    Spinbox1.configure(to=100000)
+
+    Checkbutton1=tk.Checkbutton(fMCMC)
+    Checkbutton1.place(relx=0.01,rely=0.28,relheight=iheight/fMCheight,relwidth=0.9)
+    Checkbutton1.configure(justify=tk.LEFT)
+    Checkbutton1.configure(anchor=tk.W)
+    Checkbutton1.configure(text='Save fitting to file')
+
+    fParam=tk.LabelFrame(fMCMC)
+    fPheight=145
+    fPwidth=555
+    fParam.place(relx=0.02,rely=0.4,relheight=fPheight/fMCheight,relwidth=fPwidth/fMCwidth)
+    fParam.configure(text='Params')
+
+    Label10=tk.Label(fParam)
+    Label10.place(relx=0.15,rely=0.05,relheight=lheight/fPheight,relwidth=0.2)
+    Label10.configure(text='value')
+    Label10.configure(anchor=tk.W)
+
+    Label11=tk.Label(fParam)
+    Label11.place(relx=0.35,rely=0.05,relheight=lheight/fPheight,relwidth=0.2)
+    Label11.configure(text='min.')
+    Label11.configure(anchor=tk.W)
+
+    Label12=tk.Label(fParam)
+    Label12.place(relx=0.55,rely=0.05,relheight=lheight/fPheight,relwidth=0.2)
+    Label12.configure(text='max.')
+    Label12.configure(anchor=tk.W)
+
+    Label13=tk.Label(fParam)
+    Label13.place(relx=0.75,rely=0.05,relheight=lheight/fPheight,relwidth=0.2)
+    Label13.configure(text='step')
+    Label13.configure(anchor=tk.W)
+
+    Label14=tk.Label(fParam)
+    Label14.place(relx=0.95,rely=0.05,relheight=lheight/fPheight,relwidth=0.05)
+    Label14.configure(text='fit')
+    Label14.configure(anchor=tk.W)
+
+    Label7=tk.Label(fParam)
+    Label7.place(relx=0.02,rely=0.3,relheight=lheight/fPheight,relwidth=0.12)
+    Label7.configure(text='t0')
+    Label7.configure(anchor=tk.W)
+
+    Entry5=tk.Entry(fParam)
+    Entry5.place(relx=0.15,rely=0.3,relheight=iheight/fPheight,relwidth=0.19)
+
+    Entry6=tk.Entry(fParam)
+    Entry6.place(relx=0.35,rely=0.3,relheight=iheight/fPheight,relwidth=0.19)
+
+    Entry7=tk.Entry(fParam)
+    Entry7.place(relx=0.55,rely=0.3,relheight=iheight/fPheight,relwidth=0.19)
+
+    Entry8=tk.Entry(fParam)
+    Entry8.place(relx=0.75,rely=0.3,relheight=iheight/fPheight,relwidth=0.19)
+
+    Checkbutton2=tk.Checkbutton(fParam)
+    Checkbutton2.place(relx=0.95,rely=0.3,relheight=0.15,relwidth=0.04)
+    Checkbutton2.configure(justify=tk.LEFT)
+
+    Label8=tk.Label(fParam)
+    Label8.place(relx=0.02,rely=0.5,relheight=lheight/fPheight,relwidth=0.12)
+    Label8.configure(text='P')
+    Label8.configure(anchor=tk.W)
+
+    Entry9=tk.Entry(fParam)
+    Entry9.place(relx=0.15,rely=0.5,relheight=iheight/fPheight,relwidth=0.19)
+
+    Entry10=tk.Entry(fParam)
+    Entry10.place(relx=0.35,rely=0.5,relheight=iheight/fPheight,relwidth=0.19)
+
+    Entry11=tk.Entry(fParam)
+    Entry11.place(relx=0.55,rely=0.5,relheight=iheight/fPheight,relwidth=0.19)
+
+    Entry12=tk.Entry(fParam)
+    Entry12.place(relx=0.75,rely=0.5,relheight=iheight/fPheight,relwidth=0.19)
+
+    Checkbutton3=tk.Checkbutton(fParam)
+    Checkbutton3.place(relx=0.95,rely=0.5,relheight=0.15,relwidth=0.04)
+    Checkbutton3.configure(justify=tk.LEFT)
+
+    Label9=tk.Label(fParam)
+    Label9.place(relx=0.02,rely=0.7,relheight=lheight/fPheight,relwidth=0.12)
+    Label9.configure(text='Q')
+    Label9.configure(anchor=tk.W)
+
+    Entry13=tk.Entry(fParam)
+    Entry13.place(relx=0.15,rely=0.7,relheight=iheight/fPheight,relwidth=0.19)
+
+    Entry14=tk.Entry(fParam)
+    Entry14.place(relx=0.35,rely=0.7,relheight=iheight/fPheight,relwidth=0.19)
+
+    Entry15=tk.Entry(fParam)
+    Entry15.place(relx=0.55,rely=0.7,relheight=iheight/fPheight,relwidth=0.19)
+
+    Entry16=tk.Entry(fParam)
+    Entry16.place(relx=0.75,rely=0.7,relheight=iheight/fPheight,relwidth=0.19)
+
+    Checkbutton4=tk.Checkbutton(fParam)
+    Checkbutton4.place(relx=0.95,rely=0.7,relheight=0.15,relwidth=0.04)
+    Checkbutton4.configure(justify=tk.LEFT)
+
+    Button1=tk.Button(tFit0)
+    Button1.place(relx=0.5-b1width/twidth/2,rely=0.92,relheight=b2height/theight,relwidth=b1width/twidth)
+    Button1.configure(text='Save')
+    Button1.configure(command=save)
+
+    change()
+
 
 def lin():
     #fitting O-Cs with a linear function
@@ -3806,6 +4047,7 @@ Frame2.configure(borderwidth=2)
 bFit0=tk.Button(Frame2)
 bFit0.place(relx=0.02,rely=9/f2height,relheight=b2height/f2height,relwidth=b3width/f2width)
 bFit0.configure(command=fitParams0)
+#bFit0.configure(state=tk.NORMAL)
 bFit0.configure(state=tk.DISABLED)
 bFit0.configure(text='FitParams')
 
