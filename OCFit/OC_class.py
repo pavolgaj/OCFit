@@ -915,7 +915,7 @@ class FitLinear(SimpleFit):
             return pdf
 
         # Generate the sampler
-        emceeSampler=emcee.EnsembleSampler(walkers,dims,lnpostdf)
+        emceeSampler=emcee.EnsembleSampler(int(walkers),int(dims),lnpostdf)
 
         # Generate starting values
         pos = []
@@ -1210,7 +1210,7 @@ class FitQuad(SimpleFit):
             return pdf
 
         # Generate the sampler
-        emceeSampler=emcee.EnsembleSampler(walkers,dims,lnpostdf)
+        emceeSampler=emcee.EnsembleSampler(int(walkers),int(dims),lnpostdf)
 
         # Generate starting values
         pos = []
@@ -2165,7 +2165,7 @@ class OCFit(ComplexFit,Common):
             return pdf
 
         # Generate the sampler
-        emceeSampler=emcee.EnsembleSampler(walkers,dims,lnpostdf)
+        emceeSampler=emcee.EnsembleSampler(int(walkers),int(dims),lnpostdf)
 
         # Generate starting values
         pos = []
