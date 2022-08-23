@@ -11,7 +11,7 @@
 ![](https://img.shields.io/github/issues-closed/pavolgaj/ocfit.svg?style=flat)
 
 
-:warning:__WARNING: This is a copy of the package OCFit which used `pymc` package. The development of this version was stopped! The new version uses the `emcee` package instead of `pymc`.__
+:warning:__WARNING: This is a copy of the package OCFit which used `pymc` package (v2.3.8). The development of this version was stopped! The new version uses the `emcee` package instead of `pymc`.__
 
 :warning:__IMPORTANT NOTE: E-mail address given in a paper is not working! If you want to contact me, use my new address `pavol (dot) gajdos (at) upjs (dot) sk` or create new issue here on GitHub.__
 
