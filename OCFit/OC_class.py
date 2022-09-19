@@ -248,6 +248,7 @@ class SimpleFit(Common):
         self.P=P
         self.t0=t0
         self._t0P=[t0,P]   #given linear ephemeris of binary
+        self.Q=0
 
         self.dE=dE   #diffence in epoch between primary and secondary minima
 
@@ -806,7 +807,7 @@ class FitLinear(SimpleFit):
         '''robust regresion
         return: new O-C'''
         self.FitLinear()
-        for i in range(n_iter): self.FitLinear(robust=True)
+        for i in range(int(n_iter)): self.FitLinear(robust=True)
         self._fit='Robust regression'
         return self.new_oc
 
@@ -970,6 +971,8 @@ class FitLinear(SimpleFit):
 
         self.Epoch()
         self.tC=self.params['t0']+self.params['P']*self.epoch
+        self.t0=self.params['t0']
+        self.P=self.params['P']
         self.new_oc=self.t-self.tC
         self.model=self.oc+self.new_oc
 
@@ -1098,7 +1101,7 @@ class FitQuad(SimpleFit):
         '''robust regresion
         return: new O-C'''
         self.FitQuad()
-        for i in range(n_iter): self.FitQuad(robust=True)
+        for i in range(int(n_iter)): self.FitQuad(robust=True)
         self._fit='Robust regression'
         return self.new_oc
 
@@ -1264,7 +1267,10 @@ class FitQuad(SimpleFit):
                 #self.params_err[p]='---'
 
         self.Epoch()
-        self.tC=self.t0+self.P*self.epoch+self.Q*self.epoch**2
+        self.tC=self.params['t0']+self.params['P']*self.epoch+self.params['Q']*self.epoch**2
+        self.t0=self.params['t0']
+        self.P=self.params['P']
+        self.Q=self.params['Q']
         self.new_oc=self.t-self.tC
         self.model=self.oc+self.new_oc
 

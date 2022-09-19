@@ -140,8 +140,6 @@ def load():
         bPlot0.config(state=tk.NORMAL)
         bSave0.config(state=tk.NORMAL)
         bInit.config(state=tk.NORMAL)
-        bLin.config(state=tk.NORMAL)
-        bQuad.config(state=tk.NORMAL)
 
         bPlotS.config(state=tk.DISABLED)
         bPlotRS.config(state=tk.DISABLED)
@@ -916,8 +914,7 @@ def save0(f=None):
 
 def fitParams0():
     #define params of fitting (used method, its params etc.) for linear/quadratic fitting
-    tkinter.messagebox.showerror('Fit Params','Not implemented, yet!')
-    #return
+    global fit0
 
     def change():
         met=metType.get()
@@ -932,6 +929,45 @@ def fitParams0():
             enableChildren(fMCMC)
 
     def save():
+        global fit0
+
+        fit0['met']=metType.get()
+
+        fit0['rob']=float(robVar.get())
+
+        fit0['n']=float(iterVar.get())
+        fit0['burn']=float(burnVar.get())
+        fit0['binn']=float(binnVar.get())
+        fit0['walkers']=int(walVar.get())
+
+        fit0['save']=saveVar.get()
+
+        fit0['fit']=[]
+        if t0fVar.get(): fit0['fit'].append('t0')
+        if pfVar.get(): fit0['fit'].append('P')
+        if qfVar.get(): fit0['fit'].append('Q')
+
+        #get values of params
+        fit0['params']={}
+        if len(t0Val.get())>0: fit0['params']['t0']=float(t0Val.get())
+        if len(PVal.get())>0: fit0['params']['P']=float(PVal.get())
+        if len(QVal.get())>0: fit0['params']['Q']=float(QVal.get())
+
+        #get params steps
+        fit0['steps']={}
+        if len(t0Step.get())>0: fit0['steps']['t0']=float(t0Step.get())
+        if len(PStep.get())>0: fit0['steps']['P']=float(PStep.get())
+        if len(QStep.get())>0: fit0['steps']['Q']=float(QStep.get())
+
+        #get limits for params
+        fit0['limits']={}
+        if len(t0Min.get())*len(t0Max.get())>0: fit0['limits']['t0']=[float(t0Min.get()),float(t0Max.get())]
+        if len(PMin.get())*len(PMax.get())>0: fit0['limits']['P']=[float(PMin.get()),float(PMax.get())]
+        if len(QMin.get())*len(QMax.get())>0: fit0['limits']['Q']=[float(QMin.get()),float(QMax.get())]
+
+        bLin.config(state=tk.NORMAL)
+        bQuad.config(state=tk.NORMAL)
+
         tFit0.destroy()
 
     #create window
@@ -947,6 +983,75 @@ def fitParams0():
     tFit0.title('Fit Params')
 
     metType=tk.IntVar(tFit0,value=0)   #variable for radiobuttons methods
+
+    robVar=tk.StringVar(tFit0,value='10')
+    iterVar=tk.StringVar(tFit0,value='1000')
+    burnVar=tk.StringVar(tFit0,value='0')
+    binnVar=tk.StringVar(tFit0,value='1')
+    walVar=tk.IntVar(tFit0,value=2)
+
+    saveVar=tk.IntVar(tFit0)
+
+    #vars for t0
+    t0Val=tk.StringVar(tFit0)
+    t0Min=tk.StringVar(tFit0)
+    t0Max=tk.StringVar(tFit0)
+    t0Step=tk.StringVar(tFit0,value='0.001')
+    t0fVar=tk.IntVar(tFit0)
+
+    #vars for P
+    PVal=tk.StringVar(tFit0)
+    PMin=tk.StringVar(tFit0)
+    PMax=tk.StringVar(tFit0)
+    PStep=tk.StringVar(tFit0,value='0.0001')
+    pfVar=tk.IntVar(tFit0)
+
+    #vars for Q
+    QVal=tk.StringVar(tFit0)
+    QMin=tk.StringVar(tFit0,value='-1e-11')
+    QMax=tk.StringVar(tFit0,value='1e-11')
+    QStep=tk.StringVar(tFit0,value='1e-13')
+    qfVar=tk.IntVar(tFit0)
+
+    #linear ephemeris
+    if len(t0Var.get())>0: t0Val.set(t0Var.get())
+    if len(pVar.get())>0: PVal.set(pVar.get())
+
+    if len(fit0)>0:
+        metType.set(fit0['met'])
+
+        robVar.set(fit0['rob'])
+
+        iterVar.set(fit0['n'])
+        burnVar.set(fit0['burn'])
+        binnVar.set(fit0['binn'])
+        walVar.set(fit0['walkers'])
+        if 2*len(fit0['fit'])>walVar.get(): walVar.set(2*len(fit0['fit']))
+
+        saveVar.set(fit0['save'])
+        if 't0' in fit0['fit']: t0fVar.set(1)
+        if 'P' in fit0['fit']: pfVar.set(1)
+        if 'Q' in fit0['fit']: qfVar.set(1)
+
+        #setting valus of params
+        if 't0' in fit0['params']: t0Val.set(str(fit0['params']['t0']))
+        if 'P' in fit0['params']: PVal.set(str(fit0['params']['P']))
+        if 'Q' in fit0['params']: QVal.set(str(fit0['params']['Q']))
+
+        #setting steps for params
+        if 't0' in fit0['steps']: t0Step.set(str(fit0['steps']['t0']))
+        if 'P' in fit0['steps']: PStep.set(str(fit0['steps']['P']))
+        if 'Q' in fit0['steps']: QStep.set(str(fit0['steps']['Q']))
+
+        #setting lower bound of params
+        if 't0' in fit0['limits']: t0Min.set(str(fit0['limits']['t0'][0]))
+        if 'P' in fit0['limits']: PMin.set(str(fit0['limits']['P'][0]))
+        if 'Q' in fit0['limits']: QMin.set(str(fit0['limits']['Q'][0]))
+
+        #setting upper bound of params
+        if 't0' in fit0['limits']: t0Max.set(str(fit0['limits']['t0'][1]))
+        if 'P' in fit0['limits']: PMax.set(str(fit0['limits']['P'][1]))
+        if 'Q' in fit0['limits']: QMax.set(str(fit0['limits']['Q'][1]))
 
     Label1=tk.Label(tFit0)
     Label1.place(relx=0.02,rely=0.04,relheight=lheight/theight,relwidth=0.1)
@@ -993,6 +1098,7 @@ def fitParams0():
 
     Entry1=tk.Entry(fRob)
     Entry1.place(relx=0.24,rely=0.3,relheight=iheight/fRheight,relwidth=0.3)
+    Entry1.configure(textvariable=robVar)
 
     fMCMC=tk.LabelFrame(tFit0)
     fMCheight=270
@@ -1022,24 +1128,27 @@ def fitParams0():
 
     Entry2=tk.Entry(fMCMC)
     Entry2.place(relx=0.15,rely=0.05,relheight=iheight/fMCheight,relwidth=0.3)
+    Entry2.configure(textvariable=iterVar)
 
     Entry3=tk.Entry(fMCMC)
     Entry3.place(relx=0.15,rely=0.15,relheight=iheight/fMCheight,relwidth=0.3)
+    Entry3.configure(textvariable=burnVar)
 
     Entry4=tk.Entry(fMCMC)
     Entry4.place(relx=0.63,rely=0.05,relheight=iheight/fMCheight,relwidth=0.3)
+    Entry4.configure(textvariable=binnVar)
 
     Spinbox1=tkinter.ttk.Spinbox(fMCMC)
     Spinbox1.place(relx=0.63,rely=0.15,relheight=iheight/fMCheight,relwidth=0.3)
-    Spinbox1.configure(from_=2)
-    Spinbox1.configure(increment=2)
-    Spinbox1.configure(to=100000)
+    Spinbox1.configure(textvariable=walVar)
+    Spinbox1.configure(from_=2,to=10000,increment=2)
 
     Checkbutton1=tk.Checkbutton(fMCMC)
     Checkbutton1.place(relx=0.01,rely=0.28,relheight=iheight/fMCheight,relwidth=0.9)
     Checkbutton1.configure(justify=tk.LEFT)
     Checkbutton1.configure(anchor=tk.W)
     Checkbutton1.configure(text='Save fitting to file')
+    Checkbutton1.configure(variable=saveVar)
 
     fParam=tk.LabelFrame(fMCMC)
     fPheight=145
@@ -1072,6 +1181,7 @@ def fitParams0():
     Label14.configure(text='fit')
     Label14.configure(anchor=tk.W)
 
+    #t0
     Label7=tk.Label(fParam)
     Label7.place(relx=0.02,rely=0.3,relheight=lheight/fPheight,relwidth=0.12)
     Label7.configure(text='t0')
@@ -1079,20 +1189,26 @@ def fitParams0():
 
     Entry5=tk.Entry(fParam)
     Entry5.place(relx=0.15,rely=0.3,relheight=iheight/fPheight,relwidth=0.19)
+    Entry5.configure(textvariable=t0Val)
 
     Entry6=tk.Entry(fParam)
     Entry6.place(relx=0.35,rely=0.3,relheight=iheight/fPheight,relwidth=0.19)
+    Entry6.configure(textvariable=t0Min)
 
     Entry7=tk.Entry(fParam)
     Entry7.place(relx=0.55,rely=0.3,relheight=iheight/fPheight,relwidth=0.19)
+    Entry7.configure(textvariable=t0Max)
 
     Entry8=tk.Entry(fParam)
     Entry8.place(relx=0.75,rely=0.3,relheight=iheight/fPheight,relwidth=0.19)
+    Entry8.configure(textvariable=t0Step)
 
     Checkbutton2=tk.Checkbutton(fParam)
     Checkbutton2.place(relx=0.95,rely=0.3,relheight=0.15,relwidth=0.04)
     Checkbutton2.configure(justify=tk.LEFT)
+    Checkbutton2.configure(variable=t0fVar)
 
+    #P
     Label8=tk.Label(fParam)
     Label8.place(relx=0.02,rely=0.5,relheight=lheight/fPheight,relwidth=0.12)
     Label8.configure(text='P')
@@ -1100,20 +1216,26 @@ def fitParams0():
 
     Entry9=tk.Entry(fParam)
     Entry9.place(relx=0.15,rely=0.5,relheight=iheight/fPheight,relwidth=0.19)
+    Entry9.configure(textvariable=PVal)
 
     Entry10=tk.Entry(fParam)
     Entry10.place(relx=0.35,rely=0.5,relheight=iheight/fPheight,relwidth=0.19)
+    Entry10.configure(textvariable=PMin)
 
     Entry11=tk.Entry(fParam)
     Entry11.place(relx=0.55,rely=0.5,relheight=iheight/fPheight,relwidth=0.19)
+    Entry11.configure(textvariable=PMax)
 
     Entry12=tk.Entry(fParam)
     Entry12.place(relx=0.75,rely=0.5,relheight=iheight/fPheight,relwidth=0.19)
+    Entry12.configure(textvariable=PStep)
 
     Checkbutton3=tk.Checkbutton(fParam)
     Checkbutton3.place(relx=0.95,rely=0.5,relheight=0.15,relwidth=0.04)
     Checkbutton3.configure(justify=tk.LEFT)
+    Checkbutton3.configure(variable=pfVar)
 
+    #Q
     Label9=tk.Label(fParam)
     Label9.place(relx=0.02,rely=0.7,relheight=lheight/fPheight,relwidth=0.12)
     Label9.configure(text='Q')
@@ -1121,19 +1243,24 @@ def fitParams0():
 
     Entry13=tk.Entry(fParam)
     Entry13.place(relx=0.15,rely=0.7,relheight=iheight/fPheight,relwidth=0.19)
+    Entry13.configure(textvariable=QVal)
 
     Entry14=tk.Entry(fParam)
     Entry14.place(relx=0.35,rely=0.7,relheight=iheight/fPheight,relwidth=0.19)
+    Entry14.configure(textvariable=QMin)
 
     Entry15=tk.Entry(fParam)
     Entry15.place(relx=0.55,rely=0.7,relheight=iheight/fPheight,relwidth=0.19)
+    Entry15.configure(textvariable=QMax)
 
     Entry16=tk.Entry(fParam)
     Entry16.place(relx=0.75,rely=0.7,relheight=iheight/fPheight,relwidth=0.19)
+    Entry16.configure(textvariable=QStep)
 
     Checkbutton4=tk.Checkbutton(fParam)
     Checkbutton4.place(relx=0.95,rely=0.7,relheight=0.15,relwidth=0.04)
     Checkbutton4.configure(justify=tk.LEFT)
+    Checkbutton4.configure(variable=qfVar)
 
     Button1=tk.Button(tFit0)
     Button1.place(relx=0.5-b1width/twidth/2,rely=0.92,relheight=b2height/theight,relwidth=b1width/twidth)
@@ -1172,7 +1299,22 @@ def lin():
     simple=OCFit.FitLinear(data['tO'],t0,P,err=err,dE=dE)
     if weight: simple._set_err=False
 
-    simple.FitLinear()
+    if fit0['met']==0: simple.FitLinear()
+    elif fit0['met']==1: simple.FitRobust(int(fit0['rob']))
+    elif fit0['met']==2:
+        fit_params=list(fit0['fit'])
+        if 'Q' in fit_params: fit_params.remove('Q')
+        simple.params=fit0['params']
+        if fit0['save']:
+            f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save MCMC fitting to file',filetypes=[('Temp files','*.tmp'),('All files','*.*')],defaultextension='.tmp')
+            if len(f)==0: return
+            simple.FitMCMC(fit0['n'],fit0['limits'],fit0['steps'],fit_params=fit_params,burn=fit0['burn'],binn=fit0['binn'],walkers=fit0['walkers'],db=f)
+        else:
+            simple.FitMCMC(fit0['n'],fit0['limits'],fit0['steps'],fit_params=fit_params,burn=fit0['burn'],binn=fit0['binn'],walkers=fit0['walkers'])
+    else:
+        tkinter.messagebox.showerror('Fit Lin','Method not implemented, yet!')
+        return
+
 
     #save results
     for x in data: data[x]=np.array(data[x])[simple._order]   #save sorted values
@@ -1193,7 +1335,7 @@ def quad():
     global data,simple,weight,tPQ
 
     if len(t0Var.get())*len(pVar.get())==0:
-        tkinter.messagebox.showerror('Fit Linear','Set linear ephemeris (T0, P)!')
+        tkinter.messagebox.showerror('Fit Quad','Set linear ephemeris (T0, P)!')
         return
 
     if not 'tO' in data: data['tO']=[data['tC'][i]+data['oc'][i] for i in range(len(data['oc']))]
@@ -1216,7 +1358,19 @@ def quad():
     simple=OCFit.FitQuad(data['tO'],t0,P,err=err,dE=dE)
     if weight: simple._set_err=False
 
-    simple.FitQuad()
+    if fit0['met']==0: simple.FitQuad()
+    elif fit0['met']==1: simple.FitRobust(int(fit0['rob']))
+    elif fit0['met']==2:
+        simple.params=fit0['params']
+        if fit0['save']:
+            f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save MCMC fitting to file',filetypes=[('Temp files','*.tmp'),('All files','*.*')],defaultextension='.tmp')
+            if len(f)==0: return
+            simple.FitMCMC(fit0['n'],fit0['limits'],fit0['steps'],fit_params=fit0['fit'],burn=fit0['burn'],binn=fit0['binn'],walkers=fit0['walkers'],db=f)
+        else:
+            simple.FitMCMC(fit0['n'],fit0['limits'],fit0['steps'],fit_params=fit0['fit'],burn=fit0['burn'],binn=fit0['binn'],walkers=fit0['walkers'])
+    else:
+        tkinter.messagebox.showerror('Fit Quad','Method not implemented, yet!')
+        return
 
     #save results
     for x in data: data[x]=np.array(data[x])[simple._order]   #save sorted values
@@ -3909,6 +4063,7 @@ def summary(f=None):
 data={}
 ga={}
 mc={}
+fit0={}
 save=0
 
 systemParams={}
@@ -4047,7 +4202,6 @@ Frame2.configure(borderwidth=2)
 bFit0=tk.Button(Frame2)
 bFit0.place(relx=0.02,rely=9/f2height,relheight=b2height/f2height,relwidth=b3width/f2width)
 bFit0.configure(command=fitParams0)
-#bFit0.configure(state=tk.NORMAL)
 bFit0.configure(state=tk.DISABLED)
 bFit0.configure(text='FitParams')
 
