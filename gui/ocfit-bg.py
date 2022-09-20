@@ -2,7 +2,7 @@
 
 #script for fitting on background using OCFit
 #input params: name_of_file number_of_generations size_of_gen number_of_MC_steps number_of_removed_steps binning_size save_fitting_sample
-#update: 2021...
+#update: 10.12.2021
 # (c) Pavol Gajdos, 2021
 
 import sys
