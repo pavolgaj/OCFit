@@ -43,4 +43,6 @@ or
 
 ``pip install git+https://github.com/pavolgaj/OCFit.git``
 
-[//]: # (``pip install OCFit``)
+or
+
+``pip install OCFit``
