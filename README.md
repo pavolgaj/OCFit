@@ -10,8 +10,7 @@
 ![](https://img.shields.io/github/issues/pavolgaj/ocfit.svg?style=flat)
 ![](https://img.shields.io/github/issues-closed/pavolgaj/ocfit.svg?style=flat)
 
-
-:warning:__WARNING: This is a copy of the package OCFit which used `pymc` package (v2.3.8). The development of this version was stopped! The new version uses the `emcee` package instead of `pymc`.__
+:warning:__WARNING: This version is under development! Please, use version from master branch.__
 
 :warning:__IMPORTANT NOTE: E-mail address given in a paper is not working! If you want to contact me, use my new address `pavol (dot) gajdos (at) upjs (dot) sk` or create new issue here on GitHub.__
 
@@ -21,20 +20,29 @@ In a case of using this package for scientific purposes, please, cite our paper 
 Parimucha (2019)](https://ui.adsabs.harvard.edu/abs/2019OEJV..197...71G/abstract) in [OEJV](http://var.astro.cz/oejv/issues/oejv0197.pdf) where you can also find more detail description about fitting functions
 and used models.
 
-For install it, download/clone this repository or download suitable binary file from releases.
+For install it, download/clone this repository ~~or download suitable binary file from releases~~.
 
 ### Requirements
+* python3
 * numpy
 * matplotlib
-* PyAstronomy
-* pymc (v2.3.8; recommended)
+* scipy
+* emcee (recommended)
+* corner (recommended)
+* tqdm (recommended)
 
-Installation is possible from source code or using build installation binary file (only for OS
-Windows). The following procedure is only for installation from the source code. Extract
+~~Installation is possible from source code or using build installation binary file (only for OS
+Windows).~~ The following procedure is only for installation from the source code. Extract
 files and go to new-created folder. Running script ``setup.py`` the installation will be done:
 
 ``python setup.py install``
 
 Or using pip:
 
-``pip install OCFit==0.1.4``
+``pip install .``
+
+or
+
+``pip install git+https://github.com/pavolgaj/OCFit.git@dev``
+
+[//]: # (``pip install OCFit``)

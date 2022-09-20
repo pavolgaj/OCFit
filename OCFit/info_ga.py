@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-#class for statistics about GA fitting
-#version 0.1.1
-#update: 5.4.2017
-# (c) Pavol Gajdos, 2018
+#class for statistics about GA or DE fitting
+#version 0.2.1
+#update: 22.6.2022
+# (c) Pavol Gajdos, 2018 - 2022
 
 from pickle import load
 
@@ -16,24 +16,38 @@ except:
     matplotlib.use('Agg',force=True)
     import matplotlib.pyplot as mpl
 
+def _plotsizeHelper(size):
+    '''Helps to define the optimum plot size for large big-picture plots.'''
+    c = 1
+    r = 1
+    while c * r < size:
+        c += 1
+        if c * r >= size: break
+        else: r += 1
+    return c, r
 
 class InfoGA():
-    '''statistics about GA fitting from db file'''
+    '''statistics about GA or DE fitting from db file'''
     def __init__(self,dbfile):
-        '''load db file from GA'''
+        '''load db file from GA or DE'''
         f=open(dbfile,'rb')
         self.trace=load(f)
         f.close()
-       
+
+        path=dbfile.replace('\\','/')
+        if path.rfind('/')>0: self.path=path[:path.rfind('/')+1]
+        else: self.path=''
+
         self.chi2=self.trace['chi2']
         self.availableTrace=list(self.trace.keys())
         self.availableTrace.remove('chi2')
+        self.pars=self.availableTrace
         gen=self.chi2.shape[0]
         size=self.chi2.shape[1]
         self.info={'gen':gen,'size':size}
 
-    def Info(self,name=None):
-        '''print basic info about GA'''
+    def Stats(self,path=None):
+        '''print basic info about GA or DE'''
         text=['Number of generations: '+str(self.info['gen']),
               'Size of generation: '+str(self.info['size']),
               'Number of fitted parameters: '+str(len(self.availableTrace)),
@@ -44,14 +58,10 @@ class InfoGA():
         for p in self.availableTrace:
             text.append(p+': '+str(self.trace[p][i]))
 
-        if name is None:
-            print('------------------------------------')
-            for t in text: print(t)
-            print('------------------------------------')
-        else:
-            f=open(name,'w')
-            for t in text: f.write(t+'\n')
-            f.close()
+        if path is None: path=self.path
+        f=open(path+'stat.txt','w')
+        for t in text: f.write(t+'\n')
+        f.close()
 
 
     def PlotChi2(self,best=True,mean=True,besti=False,mini=False,maxi=False,i=None,full=False,log=True):
@@ -102,79 +112,87 @@ class InfoGA():
             mpl.figure()
             mpl.xlabel('Number of generations')
             mpl.ylabel(r'$\chi^2$ error')
-            if log:  mpl.semilogy(self.chi2)
+            if log: mpl.semilogy(self.chi2)
             else: mpl.plot(self.chi2)
-            
+
         if len(plot)>0:
             x=np.arange(1,self.info['gen']+1,1)
             mpl.figure()
             mpl.xlabel('Number of generations')
             mpl.ylabel(r'$\chi^2$ error')
             for pl in plot:
-                if log:  mpl.semilogy(x,pl[1],label=pl[0])
+                if log: mpl.semilogy(x,pl[1],label=pl[0])
                 else: mpl.plot(x,pl[1],label=pl[0])
             mpl.legend()
             return plot
-            
-    def Deviance(self,i=None,par=None):
-        '''plot deviance for given generation or for all, for given parameters'''
-        if par is None: par=self.availableTrace
-        if not isinstance(par,list): par=[par]
 
-        val={}
-        for p in par: val[p]=[]
+    def Dev(self,param,new_fig=True,i_gen=None,log=True):
+        '''plot deviance for given generation or for all, for given parameter'''
+        val=[]
         dev=[]
-        if i is None:
+        if i_gen is None:
             for gen in range(self.info['gen']):
                 dev+=list(self.chi2[gen,:])
-                for p in par: val[p]+=list(self.trace[p][gen,:])
+                val+=list(self.trace[param][gen,:])
         else:
-            dev+=list(self.chi2[i,:])
-            for p in par: val[p]+=list(self.trace[p][i,:])
+            dev+=list(self.chi2[i_gen,:])
+            val+=list(self.trace[param][i_gen,:])
 
-        n=len(par)
-        mpl.figure()
-        for j in range(n):
-            mpl.subplot(2,int(np.ceil(n/2.)),j+1)
-            mpl.plot(val[par[j]],dev,'.')
-            mpl.xlabel(par[j])
-            mpl.ylabel('chi2')
-        return val,dev
+        if new_fig: fig=mpl.figure()
+        if log: mpl.semilogy(val,dev,'k.',alpha=0.2)
+        else: mpl.plot(val,dev,'k.',alpha=0.2)
+        mpl.xlabel(param)
+        mpl.ylabel('chi2')
+        #mpl.gca().ticklabel_format(useOffset=False)
+        if new_fig: return fig
+
+    def Devs(self,params=None,i_gen=None,log=True):
+        '''plot deviances for multiple parameters'''
+        if params is None: params=self.availableTrace
+
+        if len(params)==1: return self.Dev(params[0],i_gen=i_gen,log=log)
+        if isinstance(params,str): return self.Dev(params,i_gen=i_gen,log=log)
+
+        fig=mpl.figure()
+        cols,rows = _plotsizeHelper(len(params))
+        for i,p in enumerate(params):
+            mpl.subplot(rows, cols, i + 1)
+            self.Dev(p,new_fig=False,i_gen=i_gen,log=log)
+        fig.tight_layout()
+        return fig
 
 
-    def GlobHist(self,par=None):
-        '''plot histogram for given parameters for all generations'''
-        if par is None: par=self.availableTrace
-        if not isinstance(par,list): par=[par]
+    def Hists(self,params=None,i_gen=-1):
+        '''plot histogram for all parameters for given generation or all (i_gen=None)'''
+        if params is None: params=self.availableTrace
 
-        val={}
-        for p in par: val[p]=[]
-        for gen in range(self.info['gen']):
-            for p in par: val[p]+=list(self.trace[p][gen,:])
-  
-        n=len(par)
-        mpl.figure()
-        for j in range(n):
-            mpl.subplot(2,int(np.ceil(n/2.)),j+1)
-            mpl.hist(val[par[j]])
-            mpl.xlabel(par[j])
+        if len(params)==1: return self.Hist(params[0])
+        if isinstance(params,str): return self.Hist(params)
 
-        return val
+        fig=mpl.figure()
+        cols,rows = _plotsizeHelper(len(params))
+        for i,p in enumerate(params):
+            mpl.subplot(rows, cols, i + 1)
+            self.Hist(p,new_fig=False,i_gen=i_gen)
+        fig.tight_layout()
+        return fig
 
-    def Hist(self,i=-1,par=None):
+
+    def Hist(self,param,new_fig=True,i_gen=-1):
         '''plot histogram for given generation for given parameters'''
-        if par is None: par=self.availableTrace
-        if not isinstance(par,list): par=[par]
+        val=[]
+        if i_gen is None:
+            for gen in range(self.info['gen']): val+=list(self.trace[param][gen,:])
+        else: val+=list(self.trace[param][i_gen,:])
 
-        n=len(par)
-        mpl.figure()
-        for j in range(n):
-            mpl.subplot(2,int(np.ceil(n/2.)),j+1)
-            mpl.hist(self.trace[par[j]][i])
-            mpl.xlabel(par[j])
+        if new_fig: fig=mpl.figure()
+        mpl.hist(val,bins=20,color='k')
+        mpl.xlabel(param)
+        mpl.gca().ticklabel_format(useOffset=False)
+        if new_fig: return fig
 
 
-    def Plot(self,par,best=True,mean=True,mini=False,maxi=False,i=None,full=False):
+    def Trace(self,par,best=True,mean=True,mini=False,maxi=False,i=None,full=False):
         '''plot parameter trace for best, mean, minimal or maximal value in each generation or for selected individual or for all individuals'''
         if not par in self.availableTrace:
             raise KeyError('Parameter "'+par+'" is not available!')
@@ -222,6 +240,7 @@ class InfoGA():
             mpl.xlabel('Number of generations')
             mpl.ylabel(par)
             mpl.plot(self.trace[par])
+            mpl.gca().ticklabel_format(useOffset=False)
 
         if len(plot)>0:
             x=np.arange(1,self.info['gen']+1,1)
@@ -231,4 +250,5 @@ class InfoGA():
             for pl in plot:
                 mpl.plot(x,pl[1],label=pl[0])
             mpl.legend()
+            mpl.gca().ticklabel_format(useOffset=False)
             return plot

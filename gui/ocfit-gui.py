@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 #main file for GUI for OCFit class
-#update: 25.4.2022
+#update: 19.9.2022
 # (c) Pavol Gajdos, 2018-2022
 
 import tkinter as tk
@@ -12,6 +12,8 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as mpl
 
+mpl.style.use('classic')    #classic style (optional)
+
 import numpy as np
 
 import subprocess
@@ -20,11 +22,93 @@ import os,sys
 
 import OCFit
 
+import pickle
+
+tPQ=[]
+
+class AutoScroll(object):
+    '''Configure the scrollbars for a widget.'''
+    def __init__(self,master):
+        vsb=tkinter.ttk.Scrollbar(master,orient='vertical',command=self.yview)
+        #except: pass
+        hsb=tkinter.ttk.Scrollbar(master,orient='horizontal',command=self.xview)
+
+        self.configure(yscrollcommand=self._autoscroll(vsb))
+        #except: pass
+        self.configure(xscrollcommand=self._autoscroll(hsb))
+
+        self.grid(column=0,row=0,sticky='nsew')
+        vsb.grid(column=1,row=0,sticky='ns')
+        #except: pass
+        hsb.grid(column=0,row=1,sticky='ew')
+
+        master.grid_columnconfigure(0,weight=1)
+        master.grid_rowconfigure(0,weight=1)
+
+        methods=tk.Pack.__dict__.keys() | tk.Grid.__dict__.keys() | tk.Place.__dict__.keys()
+
+        for meth in methods:
+            if meth[0] != '_' and meth not in ('config','configure'): setattr(self,meth,getattr(master,meth))
+
+    @staticmethod
+    def _autoscroll(sbar):
+        '''Hide and show scrollbar as needed.'''
+        def wrapped(first,last):
+            first,last=float(first),float(last)
+            if first <= 0 and last >= 1: sbar.grid_remove()
+            else: sbar.grid()
+            sbar.set(first,last)
+        return wrapped
+
+    def __str__(self):
+        return str(self.master)
+
+def _create_container(func):
+    '''Creates a ttk Frame with a given master,and use this new frame to
+    place the scrollbars and the widget.'''
+    def wrapped(cls,master,**kw):
+        container=tkinter.ttk.Frame(master)
+        return func(cls,container,**kw)
+    return wrapped
+
+class ScrolledText(AutoScroll,tk.Text):
+    '''A standard Tkinter Text widget with scrollbars that will
+    automatically show/hide as needed.'''
+    @_create_container
+    def __init__(self,master,**kw):
+        tk.Text.__init__(self,master,**kw)
+        AutoScroll.__init__(self,master)
+
+class IORedirector(object):
+    '''A general class for redirecting I/O to this Text widget.'''
+    def __init__(self,text_area):
+        self.text_area=text_area
+
+class StdoutRedirector(IORedirector):
+    '''A class for redirecting stdout to this Text widget.'''
+    def write(self,str):
+        self.text_area.insert(tk.END,str)
+
+def disableChildren(parent):
+    for child in parent.winfo_children():
+        wtype = child.winfo_class()
+        if wtype not in ('Frame','Labelframe'):
+            child.configure(state=tk.DISABLED)
+        else:
+            disableChildren(child)
+
+def enableChildren(parent):
+    for child in parent.winfo_children():
+        wtype = child.winfo_class()
+        if wtype not in ('Frame','Labelframe'):
+            child.configure(state=tk.NORMAL)
+        else:
+            enableChildren(child)
 
 def load():
     #loading data from file
 
-    global data
+    global data,systemParams
 
     def openFile():
         #create OpenFile dialog
@@ -46,6 +130,42 @@ def load():
             subprocess.call(['xdg-open',path])
         else:
             os.startfile(path)
+
+    def closeLoad():
+        #close window and make some buttons on main window available
+        global systemParams
+
+        tLoad.destroy()
+        bFit0.config(state=tk.NORMAL)
+        bPlot0.config(state=tk.NORMAL)
+        bSave0.config(state=tk.NORMAL)
+        bInit.config(state=tk.NORMAL)
+
+        bPlotS.config(state=tk.DISABLED)
+        bPlotRS.config(state=tk.DISABLED)
+        bSumS.config(state=tk.DISABLED)
+        bSaveRS.config(state=tk.DISABLED)
+        bSaveAll0.config(state=tk.DISABLED)
+        bUpd.config(state=tk.DISABLED)
+        bParams.config(state=tk.DISABLED)
+        bFitParams.config(state=tk.DISABLED)
+        bFitGA.config(state=tk.DISABLED)
+        bFitDE.config(state=tk.DISABLED)
+        bCorr.config(state=tk.DISABLED)
+        bFitMC.config(state=tk.DISABLED)
+        bPlot.config(state=tk.DISABLED)
+        bPlotR.config(state=tk.DISABLED)
+        bSum.config(state=tk.DISABLED)
+        bSaveM.config(state=tk.DISABLED)
+        bSaveR.config(state=tk.DISABLED)
+        bSaveC.config(state=tk.DISABLED)
+        bRunBG.config(state=tk.DISABLED)
+        bSaveAll.config(state=tk.DISABLED)
+
+        systemParams={}
+        t0Var.set('')
+        pVar.set('')
+        dEVar.set(0.5)
 
 
     def procFile():
@@ -139,12 +259,8 @@ def load():
                 for i in range(len(data['met'])): data[c].append(metDic[data['met'][i]])
 
                 tMet.destroy()
-                tLoad.destroy()
-                bPlot0.config(state=tk.NORMAL)
-                bSave0.config(state=tk.NORMAL)
-                bInit.config(state=tk.NORMAL)
-                bLin.config(state=tk.NORMAL)
-                bQuad.config(state=tk.NORMAL)
+                closeLoad()
+
 
             #create window
             tMet=tk.Toplevel(tLoad)
@@ -204,15 +320,7 @@ def load():
             Button1.configure(text='OK')
             Button1.config(state=tk.DISABLED)
 
-        else:
-            #close window and make some buttons on main window available
-            tLoad.destroy()
-            bPlot0.config(state=tk.NORMAL)
-            bSave0.config(state=tk.NORMAL)
-            bInit.config(state=tk.NORMAL)
-            bLin.config(state=tk.NORMAL)
-            bQuad.config(state=tk.NORMAL)
-
+        else: closeLoad()
 
     #create window
     tLoad=tk.Toplevel(master)
@@ -273,9 +381,7 @@ def load():
     f1width=265
     Frame1.place(relx=0.07,rely=0.17,relheight=f1height/theight,relwidth=f1width/twidth)
     Frame1.configure(relief=tk.GROOVE)
-    Frame1.configure(borderwidth='2')
-    Frame1.configure(relief=tk.GROOVE)
-    Frame1.configure(width=265)
+    Frame1.configure(borderwidth=2)
 
     #label
     Label3=tk.Label(Frame1)
@@ -310,9 +416,8 @@ def load():
     f2width=265
     Frame2.place(relx=0.07,rely=0.34,relheight=f2height/theight,relwidth=f2width/twidth)
     Frame2.configure(relief=tk.GROOVE)
-    Frame2.configure(borderwidth='2')
-    Frame2.configure(relief=tk.GROOVE)
-    Frame2.configure(width=265)
+    Frame2.configure(borderwidth=2)
+
 
     #labels
     Label2=tk.Label(Frame2)
@@ -448,16 +553,296 @@ def load():
     bProc.configure(state=tk.DISABLED)
     bProc.configure(text='Process file')
 
-def plot0():
+
+def deltaE():
+    #calculate phase/difference in epoch for secondary minima
+    global systemParams
+
+    def estimate():
+        if len(t0Var.get())*len(pVar.get())==0:
+            tkinter.messagebox.showerror('Delta Epoch','Set linear ephemeris (T0, P)!',parent=tE)
+            return
+
+        t0=float(t0Var.get())
+        P=float(pVar.get())
+
+        if not 'tO' in data:
+            if not 'tC' in data:
+                if not 'E' in data: data['E']=range(len(data['oc']))
+                data['tC']=[t0+P*data['E'][i] for i in range(len(data['oc']))]
+            data['tO']=[data['tC'][i]+data['oc'][i] for i in range(len(data['oc']))]
+
+
+        #setting errors
+        if not 'err' in data and 'w' in data: err=[1./x for x in data['w']]
+        elif 'err' in data: err=data['err']
+        else: err=[1 for x in range(len(data['tO']))]
+
+        oc=OCFit.FitLinear(data['tO'],t0,P,err=err)
+
+        prim=np.where(oc._min_type==0)   #primary minima
+        sec=np.where(oc._min_type==1)    #secondary minima
+
+        ocP=np.average(oc.oc[prim],weights=oc.err[prim])
+        ocS=np.average(oc.oc[sec],weights=oc.err[sec])
+
+        dt=ocS-ocP   #difference between O-Cs
+
+        dE=0.5+dt/P  #phase/differnce in epoch for secondary minima
+        dEVar0.set(dE)
+
+        return dE
+
+    def calculate():
+        if len(eVar.get())*len(wVar.get())==0:
+            tkinter.messagebox.showerror('Delta Epoch','Set eccentricity and argument of pericenter!',parent=tE)
+            return
+
+        e=float(eVar.get())
+        w=float(wVar.get())
+
+        dE=OCFit.DeltaEpoch(e,w)
+        dEVar0.set(dE)
+
+        return dE
+
+    def updateDE():
+        dEVar.set(dEVar0.get())
+        systemParams['e']=float(eVar.get())
+        systemParams['w']=float(wVar.get())
+        systemParams['dE']=float(dEVar0.get())
+        tE.destroy()
+
+    #create window
+    tE=tk.Toplevel(master)
+    #default scale of window - NOT change this values if you want to change size
+    twidth=350
+    theight=240
+    if fixed:
+        tE.geometry(str(twidth)+'x'+str(theight))   #modif. this line to change size - e.g. master.geometry('400x500')
+    else:
+        #set relatively to screen size
+        tE.geometry('{}x{}'.format(int(twidth/mwidth*screenwidth), int(theight/mheight*screenheight)))
+    tE.title('Delta Epoch')
+
+    #variables
+    eVar=tk.StringVar(tE,value='0')
+    wVar=tk.StringVar(tE,value='0')
+    dEVar0=tk.StringVar(tE,value='0.5')
+
+    if len(systemParams)>0:
+        if 'e' in systemParams:
+            eVar.set(systemParams['e'])
+            wVar.set(systemParams['w'])
+        if 'dE' in systemParams: dEVar0.set(systemParams['dE'])
+
+    Label1=tk.Label(tE)
+    Label1.place(relx=0.06,rely=0.13,relheight=lheight/theight,relwidth=0.4)
+    Label1.configure(anchor=tk.W)
+    Label1.configure(text='Eccentricity')
+
+    Entry1=tk.Entry(tE)
+    Entry1.place(relx=0.46,rely=0.13,relheight=iheight/theight,relwidth=0.48)
+    Entry1.configure(textvariable=eVar)
+
+    Label2=tk.Label(tE)
+    Label2.place(relx=0.06,rely=0.26,relheight=lheight/theight,relwidth=0.4)
+    Label2.configure(anchor=tk.W)
+    Label2.configure(text='Arg.Pericen.[deg]')
+
+    Entry2=tk.Entry(tE)
+    Entry2.place(relx=0.46,rely=0.26,relheight=iheight/theight,relwidth=0.48)
+    Entry2.configure(textvariable=wVar)
+
+    Button1=tk.Button(tE)
+    Button1.place(relx=0.25-b5width/twidth/2,rely=0.43,relheight=b1height/theight,relwidth=b5width/twidth)
+    Button1.configure(text='Calculate')
+    Button1.configure(command=calculate)
+
+    Button2=tk.Button(tE)
+    Button2.place(relx=0.75-b5width/twidth/2,rely=0.43,relheight=b1height/theight,relwidth=b5width/twidth)
+    Button2.configure(text='Estimate')
+    Button2.configure(command=estimate)
+
+    Label3=tk.Label(tE)
+    Label3.place(relx=0.06,rely=0.64,relheight=lheight/theight,relwidth=0.4)
+    Label3.configure(anchor=tk.W)
+    Label3.configure(text='Delta Epoch')
+
+    Entry3=tk.Entry(tE)
+    Entry3.place(relx=0.46,rely=0.64,relheight=iheight/theight,relwidth=0.48)
+    Entry3.configure(textvariable=dEVar0)
+
+    Button3=tk.Button(tE)
+    Button3.place(relx=0.5-b5width/twidth/2,rely=0.81,relheight=b1height/theight,relwidth=b5width/twidth)
+    Button3.configure(text='Use value')
+    Button3.configure(command=updateDE)
+
+
+def system():
+    #set some general parameters of studied systems
+    global systemParams,ocf
+
+    def sumMass():
+        if len(M1Var.get())==0:
+            tkinter.messagebox.showerror('System Parameters','Add mass of primary star M1!',parent=tSys)
+            return
+        else: M1=float(M1Var.get())
+
+        M1e=0
+        if len(M1errVar.get())>0: M1e=float(M1errVar.get())
+
+        M2=0
+        M2e=0
+        if len(M2Var.get())>0:
+            M2=float(M2Var.get())
+            if len(M2errVar.get())>0: M2e=float(M2errVar.get())
+
+        MVar.set(M1+M2)
+        MerrVar.set(M1e+M2e)
+
+    def saveSys():
+        global systemParams,ocf
+
+        if len(M1Var.get())>0:
+            systemParams['M1']=float(M1Var.get())
+            systemParams['M1_err']=float(M1errVar.get())
+        elif 'M1' in systemParams: del(systemParams['M1'])
+        if len(M2Var.get())>0:
+            systemParams['M2']=float(M2Var.get())
+            systemParams['M2_err']=float(M2errVar.get())
+        elif 'M2' in systemParams: del(systemParams['M2'])
+        if len(MVar.get())>0:
+            systemParams['M']=float(MVar.get())
+            systemParams['M_err']=float(MerrVar.get())
+        elif 'M' in systemParams: del(systemParams['M'])
+        if len(i3Var.get())>0:
+            systemParams['i3']=float(i3Var.get())
+            systemParams['i3_err']=float(i3errVar.get())
+        elif 'i3' in systemParams: del(systemParams['i3'])
+
+        if 'ocf' in globals():
+            if hasattr(ocf,'systemParams'): ocf.systemParams=systemParams
+
+        tSys.destroy()
+
+    #create window
+    tSys=tk.Toplevel(master)
+    #default scale of window - NOT change this values if you want to change size
+    twidth=500
+    theight=310
+    if fixed:
+        tSys.geometry(str(twidth)+'x'+str(theight))   #modif. this line to change size - e.g. master.geometry('400x500')
+    else:
+        #set relatively to screen size
+        tSys.geometry('{}x{}'.format(int(twidth/mwidth*screenwidth), int(theight/mheight*screenheight)))
+    tSys.title('System Parameters')
+
+    #variables
+    M1Var=tk.StringVar(tSys,value='')
+    M2Var=tk.StringVar(tSys,value='')
+    M1errVar=tk.StringVar(tSys,value='0')
+    M2errVar=tk.StringVar(tSys,value='0')
+    MVar=tk.StringVar(tSys,value='')
+    MerrVar=tk.StringVar(tSys,value='0')
+    i3Var=tk.StringVar(tSys,value='')
+    i3errVar=tk.StringVar(tSys,value='0')
+
+    if len(systemParams)>0:
+        if 'M1' in systemParams:
+            M1Var.set(systemParams['M1'])
+            M1errVar.set(systemParams['M1_err'])
+        if 'M2' in systemParams:
+            M2Var.set(systemParams['M2'])
+            M2errVar.set(systemParams['M2_err'])
+        if 'M' in systemParams:
+            MVar.set(systemParams['M'])
+            MerrVar.set(systemParams['M_err'])
+        if 'i3' in systemParams:
+            i3Var.set(systemParams['i3'])
+            i3errVar.set(systemParams['i3_err'])
+
+    Label1=tk.Label(tSys)
+    Label1.place(relx=0.24,rely=0.06,relheight=lheight/theight,relwidth=0.35)
+    Label1.configure(text='Value')
+
+    Label2=tk.Label(tSys)
+    Label2.place(relx=0.62,rely=0.06,relheight=lheight/theight,relwidth=0.35)
+    Label2.configure(text='Error')
+
+    Label3=tk.Label(tSys)
+    Label3.place(relx=0.02,rely=0.13,relheight=lheight/theight,relwidth=0.22)
+    Label3.configure(anchor=tk.W)
+    Label3.configure(text='Mass M1')
+
+    Entry1=tk.Entry(tSys)
+    Entry1.place(relx=0.24,rely=0.13,relheight=iheight/theight,relwidth=0.35)
+    Entry1.configure(textvariable=M1Var)
+
+    Entry2=tk.Entry(tSys)
+    Entry2.place(relx=0.62,rely=0.13,relheight=iheight/theight,relwidth=0.35)
+    Entry2.configure(textvariable=M1errVar)
+
+    Label4=tk.Label(tSys)
+    Label4.place(relx=0.02,rely=0.26,relheight=lheight/theight,relwidth=0.22)
+    Label4.configure(anchor=tk.W)
+    Label4.configure(text='Mass M2')
+
+    Entry3=tk.Entry(tSys)
+    Entry3.place(relx=0.24,rely=0.26,relheight=iheight/theight,relwidth=0.35)
+    Entry3.configure(textvariable=M2Var)
+
+    Entry4=tk.Entry(tSys)
+    Entry4.place(relx=0.62,rely=0.26,relheight=iheight/theight,relwidth=0.35)
+    Entry4.configure(textvariable=M2errVar)
+
+    Label5=tk.Label(tSys)
+    Label5.place(relx=0.02,rely=0.45,relheight=lheight/theight,relwidth=0.22)
+    Label5.configure(anchor=tk.W)
+    Label5.configure(text='M=M1+M2')
+
+    Entry5=tk.Entry(tSys)
+    Entry5.place(relx=0.24,rely=0.45,relheight=iheight/theight,relwidth=0.35)
+    Entry5.configure(textvariable=MVar)
+
+    Entry6=tk.Entry(tSys)
+    Entry6.place(relx=0.62,rely=0.45,relheight=iheight/theight,relwidth=0.35)
+    Entry6.configure(textvariable=MerrVar)
+
+    Button1=tk.Button(tSys)
+    Button1.place(relx=0.24,rely=0.36,relheight=b1height/theight,relwidth=b2width/twidth)
+    Button1.configure(text='Calculate')
+    Button1.configure(command=sumMass)
+
+    Label6=tk.Label(tSys)
+    Label6.place(relx=0.02,rely=0.71,relheight=lheight/theight,relwidth=0.22)
+    Label6.configure(anchor=tk.W)
+    Label6.configure(text='Inclin. i3')
+
+    Entry7=tk.Entry(tSys)
+    Entry7.place(relx=0.24,rely=0.71,relheight=iheight/theight,relwidth=0.35)
+    Entry7.configure(textvariable=i3Var)
+
+    Entry8=tk.Entry(tSys)
+    Entry8.place(relx=0.62,rely=0.71,relheight=iheight/theight,relwidth=0.35)
+    Entry8.configure(textvariable=i3errVar)
+
+    Button2=tk.Button(tSys)
+    Button2.place(relx=0.5-b2width/twidth/2,rely=0.84,relheight=b1height/theight,relwidth=b2width/twidth)
+    Button2.configure(text='Save')
+    Button2.configure(command=saveSys)
+
+def plot0(f=None):
     #plot O-Cs calculated according to initial ephemeris
     global data,weight
 
     if len(t0Var.get())*len(pVar.get())==0:
-        tkinter.messagebox.showerror('Fit Linear','Set linear ephemeris (T0, P)!')
+        tkinter.messagebox.showerror('Plot O-C','Set linear ephemeris (T0, P)!')
         return
 
     t0=float(t0Var.get())
     P=float(pVar.get())
+    dE=float(dEVar.get())
 
     if not 'tO' in data:
         if not 'tC' in data:
@@ -477,25 +862,26 @@ def plot0():
         weight=True
         err=[1 for x in range(len(data['tO']))]
 
-    oc=OCFit.FitLinear(data['tO'],t0,P,err=err)
+    oc=OCFit.FitLinear(data['tO'],t0,P,err=err,dE=dE)
     if weight: oc._set_err=False
 
     if data['tO'][0]<2e6: trans=False
     else: trans=True
 
-    if not 'err' in data and 'w' in data: oc.Plot(trans=trans,weight=data['w'],min_type=True)
-    else: oc.Plot(trans=trans,min_type=True)
+    if not 'err' in data and 'w' in data: oc.Plot(name=f,trans=trans,weight=data['w'],min_type=True)
+    else: oc.Plot(name=f,trans=trans,min_type=True)
 
-def save0():
+def save0(f=None):
     #save O-Cs calculated according to initial ephemeris
     global data,weight
 
     if len(t0Var.get())*len(pVar.get())==0:
-        tkinter.messagebox.showerror('Fit Linear','Set linear ephemeris (T0, P)!')
+        tkinter.messagebox.showerror('Save O-C','Set linear ephemeris (T0, P)!')
         return
 
     t0=float(t0Var.get())
     P=float(pVar.get())
+    dE=float(dEVar.get())
 
     if not 'tO' in data:
         if not 'tC' in data:
@@ -514,20 +900,379 @@ def save0():
         weight=True
         err=[1 for x in range(len(data['tO']))]
 
-    oc=OCFit.FitLinear(data['tO'],t0,P,err=err)
+    oc=OCFit.FitLinear(data['tO'],t0,P,err=err,dE=dE)
     if weight: oc._set_err=False
 
     for x in data: data[x]=np.array(data[x])[oc._order]   #save sorted values
 
-    f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save O-C to file',filetypes=[('Data files','*.dat *.txt'),('All files','*.*')],defaultextension='.dat')
-    if len(f)==0: return
+    if f is None:
+        f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save O-C to file',filetypes=[('Data files','*.dat *.txt'),('All files','*.*')],defaultextension='.dat')
+        if len(f)==0: return
 
     if not 'err' in data and 'w' in data: oc.SaveOC(f,weight=data['w'])
     else: oc.SaveOC(f)
 
+def fitParams0():
+    #define params of fitting (used method, its params etc.) for linear/quadratic fitting
+    global fit0
+
+    def change():
+        met=metType.get()
+        if met==0:
+            disableChildren(fRob)
+            disableChildren(fMCMC)
+        elif met==1:
+            enableChildren(fRob)
+            disableChildren(fMCMC)
+        elif met==2:
+            disableChildren(fRob)
+            enableChildren(fMCMC)
+
+    def save():
+        global fit0
+
+        fit0['met']=metType.get()
+
+        fit0['rob']=float(robVar.get())
+
+        fit0['n']=float(iterVar.get())
+        fit0['burn']=float(burnVar.get())
+        fit0['binn']=float(binnVar.get())
+        fit0['walkers']=int(walVar.get())
+
+        fit0['save']=saveVar.get()
+
+        fit0['fit']=[]
+        if t0fVar.get(): fit0['fit'].append('t0')
+        if pfVar.get(): fit0['fit'].append('P')
+        if qfVar.get(): fit0['fit'].append('Q')
+
+        #get values of params
+        fit0['params']={}
+        if len(t0Val.get())>0: fit0['params']['t0']=float(t0Val.get())
+        if len(PVal.get())>0: fit0['params']['P']=float(PVal.get())
+        if len(QVal.get())>0: fit0['params']['Q']=float(QVal.get())
+
+        #get params steps
+        fit0['steps']={}
+        if len(t0Step.get())>0: fit0['steps']['t0']=float(t0Step.get())
+        if len(PStep.get())>0: fit0['steps']['P']=float(PStep.get())
+        if len(QStep.get())>0: fit0['steps']['Q']=float(QStep.get())
+
+        #get limits for params
+        fit0['limits']={}
+        if len(t0Min.get())*len(t0Max.get())>0: fit0['limits']['t0']=[float(t0Min.get()),float(t0Max.get())]
+        if len(PMin.get())*len(PMax.get())>0: fit0['limits']['P']=[float(PMin.get()),float(PMax.get())]
+        if len(QMin.get())*len(QMax.get())>0: fit0['limits']['Q']=[float(QMin.get()),float(QMax.get())]
+
+        bLin.config(state=tk.NORMAL)
+        bQuad.config(state=tk.NORMAL)
+
+        tFit0.destroy()
+
+    #create window
+    tFit0=tk.Toplevel(master)
+    #default scale of window - NOT change this values if you want to change size
+    twidth=600
+    theight=450
+    if fixed:
+        tFit0.geometry(str(twidth)+'x'+str(theight))   #modif. this line to change size - e.g. master.geometry('400x500')
+    else:
+        #set relatively to screen size
+        tFit0.geometry('{}x{}'.format(int(twidth/mwidth*screenwidth), int(theight/mheight*screenheight)))
+    tFit0.title('Fit Params')
+
+    metType=tk.IntVar(tFit0,value=0)   #variable for radiobuttons methods
+
+    robVar=tk.StringVar(tFit0,value='10')
+    iterVar=tk.StringVar(tFit0,value='1000')
+    burnVar=tk.StringVar(tFit0,value='0')
+    binnVar=tk.StringVar(tFit0,value='1')
+    walVar=tk.IntVar(tFit0,value=2)
+
+    saveVar=tk.IntVar(tFit0)
+
+    #vars for t0
+    t0Val=tk.StringVar(tFit0)
+    t0Min=tk.StringVar(tFit0)
+    t0Max=tk.StringVar(tFit0)
+    t0Step=tk.StringVar(tFit0,value='0.001')
+    t0fVar=tk.IntVar(tFit0)
+
+    #vars for P
+    PVal=tk.StringVar(tFit0)
+    PMin=tk.StringVar(tFit0)
+    PMax=tk.StringVar(tFit0)
+    PStep=tk.StringVar(tFit0,value='0.0001')
+    pfVar=tk.IntVar(tFit0)
+
+    #vars for Q
+    QVal=tk.StringVar(tFit0)
+    QMin=tk.StringVar(tFit0,value='-1e-11')
+    QMax=tk.StringVar(tFit0,value='1e-11')
+    QStep=tk.StringVar(tFit0,value='1e-13')
+    qfVar=tk.IntVar(tFit0)
+
+    #linear ephemeris
+    if len(t0Var.get())>0: t0Val.set(t0Var.get())
+    if len(pVar.get())>0: PVal.set(pVar.get())
+
+    if len(fit0)>0:
+        metType.set(fit0['met'])
+
+        robVar.set(fit0['rob'])
+
+        iterVar.set(fit0['n'])
+        burnVar.set(fit0['burn'])
+        binnVar.set(fit0['binn'])
+        walVar.set(fit0['walkers'])
+        if 2*len(fit0['fit'])>walVar.get(): walVar.set(2*len(fit0['fit']))
+
+        saveVar.set(fit0['save'])
+        if 't0' in fit0['fit']: t0fVar.set(1)
+        if 'P' in fit0['fit']: pfVar.set(1)
+        if 'Q' in fit0['fit']: qfVar.set(1)
+
+        #setting valus of params
+        if 't0' in fit0['params']: t0Val.set(str(fit0['params']['t0']))
+        if 'P' in fit0['params']: PVal.set(str(fit0['params']['P']))
+        if 'Q' in fit0['params']: QVal.set(str(fit0['params']['Q']))
+
+        #setting steps for params
+        if 't0' in fit0['steps']: t0Step.set(str(fit0['steps']['t0']))
+        if 'P' in fit0['steps']: PStep.set(str(fit0['steps']['P']))
+        if 'Q' in fit0['steps']: QStep.set(str(fit0['steps']['Q']))
+
+        #setting lower bound of params
+        if 't0' in fit0['limits']: t0Min.set(str(fit0['limits']['t0'][0]))
+        if 'P' in fit0['limits']: PMin.set(str(fit0['limits']['P'][0]))
+        if 'Q' in fit0['limits']: QMin.set(str(fit0['limits']['Q'][0]))
+
+        #setting upper bound of params
+        if 't0' in fit0['limits']: t0Max.set(str(fit0['limits']['t0'][1]))
+        if 'P' in fit0['limits']: PMax.set(str(fit0['limits']['P'][1]))
+        if 'Q' in fit0['limits']: QMax.set(str(fit0['limits']['Q'][1]))
+
+    Label1=tk.Label(tFit0)
+    Label1.place(relx=0.02,rely=0.04,relheight=lheight/theight,relwidth=0.1)
+    Label1.configure(text='Method')
+    Label1.configure(anchor=tk.W)
+
+    Radiobutton1=tk.Radiobutton(tFit0)
+    Radiobutton1.place(relx=0.15,rely=0.04,relheight=0.05,relwidth=0.28)
+    Radiobutton1.configure(variable=metType)
+    Radiobutton1.configure(value=0)
+    Radiobutton1.configure(justify=tk.LEFT)
+    Radiobutton1.configure(anchor=tk.W)
+    Radiobutton1.configure(text='Linear Regression')
+    Radiobutton1.configure(command=change)
+
+    Radiobutton2=tk.Radiobutton(tFit0)
+    Radiobutton2.place(relx=0.43,rely=0.04,relheight=0.05,relwidth=0.28)
+    Radiobutton2.configure(variable=metType)
+    Radiobutton2.configure(value=1)
+    Radiobutton2.configure(justify=tk.LEFT)
+    Radiobutton2.configure(anchor=tk.W)
+    Radiobutton2.configure(text='Robust Regression')
+    Radiobutton2.configure(command=change)
+
+    Radiobutton3=tk.Radiobutton(tFit0)
+    Radiobutton3.place(relx=0.71,rely=0.04,relheight=0.05,relwidth=0.28)
+    Radiobutton3.configure(variable=metType)
+    Radiobutton3.configure(value=2)
+    Radiobutton3.configure(justify=tk.LEFT)
+    Radiobutton3.configure(anchor=tk.W)
+    Radiobutton3.configure(text='Monte Carlo')
+    Radiobutton3.configure(command=change)
+
+    fRob=tk.LabelFrame(tFit0)
+    fRheight=80
+    fRwidth=580
+    fRob.place(relx=0.02,rely=0.11,relheight=fRheight/theight,relwidth=fRwidth/twidth)
+    fRob.configure(text='Robust Regression')
+
+    Label2=tk.Label(fRob)
+    Label2.place(relx=0.02,rely=0.3,relheight=lheight/fRheight,relwidth=0.2)
+    Label2.configure(text='Iterations')
+    Label2.configure(anchor=tk.W)
+
+    Entry1=tk.Entry(fRob)
+    Entry1.place(relx=0.24,rely=0.3,relheight=iheight/fRheight,relwidth=0.3)
+    Entry1.configure(textvariable=robVar)
+
+    fMCMC=tk.LabelFrame(tFit0)
+    fMCheight=270
+    fMCwidth=580
+    fMCMC.place(relx=0.02,rely=0.3,relheight=fMCheight/theight,relwidth=fMCwidth/twidth)
+    fMCMC.configure(text='Monte Carlo')
+
+    Label3=tk.Label(fMCMC)
+    Label3.place(relx=0.02,rely=0.05,relheight=lheight/fMCheight,relwidth=0.2)
+    Label3.configure(text='n_iter')
+    Label3.configure(anchor=tk.W)
+
+    Label4=tk.Label(fMCMC)
+    Label4.place(relx=0.02,rely=0.15,relheight=lheight/fMCheight,relwidth=0.2)
+    Label4.configure(text='burn')
+    Label4.configure(anchor=tk.W)
+
+    Label5=tk.Label(fMCMC)
+    Label5.place(relx=0.5,rely=0.05,relheight=lheight/fMCheight,relwidth=0.2)
+    Label5.configure(text='binn')
+    Label5.configure(anchor=tk.W)
+
+    Label6=tk.Label(fMCMC)
+    Label6.place(relx=0.5,rely=0.15,relheight=lheight/fMCheight,relwidth=0.2)
+    Label6.configure(text='walkers')
+    Label6.configure(anchor=tk.W)
+
+    Entry2=tk.Entry(fMCMC)
+    Entry2.place(relx=0.15,rely=0.05,relheight=iheight/fMCheight,relwidth=0.3)
+    Entry2.configure(textvariable=iterVar)
+
+    Entry3=tk.Entry(fMCMC)
+    Entry3.place(relx=0.15,rely=0.15,relheight=iheight/fMCheight,relwidth=0.3)
+    Entry3.configure(textvariable=burnVar)
+
+    Entry4=tk.Entry(fMCMC)
+    Entry4.place(relx=0.63,rely=0.05,relheight=iheight/fMCheight,relwidth=0.3)
+    Entry4.configure(textvariable=binnVar)
+
+    Spinbox1=tkinter.ttk.Spinbox(fMCMC)
+    Spinbox1.place(relx=0.63,rely=0.15,relheight=iheight/fMCheight,relwidth=0.3)
+    Spinbox1.configure(textvariable=walVar)
+    Spinbox1.configure(from_=2,to=10000,increment=2)
+
+    Checkbutton1=tk.Checkbutton(fMCMC)
+    Checkbutton1.place(relx=0.01,rely=0.28,relheight=iheight/fMCheight,relwidth=0.9)
+    Checkbutton1.configure(justify=tk.LEFT)
+    Checkbutton1.configure(anchor=tk.W)
+    Checkbutton1.configure(text='Save fitting to file')
+    Checkbutton1.configure(variable=saveVar)
+
+    fParam=tk.LabelFrame(fMCMC)
+    fPheight=145
+    fPwidth=555
+    fParam.place(relx=0.02,rely=0.4,relheight=fPheight/fMCheight,relwidth=fPwidth/fMCwidth)
+    fParam.configure(text='Params')
+
+    Label10=tk.Label(fParam)
+    Label10.place(relx=0.15,rely=0.05,relheight=lheight/fPheight,relwidth=0.2)
+    Label10.configure(text='value')
+    Label10.configure(anchor=tk.W)
+
+    Label11=tk.Label(fParam)
+    Label11.place(relx=0.35,rely=0.05,relheight=lheight/fPheight,relwidth=0.2)
+    Label11.configure(text='min.')
+    Label11.configure(anchor=tk.W)
+
+    Label12=tk.Label(fParam)
+    Label12.place(relx=0.55,rely=0.05,relheight=lheight/fPheight,relwidth=0.2)
+    Label12.configure(text='max.')
+    Label12.configure(anchor=tk.W)
+
+    Label13=tk.Label(fParam)
+    Label13.place(relx=0.75,rely=0.05,relheight=lheight/fPheight,relwidth=0.2)
+    Label13.configure(text='step')
+    Label13.configure(anchor=tk.W)
+
+    Label14=tk.Label(fParam)
+    Label14.place(relx=0.95,rely=0.05,relheight=lheight/fPheight,relwidth=0.05)
+    Label14.configure(text='fit')
+    Label14.configure(anchor=tk.W)
+
+    #t0
+    Label7=tk.Label(fParam)
+    Label7.place(relx=0.02,rely=0.3,relheight=lheight/fPheight,relwidth=0.12)
+    Label7.configure(text='t0')
+    Label7.configure(anchor=tk.W)
+
+    Entry5=tk.Entry(fParam)
+    Entry5.place(relx=0.15,rely=0.3,relheight=iheight/fPheight,relwidth=0.19)
+    Entry5.configure(textvariable=t0Val)
+
+    Entry6=tk.Entry(fParam)
+    Entry6.place(relx=0.35,rely=0.3,relheight=iheight/fPheight,relwidth=0.19)
+    Entry6.configure(textvariable=t0Min)
+
+    Entry7=tk.Entry(fParam)
+    Entry7.place(relx=0.55,rely=0.3,relheight=iheight/fPheight,relwidth=0.19)
+    Entry7.configure(textvariable=t0Max)
+
+    Entry8=tk.Entry(fParam)
+    Entry8.place(relx=0.75,rely=0.3,relheight=iheight/fPheight,relwidth=0.19)
+    Entry8.configure(textvariable=t0Step)
+
+    Checkbutton2=tk.Checkbutton(fParam)
+    Checkbutton2.place(relx=0.95,rely=0.3,relheight=0.15,relwidth=0.04)
+    Checkbutton2.configure(justify=tk.LEFT)
+    Checkbutton2.configure(variable=t0fVar)
+
+    #P
+    Label8=tk.Label(fParam)
+    Label8.place(relx=0.02,rely=0.5,relheight=lheight/fPheight,relwidth=0.12)
+    Label8.configure(text='P')
+    Label8.configure(anchor=tk.W)
+
+    Entry9=tk.Entry(fParam)
+    Entry9.place(relx=0.15,rely=0.5,relheight=iheight/fPheight,relwidth=0.19)
+    Entry9.configure(textvariable=PVal)
+
+    Entry10=tk.Entry(fParam)
+    Entry10.place(relx=0.35,rely=0.5,relheight=iheight/fPheight,relwidth=0.19)
+    Entry10.configure(textvariable=PMin)
+
+    Entry11=tk.Entry(fParam)
+    Entry11.place(relx=0.55,rely=0.5,relheight=iheight/fPheight,relwidth=0.19)
+    Entry11.configure(textvariable=PMax)
+
+    Entry12=tk.Entry(fParam)
+    Entry12.place(relx=0.75,rely=0.5,relheight=iheight/fPheight,relwidth=0.19)
+    Entry12.configure(textvariable=PStep)
+
+    Checkbutton3=tk.Checkbutton(fParam)
+    Checkbutton3.place(relx=0.95,rely=0.5,relheight=0.15,relwidth=0.04)
+    Checkbutton3.configure(justify=tk.LEFT)
+    Checkbutton3.configure(variable=pfVar)
+
+    #Q
+    Label9=tk.Label(fParam)
+    Label9.place(relx=0.02,rely=0.7,relheight=lheight/fPheight,relwidth=0.12)
+    Label9.configure(text='Q')
+    Label9.configure(anchor=tk.W)
+
+    Entry13=tk.Entry(fParam)
+    Entry13.place(relx=0.15,rely=0.7,relheight=iheight/fPheight,relwidth=0.19)
+    Entry13.configure(textvariable=QVal)
+
+    Entry14=tk.Entry(fParam)
+    Entry14.place(relx=0.35,rely=0.7,relheight=iheight/fPheight,relwidth=0.19)
+    Entry14.configure(textvariable=QMin)
+
+    Entry15=tk.Entry(fParam)
+    Entry15.place(relx=0.55,rely=0.7,relheight=iheight/fPheight,relwidth=0.19)
+    Entry15.configure(textvariable=QMax)
+
+    Entry16=tk.Entry(fParam)
+    Entry16.place(relx=0.75,rely=0.7,relheight=iheight/fPheight,relwidth=0.19)
+    Entry16.configure(textvariable=QStep)
+
+    Checkbutton4=tk.Checkbutton(fParam)
+    Checkbutton4.place(relx=0.95,rely=0.7,relheight=0.15,relwidth=0.04)
+    Checkbutton4.configure(justify=tk.LEFT)
+    Checkbutton4.configure(variable=qfVar)
+
+    Button1=tk.Button(tFit0)
+    Button1.place(relx=0.5-b1width/twidth/2,rely=0.92,relheight=b2height/theight,relwidth=b1width/twidth)
+    Button1.configure(text='Save')
+    Button1.configure(command=save)
+
+    change()
+
+
 def lin():
     #fitting O-Cs with a linear function
-    global data,simple,weight
+    global data,simple,weight,tPQ
 
     if len(t0Var.get())*len(pVar.get())==0:
         tkinter.messagebox.showerror('Fit Linear','Set linear ephemeris (T0, P)!')
@@ -537,6 +1282,7 @@ def lin():
 
     t0=float(t0Var.get())
     P=float(pVar.get())
+    dE=float(dEVar.get())
 
     #setting errors
     if not 'err' in data and 'w' in data:
@@ -550,36 +1296,53 @@ def lin():
         err=[1 for x in range(len(data['tO']))]
 
 
-    simple=OCFit.FitLinear(data['tO'],t0,P,err=err)
+    simple=OCFit.FitLinear(data['tO'],t0,P,err=err,dE=dE)
     if weight: simple._set_err=False
 
-    simple.FitLinear()
+    if fit0['met']==0: simple.FitLinear()
+    elif fit0['met']==1: simple.FitRobust(int(fit0['rob']))
+    elif fit0['met']==2:
+        fit_params=list(fit0['fit'])
+        if 'Q' in fit_params: fit_params.remove('Q')
+        simple.params=fit0['params']
+        if fit0['save']:
+            f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save MCMC fitting to file',filetypes=[('Temp files','*.tmp'),('All files','*.*')],defaultextension='.tmp')
+            if len(f)==0: return
+            simple.FitMCMC(fit0['n'],fit0['limits'],fit0['steps'],fit_params=fit_params,burn=fit0['burn'],binn=fit0['binn'],walkers=fit0['walkers'],db=f)
+        else:
+            simple.FitMCMC(fit0['n'],fit0['limits'],fit0['steps'],fit_params=fit_params,burn=fit0['burn'],binn=fit0['binn'],walkers=fit0['walkers'])
+    else:
+        tkinter.messagebox.showerror('Fit Lin','Method not implemented, yet!')
+        return
+
 
     #save results
     for x in data: data[x]=np.array(data[x])[simple._order]   #save sorted values
     data['oc']=simple.new_oc
     data['tC']=simple.tC
-    t0Var.set(simple.t0)
-    pVar.set(simple.P)
+    tPQ=[simple.t0,simple.P,0]
 
     #make some buttons available
     bPlotS.config(state=tk.NORMAL)
     bPlotRS.config(state=tk.NORMAL)
     bSumS.config(state=tk.NORMAL)
     bSaveRS.config(state=tk.NORMAL)
+    bUpd.config(state=tk.NORMAL)
+    bSaveAll0.config(state=tk.NORMAL)
 
 def quad():
     #fitting O-Cs with a quadratic function
-    global data,simple,weight
+    global data,simple,weight,tPQ
 
     if len(t0Var.get())*len(pVar.get())==0:
-        tkinter.messagebox.showerror('Fit Linear','Set linear ephemeris (T0, P)!')
+        tkinter.messagebox.showerror('Fit Quad','Set linear ephemeris (T0, P)!')
         return
 
     if not 'tO' in data: data['tO']=[data['tC'][i]+data['oc'][i] for i in range(len(data['oc']))]
 
     t0=float(t0Var.get())
     P=float(pVar.get())
+    dE=float(dEVar.get())
 
     #setting errors
     if not 'err' in data and 'w' in data:
@@ -592,54 +1355,60 @@ def quad():
         weight=True
         err=[1 for x in range(len(data['tO']))]
 
-    simple=OCFit.FitQuad(data['tO'],t0,P,err=err)
+    simple=OCFit.FitQuad(data['tO'],t0,P,err=err,dE=dE)
     if weight: simple._set_err=False
 
-    simple.FitQuad()
+    if fit0['met']==0: simple.FitQuad()
+    elif fit0['met']==1: simple.FitRobust(int(fit0['rob']))
+    elif fit0['met']==2:
+        simple.params=fit0['params']
+        if fit0['save']:
+            f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save MCMC fitting to file',filetypes=[('Temp files','*.tmp'),('All files','*.*')],defaultextension='.tmp')
+            if len(f)==0: return
+            simple.FitMCMC(fit0['n'],fit0['limits'],fit0['steps'],fit_params=fit0['fit'],burn=fit0['burn'],binn=fit0['binn'],walkers=fit0['walkers'],db=f)
+        else:
+            simple.FitMCMC(fit0['n'],fit0['limits'],fit0['steps'],fit_params=fit0['fit'],burn=fit0['burn'],binn=fit0['binn'],walkers=fit0['walkers'])
+    else:
+        tkinter.messagebox.showerror('Fit Quad','Method not implemented, yet!')
+        return
 
     #save results
     for x in data: data[x]=np.array(data[x])[simple._order]   #save sorted values
     data['oc']=simple.new_oc
     data['tC']=simple.tC
-    t0Var.set(simple.t0)
-    pVar.set(simple.P)
+    tPQ=[simple.t0,simple.P,simple.Q]
 
     #make some buttons available
     bPlotS.config(state=tk.NORMAL)
     bPlotRS.config(state=tk.NORMAL)
     bSumS.config(state=tk.NORMAL)
     bSaveRS.config(state=tk.NORMAL)
+    bUpd.config(state=tk.NORMAL)
+    bSaveAll0.config(state=tk.NORMAL)
 
-def plotS():
+def plotS(f=None):
     #plot O-Cs together with linear / quadratic fit
     if data['tO'][0]<2e6: trans=False
     else: trans=True
 
-    if not 'err' in data and 'w' in data: simple.Plot(trans=trans,weight=data['w'],min_type=True)
-    else: simple.Plot(trans=trans,min_type=True)
+    if not 'err' in data and 'w' in data: simple.Plot(name=f,trans=trans,weight=data['w'],min_type=True)
+    else: simple.Plot(name=f,trans=trans,min_type=True)
 
 
-def plotRS():
+def plotRS(f=None):
     #plot residual O-Cs after linear / quadratic fit
     if data['tO'][0]<2e6: trans=False
     else: trans=True
 
-    if not 'err' in data and 'w' in data: simple.PlotRes(trans=trans,weight=data['w'],min_type=True)
-    else: simple.PlotRes(trans=trans,min_type=True)
-
-class IORedirector(object):
-    '''A general class for redirecting I/O to this Text widget.'''
-    def __init__(self,text_area):
-        self.text_area=text_area
-
-class StdoutRedirector(IORedirector):
-    '''A class for redirecting stdout to this Text widget.'''
-    def write(self,str):
-        self.text_area.insert(tk.END,str)
+    if not 'err' in data and 'w' in data: simple.PlotRes(name=f,trans=trans,weight=data['w'],min_type=True)
+    else: simple.PlotRes(name=f,trans=trans,min_type=True)
 
 
-def sumS():
+def sumS(f=None):
     #summary for linear / quadratic fit
+    if f is not None:
+        simple.Summary(f)
+        return
 
     #create new window
     sumW=tk.Toplevel(master)
@@ -654,8 +1423,21 @@ def sumS():
     sumW.title('Summary')
 
     #text field
-    text=tk.Text(sumW)
+    text=ScrolledText(sumW)
     text.place(relx=0.02,rely=0.02,relheight=0.96,relwidth=0.96)
+    text.configure(wrap=tk.NONE)
+
+    M1=0
+    M2=0
+    M1_err=0
+    M2_err=0
+    if len(systemParams)>0:
+        if 'M1' in systemParams: M1=systemParams['M1']
+        if 'M2' in systemParams: M2=systemParams['M2']
+        if 'M1_err' in systemParams: M1_err=systemParams['M1_err']
+        if 'M2_err' in systemParams: M2_err=systemParams['M2_err']
+
+    simple.QuadTerm(M1,M2,M1_err,M2_err)
 
     old=sys.stdout
     #redirect output to text field
@@ -665,13 +1447,36 @@ def sumS():
     sys.stdout=old
 
 
-def saveRS():
+def saveRS(f=None):
     #save residual O-Cs to file
-    f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save new O-C to file',filetypes=[('Data files','*.dat *.txt'),('All files','*.*')],defaultextension='.dat')
+    if f is None:
+        f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save new O-C to file',filetypes=[('Data files','*.dat *.txt'),('All files','*.*')],defaultextension='.dat')
     if len(f)==0: return
     if not 'err' in data and 'w' in data: simple.SaveRes(f,weight=data['w'])
     else: simple.SaveRes(f)
 
+def saveAll0():
+    #run all saving functions
+    #run all saving functions
+    f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save all to file',filetypes=[('All files','*.*')])
+    if len(f)==0: return
+
+    if '.' in f[-5:]: f=f[:f.rfind('.')]
+
+    save0(f+'_oc.dat')
+    saveRS(f+'_res.dat')
+    sumS(f+'_summary.txt')
+    plot0(f+'_oc')
+    plotS(f)
+    plotRS(f+'_res')
+    simple.SaveModel(f+'_model.dat')
+
+def update():
+    #update linear ephemeris
+    ans=tk.messagebox.askyesno('Update linear ephemeris','Update linear ephemeris from fit result ('+str(tPQ[0])+' and '+str(tPQ[1])+')?')
+    if ans:
+        t0Var.set(tPQ[0])
+        pVar.set(tPQ[1])
 
 def initC():
     #main class (OCFit) initialization
@@ -683,10 +1488,11 @@ def initC():
 
     t0=float(t0Var.get())
     P=float(pVar.get())
+    dE=float(dEVar.get())
 
     #calculationg O-Cs
     if not 'oc' in data:
-        lin=OCFit.FitLinear(data['tO'],t0,P)
+        lin=OCFit.FitLinear(data['tO'],t0,P,dE=dE)
         for x in data: data[x]=np.array(data[x])[lin._order]   #save sorted values
         data['oc']=lin.oc
 
@@ -706,7 +1512,8 @@ def initC():
         err=[1 for x in range(len(data['tO']))]
     else: err=data['err']
 
-    ocf=OCFit.OCFit(data['tO'],data['oc'],err)
+    ocf=OCFit.OCFit(data['tO'],data['oc'],err,dE=dE)
+    ocf.systemParams=systemParams
 
     ocf.Epoch(float(t0Var.get()),float(pVar.get()))   #calculate epochs
 
@@ -726,6 +1533,7 @@ def initC():
     bSum.config(state=tk.DISABLED)
     bSaveAll.config(state=tk.DISABLED)
 
+
 def saveC(f=None):
     #save class to file
     if f is None:
@@ -737,10 +1545,12 @@ def saveC(f=None):
 
 def loadC():
     #load class from file
-    global ocf
+    global ocf,systemParams
     f=tkinter.filedialog.askopenfilename(parent=master,title='Load class from file',filetypes=[('OCFit files','*.ocf'),('All files','*.*')])
     if len(f)==0: return
     ocf=OCFit.OCFitLoad(f)
+
+    systemParams=ocf.systemParams
 
     #make some buttons available
     bSaveC.config(state=tk.NORMAL)
@@ -752,6 +1562,7 @@ def loadC():
     bSaveR.config(state=tk.NORMAL)
     bSum.config(state=tk.NORMAL)
     bSaveAll.config(state=tk.NORMAL)
+    bCorr.config(state=tk.NORMAL)
 
 def fitGA():
     #fitting using genetic algorithms
@@ -776,6 +1587,33 @@ def fitGA():
     bSaveR.config(state=tk.NORMAL)
     bSum.config(state=tk.NORMAL)
     bSaveAll.config(state=tk.NORMAL)
+    bCorr.config(state=tk.NORMAL)
+
+def fitDE():
+    #fitting using scipy differentional evolution
+    for p in ocf.fit_params:
+        if not p in ocf.limits:
+            tkinter.messagebox.showerror('Fit DE','Set limits of parameter "'+p+'"!')
+            return
+        if not p in ocf.steps:
+            tkinter.messagebox.showerror('Fit DE','Set step of parameter "'+p+'"!')
+            return
+
+    if save==1:
+        f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save DE fitting to file',filetypes=[('Temp files','*.tmp'),('All files','*.*')],defaultextension='.tmp')
+        if len(f)==0: return
+        ocf.FitDE(ga['gen'],ga['size'],db=f)
+    else: ocf.FitDE(ga['gen'],ga['size'])
+
+    #make some buttons available
+    bPlot.config(state=tk.NORMAL)
+    bPlotR.config(state=tk.NORMAL)
+    bSaveM.config(state=tk.NORMAL)
+    bSaveR.config(state=tk.NORMAL)
+    bSum.config(state=tk.NORMAL)
+    bSaveAll.config(state=tk.NORMAL)
+    bCorr.config(state=tk.NORMAL)
+
 
 def fitMC():
     #fitting using Monte Carlo method
@@ -795,8 +1633,8 @@ def fitMC():
     if save==1:
         f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save MCMC fitting to file',filetypes=[('Temp files','*.tmp'),('All files','*.*')],defaultextension='.tmp')
         if len(f)==0: return
-        ocf.FitMCMC(mc['n'],mc['burn'],mc['binn'],db=f)
-    else: ocf.FitMCMC(mc['n'],mc['burn'],mc['binn'])
+        ocf.FitMCMC(mc['n'],mc['burn'],mc['binn'],mc['walkers'],db=f)
+    else: ocf.FitMCMC(mc['n'],mc['burn'],mc['binn'],mc['walkers'])
 
     #make some buttons available
     bPlot.config(state=tk.NORMAL)
@@ -805,6 +1643,312 @@ def fitMC():
     bSaveR.config(state=tk.NORMAL)
     bSum.config(state=tk.NORMAL)
     bSaveAll.config(state=tk.NORMAL)
+    bCorr.config(state=tk.NORMAL)
+
+def infoMC():
+    #posterior info about MC/GA/DE fitting
+
+    def change():
+        if dbType.get()==0:
+            Checkbutton1.configure(state=tk.DISABLED)
+            Checkbutton2.configure(state=tk.DISABLED)
+            Checkbutton3.configure(state=tk.DISABLED)
+            Checkbutton13.configure(state=tk.NORMAL)
+            Checkbutton6.configure(state=tk.DISABLED)
+            Checkbutton14.configure(state=tk.NORMAL)
+
+            Checkbutton7.configure(state=tk.DISABLED)
+            Checkbutton8.configure(state=tk.DISABLED)
+            Checkbutton12.configure(state=tk.DISABLED)
+        else:
+            Checkbutton1.configure(state=tk.NORMAL)
+            Checkbutton2.configure(state=tk.NORMAL)
+            Checkbutton3.configure(state=tk.NORMAL)
+            Checkbutton13.configure(state=tk.DISABLED)
+            Checkbutton6.configure(state=tk.NORMAL)
+
+            Checkbutton7.configure(state=tk.NORMAL)
+            Checkbutton8.configure(state=tk.NORMAL)
+            Checkbutton12.configure(state=tk.NORMAL)
+
+    def load():
+        #create OpenFile dialog
+        global dbfile
+
+        dbfile=tkinter.filedialog.askopenfilename(parent=tIMC,filetypes=[('Tmp files','*.tmp'),('Data files','*.dat *.txt'),('All files','*.*')],title='Open file')
+        dbfile=dbfile.replace('\\','/')
+
+        if len(dbfile)>0:
+            if os.path.isfile(dbfile):
+                #test if file exists -> if yes, make buttons available
+                Button2.configure(state=tk.NORMAL)
+
+    def generate():
+        path=tkinter.filedialog.askdirectory(parent=tIMC,title='Output folder',initialdir=dbfile[:dbfile.rfind('/')],mustexist=tk.FALSE)
+        if len(path)==0: return
+        if not os.path.isdir(path):
+            if os.path.isdir(path[:path.rfind('/')]): os.mkdir(path)
+            else: return
+        path+='/'
+
+        if dbType.get()==0:
+            #GA/DE
+            try: info=OCFit.info_ga.InfoGA(dbfile)
+            except KeyError:
+                tkinter.messagebox.showerror('Info MCMC/GA/DE','Incorrect input DB file! Try to change "file type".',parent=tIMC)
+                return
+            except pickle.UnpicklingError:
+                tkinter.messagebox.showerror('Info MCMC/GA/DE','Incorrect input DB file! Try to change "file type".',parent=tIMC)
+                return
+
+            if chiVar.get():
+                info.PlotChi2()
+                mpl.savefig(path+'chi2.png')
+                mpl.close()
+            if histsVar.get():
+                info.Hists()
+                mpl.savefig(path+'hist.png')
+                mpl.close()
+            if devsVar.get():
+                info.Devs()
+                mpl.savefig(path+'dev.png')
+                mpl.close()
+            if gstatVar.get(): info.Stats(path)
+            for p in info.pars:
+                if trVar.get():
+                    info.Trace(p)
+                    mpl.savefig(path+p+'_trace.png')
+                    mpl.close()
+                if histVar.get():
+                    info.Hist(p)
+                    mpl.savefig(path+p+'_hist.png')
+                    mpl.close()
+                if devVar.get():
+                    info.Dev(p)
+                    mpl.savefig(path+p+'_dev.png')
+                    mpl.close()
+
+        else:
+            #MCMC
+            try: info=OCFit.info_mc.InfoMC(dbfile)
+            except KeyError:
+                tkinter.messagebox.showerror('Info MCMC/GA/DE','Incorrect input DB file! Try to change "file type". PYMC files are not supported!',parent=tIMC)
+                return
+
+            if cornVar.get():
+                info.Corner()
+                mpl.savefig(path+'corner.png')
+                mpl.close()
+            if corrVar.get():
+                info.Corr()
+                mpl.savefig(path+'corr.png')
+                mpl.close()
+            if confVar.get():
+                info.ConfidInt(points=info.flat.shape[0]<1000)  #only if not many points
+                mpl.savefig(path+'conf.png')
+                mpl.close()
+            if histsVar.get():
+                info.Hists()
+                mpl.savefig(path+'hist.png')
+                mpl.close()
+            if devsVar.get():
+                info.Devs()
+                mpl.savefig(path+'dev.png')
+                mpl.close()
+            if corrTVar.get(): info.CorrTab(path)
+            for p in info.pars:
+                if statVar.get(): info.Stats(p,path)
+                if mulVar.get():
+                    info.MultiPlot(p)
+                    mpl.savefig(path+p+'_all.png')
+                    mpl.close()
+                if trVar.get():
+                    info.Trace(p)
+                    mpl.savefig(path+p+'_trace.png')
+                    mpl.close()
+                if histVar.get():
+                    info.Hist(p)
+                    mpl.savefig(path+p+'_hist.png')
+                    mpl.close()
+                if devVar.get():
+                    info.Dev(p)
+                    mpl.savefig(path+p+'_dev.png')
+                    mpl.close()
+                if acorVar.get():
+                    info.Acorr(p)
+                    mpl.savefig(path+p+'_acorr.png')
+                    mpl.close()
+
+        tkinter.messagebox.showinfo('Info MCMC/GA/DE','All files generated!',parent=tIMC)
+
+
+    #create new window
+    tIMC=tk.Toplevel(master)
+    #default scale of window - NOT change this values if you want to change size
+    twidth=335
+    theight=440
+    if fixed:
+        tIMC.geometry(str(twidth)+'x'+str(theight))   #modif. this line to change size - e.g. master.geometry('400x500')
+    else:
+        #set relatively to screen size
+        tIMC.geometry('{}x{}'.format(int(twidth/mwidth*screenwidth), int(theight/mheight*screenheight)))
+    tIMC.title('Info MCMC/GA/DE')
+
+    dbType=tk.IntVar(tIMC,value=1)   #variable for radiobuttons GA /MC
+    cornVar=tk.IntVar(tIMC)
+    corrVar=tk.IntVar(tIMC)
+    confVar=tk.IntVar(tIMC)
+    chiVar=tk.IntVar(tIMC)
+    histsVar=tk.IntVar(tIMC)
+    devsVar=tk.IntVar(tIMC)
+    corrTVar=tk.IntVar(tIMC)
+    gstatVar=tk.IntVar(tIMC)
+
+    statVar=tk.IntVar(tIMC)
+    mulVar=tk.IntVar(tIMC)
+    trVar=tk.IntVar(tIMC)
+    histVar=tk.IntVar(tIMC)
+    devVar=tk.IntVar(tIMC)
+    acorVar=tk.IntVar(tIMC)
+
+    Button1=tk.Button(tIMC)
+    Button1.place(relx=0.5-b1width/twidth/2,rely=0.02,relheight=b2height/theight,relwidth=b1width/twidth)
+    Button1.configure(text='Open File')
+    Button1.configure(command=load)
+
+    Label1=tk.Label(tIMC)
+    Label1.place(relx=0.06,rely=0.10,relheight=lheight/theight,relwidth=0.3)
+    Label1.configure(text='File Type')
+    Label1.configure(anchor=tk.W)
+
+    Radiobutton1=tk.Radiobutton(tIMC)
+    Radiobutton1.place(relx=0.36,rely=0.10,relheight=iheight/theight,relwidth=0.3)
+    Radiobutton1.configure(text='GA/DE')
+    Radiobutton1.configure(justify=tk.LEFT)
+    Radiobutton1.configure(variable=dbType)
+    Radiobutton1.configure(value=0)
+    Radiobutton1.configure(command=change)
+
+    Radiobutton2=tk.Radiobutton(tIMC)
+    Radiobutton2.place(relx=0.66,rely=0.10,relheight=iheight/theight,relwidth=0.3)
+    Radiobutton2.configure(text='MCMC')
+    Radiobutton2.configure(justify=tk.LEFT)
+    Radiobutton2.configure(variable=dbType)
+    Radiobutton2.configure(value=1)
+    Radiobutton2.configure(command=change)
+
+    Labelframe1=tk.LabelFrame(tIMC)
+    fheight=310
+    fwidth=300
+    Labelframe1.place(relx=0.06,rely=0.18,relheight=fheight/theight,relwidth=fwidth/twidth)
+    Labelframe1.configure(text='Generated Outputs')
+
+    Label2=tk.Label(Labelframe1)
+    Label2.place(relx=0,rely=0.03,relheight=lheight/fheight,relwidth=1)
+    Label2.configure(text='Common (one for all params)')
+
+    Checkbutton1=tk.Checkbutton(Labelframe1)
+    Checkbutton1.place(relx=0.03,rely=0.13,relheight=iheight/fheight,relwidth=0.45)
+    Checkbutton1.configure(text='Corner plot')
+    Checkbutton1.configure(anchor=tk.W)
+    Checkbutton1.configure(variable=cornVar)
+
+    Checkbutton2=tk.Checkbutton(Labelframe1)
+    Checkbutton2.place(relx=0.03,rely=0.23,relheight=iheight/fheight,relwidth=0.45)
+    Checkbutton2.configure(text='Correl. plot')
+    Checkbutton2.configure(anchor=tk.W)
+    Checkbutton2.configure(variable=corrVar)
+
+    Checkbutton3=tk.Checkbutton(Labelframe1)
+    Checkbutton3.place(relx=0.03,rely=0.33,relheight=iheight/fheight,relwidth=0.45)
+    Checkbutton3.configure(text='Confid. plot')
+    Checkbutton3.configure(anchor=tk.W)
+    Checkbutton3.configure(variable=confVar)
+
+    Checkbutton13=tk.Checkbutton(Labelframe1)
+    Checkbutton13.place(relx=0.03,rely=0.43,relheight=iheight/fheight,relwidth=0.45)
+    Checkbutton13.configure(text='Chi2 plot')
+    Checkbutton13.configure(anchor=tk.W)
+    Checkbutton13.configure(state=tk.DISABLED)
+    Checkbutton13.configure(variable=chiVar)
+
+    Checkbutton4=tk.Checkbutton(Labelframe1)
+    Checkbutton4.place(relx=0.53,rely=0.13,relheight=iheight/fheight,relwidth=0.45)
+    Checkbutton4.configure(text='Histograms')
+    Checkbutton4.configure(anchor=tk.W)
+    Checkbutton4.configure(variable=histsVar)
+
+    Checkbutton5=tk.Checkbutton(Labelframe1)
+    Checkbutton5.place(relx=0.53,rely=0.23,relheight=iheight/fheight,relwidth=0.45)
+    Checkbutton5.configure(text='Deviance')
+    Checkbutton5.configure(anchor=tk.W)
+    Checkbutton5.configure(variable=devsVar)
+
+    Checkbutton6=tk.Checkbutton(Labelframe1)
+    Checkbutton6.place(relx=0.53,rely=0.33,relheight=iheight/fheight,relwidth=0.45)
+    Checkbutton6.configure(text='Correl. table')
+    Checkbutton6.configure(anchor=tk.W)
+    Checkbutton6.configure(variable=corrTVar)
+
+    Checkbutton14=tk.Checkbutton(Labelframe1)
+    Checkbutton14.place(relx=0.53,rely=0.43,relheight=iheight/fheight,relwidth=0.45)
+    Checkbutton14.configure(text='Global Stats.')
+    Checkbutton14.configure(anchor=tk.W)
+    Checkbutton14.configure(state=tk.DISABLED)
+    Checkbutton14.configure(variable=gstatVar)
+
+    Label3=tk.Label(Labelframe1)
+    Label3.place(relx=0,rely=0.59,relheight=lheight/fheight,relwidth=1)
+    Label3.configure(text='Individual (one for each param)')
+
+    Checkbutton7=tk.Checkbutton(Labelframe1)
+    Checkbutton7.place(relx=0.03,rely=0.69,relheight=iheight/fheight,relwidth=0.45)
+    Checkbutton7.configure(text='Statistics')
+    Checkbutton7.configure(anchor=tk.W)
+    Checkbutton7.configure(variable=statVar)
+
+    Checkbutton8=tk.Checkbutton(Labelframe1)
+    Checkbutton8.place(relx=0.03,rely=0.79,relheight=iheight/fheight,relwidth=0.45)
+    Checkbutton8.configure(text='Multi plot')
+    Checkbutton8.configure(anchor=tk.W)
+    Checkbutton8.configure(variable=mulVar)
+
+    Checkbutton9=tk.Checkbutton(Labelframe1)
+    Checkbutton9.place(relx=0.03,rely=0.89,relheight=iheight/fheight,relwidth=0.45)
+    Checkbutton9.configure(text='Trace plot')
+    Checkbutton9.configure(anchor=tk.W)
+    Checkbutton9.configure(variable=trVar)
+
+    Checkbutton10=tk.Checkbutton(Labelframe1)
+    Checkbutton10.place(relx=0.53,rely=0.7,relheight=iheight/fheight,relwidth=0.45)
+    Checkbutton10.configure(text='Histogram')
+    Checkbutton10.configure(anchor=tk.W)
+    Checkbutton10.configure(variable=histVar)
+
+    Checkbutton11=tk.Checkbutton(Labelframe1)
+    Checkbutton11.place(relx=0.53,rely=0.79,relheight=iheight/fheight,relwidth=0.45)
+    Checkbutton11.configure(text='Deviance')
+    Checkbutton11.configure(anchor=tk.W)
+    Checkbutton11.configure(variable=devVar)
+
+    Checkbutton12=tk.Checkbutton(Labelframe1)
+    Checkbutton12.place(relx=0.53,rely=0.89,relheight=iheight/fheight,relwidth=0.45)
+    Checkbutton12.configure(text='Autocorrel.')
+    Checkbutton12.configure(anchor=tk.W)
+    Checkbutton12.configure(variable=acorVar)
+
+    Button2=tk.Button(tIMC)
+    Button2.place(relx=0.5-b1width/twidth/2,rely=0.9,relheight=b2height/theight,relwidth=b1width/twidth)
+    Button2.configure(text='Generate')
+    Button2.configure(command=generate)
+    Button2.configure(state=tk.DISABLED)
+
+def corrErr():
+    #correction of errors level - sometimes useful before MCMC
+    ans=tk.messagebox.askyesno('Correct Errors','Correct values of O-C errors (their mean level) according to current fitted model?')
+    if ans:
+        try: ocf.CorrectErr()
+        except KeyError: tkinter.messagebox.showerror('Correct Errors','Fit the model!')
 
 def fitParams():
     #setting parameters of GA and MC fitting
@@ -814,6 +1958,13 @@ def fitParams():
         #save values
         global ga,mc,save
 
+        if int(walkVar.get())%2==1:
+            tkinter.messagebox.showerror('Parameters of Fitting','The number of walkers must be even!',parent=tFitPar)
+            return
+        elif int(walkVar.get())<2*len(ocf.fit_params):
+            tkinter.messagebox.showerror('Parameters of Fitting','Numbers of walkers should be more than two times number of free parameters!',parent=tFitPar)
+            return
+
         save=saveChVar.get()
 
         ga['gen']=int(genVar.get())
@@ -822,6 +1973,7 @@ def fitParams():
         mc['n']=float(nVar.get())
         mc['burn']=float(burnVar.get())
         mc['binn']=float(binnVar.get())
+        mc['walkers']=int(walkVar.get())
 
         tFitPar.destroy()
 
@@ -829,13 +1981,14 @@ def fitParams():
         bRunBG.config(state=tk.NORMAL)
         bFitGA.config(state=tk.NORMAL)
         bFitMC.config(state=tk.NORMAL)
+        bFitDE.config(state=tk.NORMAL)
 
 
     #create new window
     tFitPar=tk.Toplevel(master)
     #default scale of window - NOT change this values if you want to change size
     twidth=288
-    theight=316
+    theight=330
     if fixed:
         tFitPar.geometry(str(twidth)+'x'+str(theight))   #modif. this line to change size - e.g. master.geometry('400x500')
     else:
@@ -850,47 +2003,50 @@ def fitParams():
     nVar=tk.StringVar(tFitPar,value='1000')
     burnVar=tk.StringVar(tFitPar,value='0')
     binnVar=tk.StringVar(tFitPar,value='1')
+    walkVar=tk.IntVar(tFitPar,value=2)
+
+    if len(ga)>0:
+        genVar.set(ga['gen'])
+        sizeVar.set(ga['size'])
+    if len(mc)>0:
+        nVar.set(mc['n'])
+        burnVar.set(mc['burn'])
+        binnVar.set(mc['binn'])
+        walkVar.set(mc['walkers'])
+    saveChVar.set(save)
+    if 2*len(ocf.fit_params)>walkVar.get(): walkVar.set(2*len(ocf.fit_params))
 
     #button process file
     bOK=tk.Button(tFitPar)
-    bOK.place(relx=0.35,rely=0.88,relheight=b1height/theight,relwidth=b3width/twidth)
+    bOK.place(relx=0.35,rely=295/theight,relheight=b1height/theight,relwidth=b3width/twidth)
     bOK.configure(command=ok)
     bOK.configure(text='OK')
 
-    #label
-    Label1=tk.Label(tFitPar)
-    Label1.place(relx=0.07,rely=0.79,relheight=l2height/theight,relwidth=0.4)
-    Label1.configure(text='Save fitting to file')
-    Label1.configure(anchor=tk.W)
-    Label1.configure(font=('None',9))
-
     #check - save fitting sample to file
     saveCh=tk.Checkbutton(tFitPar)
-    saveCh.place(relx=0.5,rely=0.78,relheight=0.06,relwidth=0.09)
+    saveCh.place(relx=0.07,rely=265/theight,relheight=0.06,relwidth=0.9)
     saveCh.configure(justify=tk.LEFT)
+    saveCh.configure(anchor=tk.W)
+    saveCh.configure(text=' Save fitting to file')
     saveCh.configure(variable=saveChVar)
 
     #frame for GA
     Labelframe1=tk.LabelFrame(tFitPar)
     f1height=95
     f1width=250
-    Labelframe1.place(relx=0.07,rely=0.03,relheight=f1height/theight,relwidth=f1width/twidth)
-    Labelframe1.configure(relief=tk.GROOVE)
-    Labelframe1.configure(text='FitGA')
-    Labelframe1.configure(width=250)
+    Labelframe1.place(relx=0.07,rely=9/theight,relheight=f1height/theight,relwidth=f1width/twidth)
+    Labelframe1.configure(text='FitGA/DE')
 
     #labels
     Label2=tk.Label(Labelframe1)
-    Label2.place(relx=0.08,rely=0.26,relheight=l2height/f1height,relwidth=0.3)
+    Label2.place(relx=0.08,rely=0.25,relheight=l2height/f1height,relwidth=0.3)
     Label2.configure(text='generation')
     Label2.configure(anchor=tk.W)
-    Label2.configure(font=('None',9))
 
     Label3=tk.Label(Labelframe1)
     Label3.place(relx=0.08,rely=0.61,relheight=l2height/f1height,relwidth=0.3)
     Label3.configure(text='size')
     Label3.configure(anchor=tk.W)
-    Label3.configure(font=('None',9))
 
     #input - number of generations
     gen=tk.Entry(Labelframe1)
@@ -904,46 +2060,53 @@ def fitParams():
 
     #frame for MC
     Labelframe2=tk.LabelFrame(tFitPar)
-    f2height=127
+    f2height=145
     f2width=250
-    Labelframe2.place(relx=0.07,rely=0.35,relheight=f2height/theight,relwidth=f2width/twidth)
-    Labelframe2.configure(relief=tk.GROOVE)
+    Labelframe2.place(relx=0.07,rely=110/theight,relheight=f2height/theight,relwidth=f2width/twidth)
     Labelframe2.configure(text='FitMCMC')
-    Labelframe2.configure(width=250)
 
     #labels
     Label4=tk.Label(Labelframe2)
-    Label4.place(relx=0.08,rely=0.16,relheight=l2height/f2height,relwidth=0.3)
+    Label4.place(relx=0.08,rely=20/f2height,relheight=l2height/f2height,relwidth=0.3)
     Label4.configure(text='n_iter')
     Label4.configure(anchor=tk.W)
-    Label4.configure(font=('None',9))
 
     Label5=tk.Label(Labelframe2)
-    Label5.place(relx=0.08,rely=0.43,relheight=l2height/f2height,relwidth=0.3)
+    Label5.place(relx=0.08,rely=55/f2height,relheight=l2height/f2height,relwidth=0.3)
     Label5.configure(text='burn')
     Label5.configure(anchor=tk.W)
-    Label5.configure(font=('None',9))
 
     Label6=tk.Label(Labelframe2)
-    Label6.place(relx=0.08,rely=0.69,relheight=l2height/f2height,relwidth=0.3)
+    Label6.place(relx=0.08,rely=90/f2height,relheight=l2height/f2height,relwidth=0.3)
     Label6.configure(text='binn')
     Label6.configure(anchor=tk.W)
-    Label6.configure(font=('None',9))
+
+    Label7=tk.Label(Labelframe2)
+    Label7.place(relx=0.08,rely=125/f2height,relheight=l2height/f2height,relwidth=0.3)
+    Label7.configure(text='walkers')
+    Label7.configure(anchor=tk.W)
 
     #input - number of MC steps
     n=tk.Entry(Labelframe2)
-    n.place(relx=0.4,rely=0.1,relheight=iheight/f2height,relwidth=0.56)
+    n.place(relx=0.4,rely=13/f2height,relheight=iheight/f2height,relwidth=0.56)
     n.configure(textvariable=nVar)
 
     #input - number of removed steps
     burn=tk.Entry(Labelframe2)
-    burn.place(relx=0.4,rely=0.36,relheight=iheight/f2height,relwidth=0.56)
+    burn.place(relx=0.4,rely=48/f2height,relheight=iheight/f2height,relwidth=0.56)
     burn.configure(textvariable=burnVar)
 
     #input - binning size
     binn=tk.Entry(Labelframe2)
-    binn.place(relx=0.4,rely=0.63,relheight=iheight/f2height,relwidth=0.56)
+    binn.place(relx=0.4,rely=83/f2height,relheight=iheight/f2height,relwidth=0.56)
     binn.configure(textvariable=binnVar)
+
+    #input - walkers size
+    walk=tkinter.ttk.Spinbox(Labelframe2)
+    walk.place(relx=0.4,rely=118/f2height,relheight=iheight/f2height,relwidth=0.56)
+    walk.configure(textvariable=walkVar)
+    walk.configure(from_=2*len(ocf.fit_params),to=10000,increment=2)
+
 
 
 def params():
@@ -1173,6 +2336,16 @@ def params():
             if len(dwMin.get())*len(dwMax.get())>0: ocf.limits['dw']=[float(dwMin.get()),float(dwMax.get())]
             if len(eMin.get())*len(eMax.get())>0: ocf.limits['e']=[float(eMin.get()),float(eMax.get())]
 
+            if 'Quad' in model:
+                #checking if params will be fitted
+                if QFit.get()==1: ocf.fit_params.append('Q')
+                #get values of params
+                if len(QVal.get())>0: ocf.params['Q']=float(QVal.get())
+                #get params steps
+                if len(QStep.get())>0: ocf.steps['Q']=float(QStep.get())
+                #get limits for params
+                if len(QMin.get())*len(QMax.get())>0: ocf.limits['Q']=[float(QMin.get()),float(QMax.get())]
+
         #close window
         tParams.destroy()
         bFitParams.config(state=tk.NORMAL)
@@ -1234,6 +2407,10 @@ def params():
         elif 'Apsid' in model:
             #model of apsidal motion (Apsidal)
             tNTB.select(3)
+            if 'Quad' in model:
+                for i in range(5): QA[i].config(state=tk.NORMAL)
+            else:
+                for i in range(5): QA[i].config(state=tk.DISABLED)
 
 
     def init_vars():
@@ -1536,7 +2713,7 @@ def params():
     model.place(relx=0.15,rely=0.02,relheight=0.04,relwidth=0.4)
     model.configure(textvariable=modelVar)
     model.configure(state='readonly')
-    model['values']=('LiTE3','LiTE34','LiTE3Quad','LiTE34Quad','AgolInPlanet','AgolInPlanetLin','AgolExPlanet','AgolExPlanetLin','Apsidal')
+    model['values']=('LiTE3','LiTE34','LiTE3Quad','LiTE34Quad','AgolInPlanet','AgolInPlanetLin','AgolExPlanet','AgolExPlanetLin','Apsidal','ApsidalQuad')
     model.current(0)
     model.bind('<<ComboboxSelected>>',change)
 
@@ -2551,20 +3728,26 @@ def params():
     Label3.configure(font=('None',9))
     Label3.configure(anchor=tk.W)
 
+    Label15=tk.Label(fAps)
+    Label15.place(relx=0.02,rely=0.24,relheight=l2height/nheight,relwidth=0.12)
+    Label15.configure(text='Q')
+    Label15.configure(anchor=tk.W)
+    Label15.configure(font=('None',9))
+
     Label14=tk.Label(fAps)
-    Label14.place(relx=0.02,rely=0.24,relheight=l2height/nheight,relwidth=0.12)
+    Label14.place(relx=0.02,rely=0.31,relheight=l2height/nheight,relwidth=0.12)
     Label14.configure(text='w0')
     Label14.configure(font=('None',9))
     Label14.configure(anchor=tk.W)
 
     Label4=tk.Label(fAps)
-    Label4.place(relx=0.02,rely=0.31,relheight=l2height/nheight,relwidth=0.12)
+    Label4.place(relx=0.02,rely=0.38,relheight=l2height/nheight,relwidth=0.12)
     Label4.configure(text='dw')
     Label4.configure(font=('None',9))
     Label4.configure(anchor=tk.W)
 
     Label5=tk.Label(fAps)
-    Label5.place(relx=0.02,rely=0.38,relheight=l2height/nheight,relwidth=0.12)
+    Label5.place(relx=0.02,rely=0.45,relheight=l2height/nheight,relwidth=0.12)
     Label5.configure(text='e')
     Label5.configure(font=('None',9))
     Label5.configure(anchor=tk.W)
@@ -2613,69 +3796,91 @@ def params():
     PA[-1].configure(justify=tk.LEFT)
     PA[-1].configure(variable=PFit)
 
+    #input objects for param Q
+    QA=[tk.Entry(fAps)]
+    QA[-1].place(relx=0.15,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
+    QA[-1].configure(textvariable=QVal)
+
+    QA.append(tk.Entry(fAps))
+    QA[-1].place(relx=0.35,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
+    QA[-1].configure(textvariable=QMin)
+
+    QA.append(tk.Entry(fAps))
+    QA[-1].place(relx=0.55,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
+    QA[-1].configure(textvariable=QMax)
+
+    QA.append(tk.Entry(fAps))
+    QA[-1].place(relx=0.75,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
+    QA[-1].configure(textvariable=QStep)
+
+    QA.append(tk.Checkbutton(fAps))
+    QA[-1].place(relx=0.95,rely=0.23,relheight=0.06,relwidth=0.04)
+    QA[-1].configure(justify=tk.LEFT)
+    QA[-1].configure(variable=QFit)
+
     #input objects for param w0
     w0A=[tk.Entry(fAps)]
-    w0A[-1].place(relx=0.15,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
+    w0A[-1].place(relx=0.15,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
     w0A[-1].configure(textvariable=w0Val)
 
     w0A.append(tk.Entry(fAps))
-    w0A[-1].place(relx=0.35,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
+    w0A[-1].place(relx=0.35,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
     w0A[-1].configure(textvariable=w0Min)
 
     w0A.append(tk.Entry(fAps))
-    w0A[-1].place(relx=0.55,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
+    w0A[-1].place(relx=0.55,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
     w0A[-1].configure(textvariable=w0Max)
 
     w0A.append(tk.Entry(fAps))
-    w0A[-1].place(relx=0.75,rely=0.23,relheight=iheight/nheight,relwidth=0.19)
+    w0A[-1].place(relx=0.75,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
     w0A[-1].configure(textvariable=w0Step)
 
     w0A.append(tk.Checkbutton(fAps))
-    w0A[-1].place(relx=0.95,rely=0.23,relheight=0.06,relwidth=0.04)
+    w0A[-1].place(relx=0.95,rely=0.30,relheight=0.06,relwidth=0.04)
     w0A[-1].configure(justify=tk.LEFT)
     w0A[-1].configure(variable=w0Fit)
 
     #input objects for param dw
     dwA=[tk.Entry(fAps)]
-    dwA[-1].place(relx=0.15,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
+    dwA[-1].place(relx=0.15,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
     dwA[-1].configure(textvariable=dwVal)
 
     dwA.append(tk.Entry(fAps))
-    dwA[-1].place(relx=0.35,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
+    dwA[-1].place(relx=0.35,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
     dwA[-1].configure(textvariable=dwMin)
 
     dwA.append(tk.Entry(fAps))
-    dwA[-1].place(relx=0.55,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
+    dwA[-1].place(relx=0.55,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
     dwA[-1].configure(textvariable=dwMax)
 
     dwA.append(tk.Entry(fAps))
-    dwA[-1].place(relx=0.75,rely=0.30,relheight=iheight/nheight,relwidth=0.19)
+    dwA[-1].place(relx=0.75,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
     dwA[-1].configure(textvariable=dwStep)
 
     dwA.append(tk.Checkbutton(fAps))
-    dwA[-1].place(relx=0.95,rely=0.30,relheight=0.06,relwidth=0.04)
+    dwA[-1].place(relx=0.95,rely=0.37,relheight=0.06,relwidth=0.04)
     dwA[-1].configure(justify=tk.LEFT)
     dwA[-1].configure(variable=dwFit)
 
     #input objects for param e
     eA=[tk.Entry(fAps)]
-    eA[-1].place(relx=0.15,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
+    eA[-1].place(relx=0.15,rely=0.44,relheight=iheight/nheight,relwidth=0.19)
     eA[-1].configure(textvariable=eVal)
 
     eA.append(tk.Entry(fAps))
-    eA[-1].place(relx=0.35,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
+    eA[-1].place(relx=0.35,rely=0.44,relheight=iheight/nheight,relwidth=0.19)
     eA[-1].configure(textvariable=eMin)
 
     eA.append(tk.Entry(fAps))
-    eA[-1].place(relx=0.55,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
+    eA[-1].place(relx=0.55,rely=0.44,relheight=iheight/nheight,relwidth=0.19)
     eA[-1].configure(textvariable=eMax)
 
     eA.append(tk.Entry(fAps))
-    eA[-1].place(relx=0.75,rely=0.37,relheight=iheight/nheight,relwidth=0.19)
+    eA[-1].place(relx=0.75,rely=0.44,relheight=iheight/nheight,relwidth=0.19)
     eA[-1].configure(textvariable=eStep)
 
     eA.append(tk.Checkbutton(fAps))
-    eA[-1].place(relx=0.95,rely=0.37,relheight=0.06,relwidth=0.04)
+    eA[-1].place(relx=0.95,rely=0.44,relheight=0.06,relwidth=0.04)
     eA[-1].configure(justify=tk.LEFT)
     eA[-1].configure(variable=eFit)
 
@@ -2705,7 +3910,7 @@ def plot(f=None):
             if min(w)==max(w): ocf.Plot(name=f,trans=trans,weight=w,min_type=True)
             else: ocf.Plot(name=f,trans=trans,weight=w,trans_weight=True,min_type=True)
         else: ocf.Plot(name=f,trans=trans,min_type=True)
-    except:
+    except KeyError:
         mpl.close()
         tkinter.messagebox.showerror('Plot O-C','Fit the model!')
 
@@ -2730,7 +3935,7 @@ def plotR(f=None):
             if min(w)==max(w): ocf.PlotRes(name=f,trans=trans,weight=w,min_type=True)
             else: ocf.PlotRes(name=f,trans=trans,weight=w,trans_weight=True,min_type=True)
         else: ocf.PlotRes(name=f,trans=trans,min_type=True)
-    except:
+    except KeyError:
         mpl.close()
         tkinter.messagebox.showerror('Plot new O-C','Fit the model!')
 
@@ -2779,7 +3984,7 @@ def saveM(f=None):
     if len(f)==0: return
 
     try: ocf.SaveModel(f)
-    except: tkinter.messagebox.showerror('Save model','Fit the model!')
+    except KeyError: tkinter.messagebox.showerror('Save model','Fit the model!')
 
 def saveR(f=None):
     #save residual O-Cs
@@ -2790,7 +3995,7 @@ def saveR(f=None):
     try:
         if not 'err' in data and 'w' in data: ocf.SaveRes(f,weight=data['w'])
         else: ocf.SaveRes(f)
-    except: tkinter.messagebox.showerror('Save new O-C','Fit the model!')
+    except KeyError: tkinter.messagebox.showerror('Save new O-C','Fit the model!')
 
 def saveAll():
     #run all saving functions
@@ -2798,6 +4003,18 @@ def saveAll():
     if len(f)==0: return
 
     if '.' in f[-5:]: f=f[:f.rfind('.')]
+
+    try:
+        t0=None
+        P=None
+        if not len(ocf.epoch)==len(ocf.t):
+            if not (len(t0Var.get())*len(pVar.get())==0):
+                 t0=float(t0Var.get())
+                 P=float(pVar.get())
+
+        if not 'err' in data and 'w' in data: ocf.SaveOC(f+'_oc.dat',weight=data['w'],t0=t0,P=P)
+        else: ocf.SaveOC(f+'_oc.dat',t0=t0,P=P)
+    except TypeError: tkinter.messagebox.showerror('Save O-C','Set linear ephemeris (T0, P)!')
 
     saveM(f+'_model.dat')
     saveR(f+'_res.dat')
@@ -2811,7 +4028,7 @@ def summary(f=None):
 
     if f is not None:
         try: ocf.Summary(f)
-        except: tkinter.messagebox.showerror('Summary','Fit the model!')
+        except KeyError: tkinter.messagebox.showerror('Summary','Fit the model!')
         return
 
 
@@ -2828,15 +4045,16 @@ def summary(f=None):
     sumW.title('Summary')
 
     #text field
-    text=tk.Text(sumW)
+    text=ScrolledText(sumW)
     text.place(relx=0.02,rely=0.02,relheight=0.96,relwidth=0.96)
+    text.configure(wrap=tk.NONE)
 
     old=sys.stdout
     #redirect output to text field
     sys.stdout=StdoutRedirector(text)
 
     try: ocf.Summary()
-    except:
+    except KeyError:
         sumW.destroy()
         tkinter.messagebox.showerror('Summary','Fit the model!')
 
@@ -2845,13 +4063,16 @@ def summary(f=None):
 data={}
 ga={}
 mc={}
+fit0={}
 save=0
+
+systemParams={}
 
 #main window
 master=tk.Tk()
 #default scale of window - NOT change this values if you want to change size
-mwidth=329
-mheight=492
+mwidth=350
+mheight=560
 
 fixed=True   #fixed size to default
 
@@ -2861,7 +4082,7 @@ else:
     #set relatively to screen size
     height = master.winfo_screenheight()
     width = master.winfo_screenwidth()
-    screenheight = int(0.5*height)
+    screenheight = int(0.6*height)
     screenwidth = int(0.25*width)
     master.geometry('{}x{}'.format(screenwidth, screenheight))
 master.title('OCFit GUI')
@@ -2874,10 +4095,10 @@ lheight=23    #label
 l2height=18
 rheight=27      #radiobutton
 
-b1width=87
+b1width=90
 b2width=117
-b3width=90
-b4width=135
+b3width=95
+b4width=140
 b5width=100
 b6width=80
 rwidth=75
@@ -2889,223 +4110,286 @@ style.layout('TNotebook.Tab',[])
 #variable for T0 and P
 t0Var=tk.StringVar(master)
 pVar=tk.StringVar(master)
+dEVar=tk.StringVar(master,value='0.5')
 
 #button - load data from file
 bLoad=tk.Button(master)
-bLoad.place(relx=0.36,rely=0.01,relheight=b1height/mheight,relwidth=b1width/mwidth)
+bLoad.place(relx=0.5-b1width/mwidth/2,rely=5/mheight,relheight=b1height/mheight,relwidth=b1width/mwidth)
 bLoad.configure(command=load)
 bLoad.configure(text='Load Data')
 
 #frame for linear ephemeris
 Frame1=tk.Frame(master)
-f1height=74
-f1width=296
-Frame1.place(relx=0.06,rely=0.08,relheight=f1height/mheight,relwidth=f1width/mwidth)
+f1height=95
+f1width=316
+Frame1.place(relx=0.06,rely=40/mheight,relheight=f1height/mheight,relwidth=f1width/mwidth)
 Frame1.configure(relief=tk.GROOVE)
-Frame1.configure(borderwidth='2')
-Frame1.configure(relief=tk.GROOVE)
-Frame1.configure(width=295)
+Frame1.configure(borderwidth=2)
+
 
 #labels
 Label1=tk.Label(Frame1)
-Label1.place(relx=0.07,rely=0.2,relheight=lheight/f1height,relwidth=0.15)
+Label1.place(relx=0.07,rely=15/f1height,relheight=lheight/f1height,relwidth=0.15)
 Label1.configure(anchor=tk.W)
 Label1.configure(text='T0')
 Label1.configure(font=('None',9))
 
+#input - T0
+Entry1=tk.Entry(Frame1)
+Entry1.place(relx=0.24,rely=15/f1height,relheight=iheight/f1height,relwidth=0.73)
+Entry1.configure(textvariable=t0Var)
+
 Label2=tk.Label(Frame1)
-Label2.place(relx=0.07,rely=0.53,relheight=lheight/f1height,relwidth=0.15)
+Label2.place(relx=0.07,rely=(15+24)/f1height,relheight=lheight/f1height,relwidth=0.15)
 Label2.configure(anchor=tk.W)
 Label2.configure(justify=tk.LEFT)
 Label2.configure(text='P')
 Label2.configure(font=('None',9))
 
-#input - T0
-Entry1=tk.Entry(Frame1)
-Entry1.place(relx=0.24,rely=0.13,relheight=iheight/f1height,relwidth=0.73)
-Entry1.configure(textvariable=t0Var)
-
 #input - P
 Entry2=tk.Entry(Frame1)
-Entry2.place(relx=0.24,rely=0.53,relheight=iheight/f1height,relwidth=0.73)
+Entry2.place(relx=0.24,rely=(15+24)/f1height,relheight=iheight/f1height,relwidth=0.73)
 Entry2.configure(textvariable=pVar)
+
+Label3=tk.Label(Frame1)
+Label3.place(relx=0.07,rely=(15+2*24)/f1height,relheight=lheight/f1height,relwidth=0.15)
+Label3.configure(anchor=tk.W)
+Label3.configure(justify=tk.LEFT)
+Label3.configure(text='dE')
+Label3.configure(font=('None',9))
+
+#input - dE
+Entry3=tk.Entry(Frame1)
+Entry3.place(relx=0.24,rely=(15+2*24)/f1height,relheight=iheight/f1height,relwidth=0.35)
+Entry3.configure(textvariable=dEVar)
+
+bdE=tk.Button(Frame1)
+bdE.place(relx=0.6,rely=(15+2*24)/f1height,relheight=iheight/f1height,relwidth=0.37)
+bdE.configure(command=deltaE)
+bdE.configure(text='Calculate')
 
 #button - Plot O-C
 bPlot0=tk.Button(master)
-bPlot0.place(relx=0.12,rely=0.24,relheight=b1height/mheight,relwidth=b2width/mwidth)
+bPlot0.place(relx=0.06,rely=140/mheight,relheight=b1height/mheight,relwidth=b5width/mwidth)
 bPlot0.configure(command=plot0)
 bPlot0.configure(state=tk.DISABLED)
 bPlot0.configure(text='Plot O-C')
 
+
 #button - Save O-C
 bSave0=tk.Button(master)
-bSave0.place(relx=0.55,rely=0.24,relheight=b1height/mheight,relwidth=b2width/mwidth)
+bSave0.place(relx=0.365,rely=140/mheight,relheight=b1height/mheight,relwidth=b5width/mwidth)
 bSave0.configure(command=save0)
 bSave0.configure(state=tk.DISABLED)
 bSave0.configure(text='Save O-C')
 
+#button - System Params
+bSyst=tk.Button(master)
+bSyst.place(relx=0.67,rely=140/mheight,relheight=b1height/mheight,relwidth=b5width/mwidth)
+bSyst.configure(command=system)
+bSyst.configure(text='Sys.Params.')
+
 #frame for linear / quadratic fitting
 Frame2=tk.Frame(master)
 f2height=113
-f2width=296
-Frame2.place(relx=0.06,rely=0.32,relheight=f2height/mheight,relwidth=f2width/mwidth)
+f2width=316
+Frame2.place(relx=0.06,rely=177/mheight,relheight=f2height/mheight,relwidth=f2width/mwidth)
 Frame2.configure(relief=tk.GROOVE)
-Frame2.configure(borderwidth='2')
-Frame2.configure(relief=tk.GROOVE)
-Frame2.configure(width=295)
+Frame2.configure(borderwidth=2)
+
+
+#button - fit params
+bFit0=tk.Button(Frame2)
+bFit0.place(relx=0.02,rely=9/f2height,relheight=b2height/f2height,relwidth=b3width/f2width)
+bFit0.configure(command=fitParams0)
+bFit0.configure(state=tk.DISABLED)
+bFit0.configure(text='FitParams')
 
 #button - fit linear
 bLin=tk.Button(Frame2)
-bLin.place(relx=0.05,rely=0.08,relheight=b2height/f2height,relwidth=b2width/f2width)
+bLin.place(relx=0.35,rely=9/f2height,relheight=b2height/f2height,relwidth=b3width/f2width)
 bLin.configure(command=lin)
 bLin.configure(state=tk.DISABLED)
-bLin.configure(text='Fit Linear')
+bLin.configure(text='FitLinear')
+
+#button - fit quadratic
+bQuad=tk.Button(Frame2)
+bQuad.place(relx=0.68,rely=9/f2height,relheight=b2height/f2height,relwidth=b3width/f2width)
+bQuad.configure(command=quad)
+bQuad.configure(state=tk.DISABLED)
+bQuad.configure(text='FitQuad')
 
 #button - plot O-C
 bPlotS=tk.Button(Frame2)
-bPlotS.place(relx=0.05,rely=0.38,relheight=b2height/f2height,relwidth=b2width/f2width)
+bPlotS.place(relx=0.02,rely=(9+34)/f2height,relheight=b2height/f2height,relwidth=b3width/f2width)
 bPlotS.configure(command=plotS)
 bPlotS.configure(state=tk.DISABLED)
 bPlotS.configure(text='Plot O-C')
 
-#button - summary
-bSumS=tk.Button(Frame2)
-bSumS.place(relx=0.05,rely=0.69,relheight=b2height/f2height,relwidth=b2width/f2width)
-bSumS.configure(command=sumS)
-bSumS.configure(state=tk.DISABLED)
-bSumS.configure(text='Summary')
-
-#button - fit quadratic
-bQuad=tk.Button(Frame2)
-bQuad.place(relx=0.54,rely=0.08,relheight=b2height/f2height,relwidth=b2width/f2width)
-bQuad.configure(command=quad)
-bQuad.configure(state=tk.DISABLED)
-bQuad.configure(text='Fit Quadratic')
-
 #button - plot residual O-C
 bPlotRS=tk.Button(Frame2)
-bPlotRS.place(relx=0.54,rely=0.38,relheight=b2height/f2height,relwidth=b2width/f2width)
+bPlotRS.place(relx=0.35,rely=(9+34)/f2height,relheight=b2height/f2height,relwidth=b3width/f2width)
 bPlotRS.configure(command=plotRS)
 bPlotRS.configure(state=tk.DISABLED)
 bPlotRS.configure(text='Plot O-C res.')
 
+#button - summary
+bSumS=tk.Button(Frame2)
+bSumS.place(relx=0.68,rely=(9+34)/f2height,relheight=b2height/f2height,relwidth=b3width/f2width)
+bSumS.configure(command=sumS)
+bSumS.configure(state=tk.DISABLED)
+bSumS.configure(text='Summary')
+
 #button - save residual O-C
 bSaveRS=tk.Button(Frame2)
-bSaveRS.place(relx=0.54,rely=0.69,relheight=b2height/f2height,relwidth=b2width/f2width)
+bSaveRS.place(relx=0.02,rely=(9+2*34)/f2height,relheight=b2height/f2height,relwidth=b3width/f2width)
 bSaveRS.configure(command=saveRS)
 bSaveRS.configure(state=tk.DISABLED)
 bSaveRS.configure(text='Save O-C res.')
 
+#button - save all
+bSaveAll0=tk.Button(Frame2)
+bSaveAll0.place(relx=0.35,rely=(9+2*34)/f2height,relheight=b2height/f2height,relwidth=b3width/f2width)
+bSaveAll0.configure(command=saveAll0)
+bSaveAll0.configure(state=tk.DISABLED)
+bSaveAll0.configure(text='Save all')
+
+#button - save residual O-C
+bUpd=tk.Button(Frame2)
+bUpd.place(relx=0.68,rely=(9+2*34)/f2height,relheight=b2height/f2height,relwidth=b3width/f2width)
+bUpd.configure(command=update)
+bUpd.configure(state=tk.DISABLED)
+bUpd.configure(text='UpdateEph')
+
 #frame for O-C fitting
 Frame3=tk.Frame(master)
-f3height=187
-f3width=296
-Frame3.place(relx=0.06,rely=0.56,relheight=f3height/mheight,relwidth=f3width/mwidth)
+f3height=220
+f3width=316
+Frame3.place(relx=0.06,rely=300/mheight,relheight=f3height/mheight,relwidth=f3width/mwidth)
 Frame3.configure(relief=tk.GROOVE)
-Frame3.configure(borderwidth='2')
-Frame3.configure(relief=tk.GROOVE)
-Frame3.configure(width=295)
+Frame3.configure(borderwidth=2)
+
 
 #button - class initialization
 bInit=tk.Button(Frame3)
-bInit.place(relx=0.02,rely=0.05,relheight=b1height/f3height,relwidth=b3width/f3width)
+bInit.place(relx=0.02,rely=9/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
 bInit.configure(command=initC)
 bInit.configure(state=tk.DISABLED)
 bInit.configure(text='Init class')
 
 #button - load class from file
 bLoadC=tk.Button(Frame3)
-bLoadC.place(relx=0.35,rely=0.05,relheight=b1height/f3height,relwidth=b3width/f3width)
+bLoadC.place(relx=0.35,rely=9/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
 bLoadC.configure(command=loadC)
 bLoadC.configure(text='Load Class')
 
 #button - set model parameters
 bParams=tk.Button(Frame3)
-bParams.place(relx=0.68,rely=0.05,relheight=b1height/f3height,relwidth=b3width/f3width)
+bParams.place(relx=0.68,rely=9/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
 bParams.configure(command=params)
 bParams.configure(state=tk.DISABLED)
 bParams.configure(text='Set Params')
 
 #button - set parameters of GA and MC fitting
 bFitParams=tk.Button(Frame3)
-bFitParams.place(relx=0.02,rely=0.24,relheight=b1height/f3height,relwidth=b3width/f3width)
+bFitParams.place(relx=0.02,rely=(9+35)/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
 bFitParams.configure(command=fitParams)
 bFitParams.configure(state=tk.DISABLED)
 bFitParams.configure(text='Fit. Params')
 
 #button - GA fitting
 bFitGA=tk.Button(Frame3)
-bFitGA.place(relx=0.35,rely=0.24,relheight=b1height/f3height,relwidth=b3width/f3width)
+bFitGA.place(relx=0.35,rely=(9+35)/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
 bFitGA.configure(command=fitGA)
 bFitGA.configure(state=tk.DISABLED)
 bFitGA.configure(text='Fit GA')
 
 #button - MC fitting
+bFitDE=tk.Button(Frame3)
+bFitDE.place(relx=0.68,rely=(9+35)/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
+bFitDE.configure(command=fitDE)
+bFitDE.configure(state=tk.DISABLED)
+bFitDE.configure(text='Fit DE')
+
+#button - MC fitting
+bCorr=tk.Button(Frame3)
+bCorr.place(relx=0.02,rely=(9+2*35)/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
+bCorr.configure(command=corrErr)
+bCorr.configure(state=tk.DISABLED)
+bCorr.configure(text='Corr. Err.')
+
+#button - MC fitting
 bFitMC=tk.Button(Frame3)
-bFitMC.place(relx=0.68,rely=0.24,relheight=b1height/f3height,relwidth=b3width/f3width)
+bFitMC.place(relx=0.35,rely=(9+2*35)/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
 bFitMC.configure(command=fitMC)
 bFitMC.configure(state=tk.DISABLED)
 bFitMC.configure(text='Fit MCMC')
 
+#button - info about MC/GA fitting
+bInfoMC=tk.Button(Frame3)
+bInfoMC.place(relx=0.68,rely=(9+2*35)/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
+bInfoMC.configure(command=infoMC)
+bInfoMC.configure(text='Info MC/GA')
+
 #button - plot O-C with model
 bPlot=tk.Button(Frame3)
-bPlot.place(relx=0.02,rely=0.43,relheight=b1height/f3height,relwidth=b3width/f3width)
+bPlot.place(relx=0.02,rely=(9+3*35)/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
 bPlot.configure(command=plot)
 bPlot.configure(state=tk.DISABLED)
 bPlot.configure(text='Plot O-C')
 
 #button - plot residual O-C
 bPlotR=tk.Button(Frame3)
-bPlotR.place(relx=0.35,rely=0.43,relheight=b1height/f3height,relwidth=b3width/f3width)
+bPlotR.place(relx=0.35,rely=(9+3*35)/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
 bPlotR.configure(command=plotR)
 bPlotR.configure(state=tk.DISABLED)
 bPlotR.configure(text='Plot O-C res.')
 
 #button - summary of fitting
 bSum=tk.Button(Frame3)
-bSum.place(relx=0.68,rely=0.43,relheight=b1height/f3height,relwidth=b3width/f3width)
+bSum.place(relx=0.68,rely=(9+3*35)/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
 bSum.configure(command=summary)
 bSum.configure(state=tk.DISABLED)
 bSum.configure(text='Summary')
 
 #button - save model O-C
 bSaveM=tk.Button(Frame3)
-bSaveM.place(relx=0.02,rely=0.62,relheight=b1height/f3height,relwidth=b3width/f3width)
+bSaveM.place(relx=0.02,rely=(9+4*35)/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
 bSaveM.configure(command=saveM)
 bSaveM.configure(state=tk.DISABLED)
 bSaveM.configure(text='Save model')
 
 #button - save residual O-C
 bSaveR=tk.Button(Frame3)
-bSaveR.place(relx=0.35,rely=0.62,relheight=b1height/f3height,relwidth=b3width/f3width)
+bSaveR.place(relx=0.35,rely=(9+4*35)/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
 bSaveR.configure(command=saveR)
 bSaveR.configure(state=tk.DISABLED)
 bSaveR.configure(text='Save O-C res.')
 
 #button - save class to file
 bSaveC=tk.Button(Frame3)
-bSaveC.place(relx=0.68,rely=0.62,relheight=b1height/f3height,relwidth=b3width/f3width)
+bSaveC.place(relx=0.68,rely=(9+4*35)/f3height,relheight=b1height/f3height,relwidth=b3width/f3width)
 bSaveC.configure(command=saveC)
 bSaveC.configure(state=tk.DISABLED)
 bSaveC.configure(text='Save class')
 
 #button - fitting on background
 bRunBG=tk.Button(Frame3)
-bRunBG.place(relx=0.02,rely=0.81,relheight=b1height/f3height,relwidth=b4width/f3width)
+bRunBG.place(relx=0.02,rely=(9+5*35)/f3height,relheight=b1height/f3height,relwidth=b4width/f3width)
 bRunBG.configure(command=runBG)
 bRunBG.configure(state=tk.DISABLED)
 bRunBG.configure(text='Fit on Background')
 
 #buttom - save all
 bSaveAll=tk.Button(Frame3)
-bSaveAll.place(relx=0.53, rely=0.81,relheight=b1height/f3height,relwidth=b4width/f3width)
+bSaveAll.place(relx=0.53,rely=(9+5*35)/f3height,relheight=b1height/f3height,relwidth=b4width/f3width)
 bSaveAll.configure(command=saveAll)
 bSaveAll.configure(state=tk.DISABLED)
 bSaveAll.configure(text='Save All')
 
 #label
 Label3=tk.Label(master)
-Label3.place(relx=0.09,rely=0.95,relheight=l2height/mheight,relwidth=0.9)
+Label3.place(relx=0.09,rely=1-24/mheight,relheight=l2height/mheight,relwidth=0.9)
 Label3.configure(text='(c) Pavol Gajdos, 2018 - 2022')
 Label3.configure(font=('None',9))
 
