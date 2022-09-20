@@ -43,6 +43,6 @@ Or using pip:
 
 or
 
-``pip install git+https://github.com/pavolgaj/OCFit.git@dev``
+``pip install git+https://github.com/pavolgaj/OCFit.git``
 
 [//]: # (``pip install OCFit``)
