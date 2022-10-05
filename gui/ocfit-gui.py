@@ -1537,7 +1537,7 @@ def initC():
 def saveC(f=None):
     #save class to file
     if f is None:
-        f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save class to file',filetypes=[('OCFit files','*.ocf'),('All files','*.*')],defaultextension='.ocf')
+        f=tkinter.filedialog.asksaveasfilename(parent=master,title='Save class to file',filetypes=[('JSON files','*.json'),('OCFit files','*.ocf'),('All files','*.*')],defaultextension='.json')
     if len(f)==0: return
     ocf.Save(f)
     return f
@@ -1546,7 +1546,7 @@ def saveC(f=None):
 def loadC():
     #load class from file
     global ocf,systemParams
-    f=tkinter.filedialog.askopenfilename(parent=master,title='Load class from file',filetypes=[('OCFit files','*.ocf'),('All files','*.*')])
+    f=tkinter.filedialog.askopenfilename(parent=master,title='Load class from file',filetypes=[('JSON files','*.json'),('OCFit files','*.ocf'),('All files','*.*')])
     if len(f)==0: return
     ocf=OCFit.OCFitLoad(f)
 
@@ -4018,7 +4018,7 @@ def saveAll():
 
     saveM(f+'_model.dat')
     saveR(f+'_res.dat')
-    saveC(f+'.ocf')
+    saveC(f+'.json')
     summary(f+'_summary.txt')
     plot(f)
     plotR(f+'_res')

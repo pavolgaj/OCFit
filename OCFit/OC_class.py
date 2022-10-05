@@ -1633,7 +1633,7 @@ class OCFit(ComplexFit,Common):
         data['system']=self.systemParams
 
         path=path.replace('\\','/')   #change dirs in path (for Windows)
-        if path.rfind('.')<=path.rfind('/'): path+='.ocf'   #without extesion
+        if path.rfind('.')<=path.rfind('/'): path+='.json'   #without extesion
 
         if format=='pickle':
             f=open(path,'wb')
@@ -1649,7 +1649,7 @@ class OCFit(ComplexFit,Common):
     def Load(self,path):
         '''loading data, model, parameters... from file'''
         path=path.replace('\\','/')   #change dirs in path (for Windows)
-        if path.rfind('.')<=path.rfind('/'): path+='.ocf'   #without extesion
+        if path.rfind('.')<=path.rfind('/'): path+='.json'   #without extesion
         f=open(path,'rb')  #detect if file is json or pickle
         x=f.read(1)
         f.close()
