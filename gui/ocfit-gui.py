@@ -931,6 +931,11 @@ def fitParams0():
     def save():
         global fit0
 
+        if metType.get()==2:
+            result=tkinter.messagebox.askquestion('Saving parameters','It is necessary to set values of all fixed parameters and limits\
+             and steps of all fitted parameters. Do you want to continue?',icon='warning',parent=tFit0)
+            if result=='no': return
+
         fit0['met']=metType.get()
 
         fit0['rob']=float(robVar.get())
