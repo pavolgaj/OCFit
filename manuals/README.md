@@ -1,6 +1,8 @@
 List of manuals/documentations:
 
-- gui.pdf - short presentation about GUI (in English)
+- gui.pdf - short presentation about GUI (in English, 2018)
+
+- gui-news.pdf - short presentation about news in OCFit and mainly in GUI (in English, 2020)
 
 - gui-paper.pdf - our paper mainly about GUI and also about OCFit class; published in [OEJV](http://var.astro.cz/oejv/issues/oejv0197.pdf), 2019, 197, 71
 
