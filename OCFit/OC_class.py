@@ -816,10 +816,7 @@ class FitLinear(SimpleFit):
         return: new O-C'''
         if robust:
             err=self.err*np.exp(((self.oc-self.model)/(5*self.err))**4)
-            k=1
-            while np.inf in err:
-                k*=10
-                err=self.err*np.exp(((self.oc-self.model)/(5*k*self.err))**4)
+            err[err==np.inf]=1e300
         else: err=self.err
         w=1./err
 
@@ -1110,10 +1107,7 @@ class FitQuad(SimpleFit):
         return: new O-C'''
         if robust:
             err=self.err*np.exp(((self.oc-self.model)/(5*self.err))**4)
-            k=1
-            while np.inf in err:
-                k*=10
-                err=self.err*np.exp(((self.oc-self.model)/(5*k*self.err))**4)
+            err[err==np.inf]=1e300
         else: err=self.err
         p,cov=np.polyfit(self.epoch,self.oc,2,cov=True,w=1./err)
 
@@ -2963,7 +2957,7 @@ class OCFit(ComplexFit,Common):
 
         warning: weights have to be in same order as input data!
         '''
-        if epoch:
+        if epoch or double_ax:
             if not len(self.epoch)==len(self.t):
                 raise NameError('Epoch not callculated! Run function "Epoch" before it.')
 
@@ -3094,7 +3088,7 @@ class OCFit(ComplexFit,Common):
         #expand time interval for model O-C
         if len(self.t)<1000:
             if 't0' in params:
-                old_epoch=self.epoch
+                old_epoch=np.array(self.epoch)
                 dE=(self.epoch[-1]-self.epoch[0])/1000.
                 E=np.linspace(self.epoch[0]-50*dE,self.epoch[-1]+50*dE,1100)
                 t1=params['t0']+params['P']*E
@@ -3108,7 +3102,7 @@ class OCFit(ComplexFit,Common):
                 t1=np.linspace(self.t[0]-50*dt,self.t[-1]+50*dt,1100)
         else:
             if 't0' in params:
-                old_epoch=self.epoch
+                old_epoch=np.array(self.epoch)
                 dE=(self.epoch[-1]-self.epoch[0])/len(self.epoch)
                 E=np.linspace(self.epoch[0]-0.05*len(self.epoch)*dE,self.epoch[-1]+0.05*len(self.epoch)*dE,int(1.1*len(self.epoch)))
                 t1=params['t0']+params['P']*E
