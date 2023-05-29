@@ -1,6 +1,7 @@
 # OCFit
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.2547766.svg)](https://doi.org/10.5281/zenodo.2547766)
 [![DOI](https://img.shields.io/badge/ascl-1901.002-blue.svg?colorB=262255)](http://ascl.net/1901.002)
+[![DOI](https://img.shields.io/badge/ADS-2019OEJV..197...71G-red)]([http://ascl.net/1901.002](https://ui.adsabs.harvard.edu/abs/2019OEJV..197...71G))
 [![PyPI version](https://img.shields.io/pypi/v/ocfit.svg?colorB=green&style=flat)](https://pypi.org/project/OCFit/)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/b3fe9f8e7f1d438ca0e9a11e9c951a20)](https://www.codacy.com/gh/pavolgaj/OCFit/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=pavolgaj/OCFit&amp;utm_campaign=Badge_Grade)
 
