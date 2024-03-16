@@ -158,7 +158,7 @@ class InfoMC():
             i=self.pars.index(p)
             values.append(np.median(self.flat[:,i]))
             tr.append(self.flat[:,i])
-        fig=corner.corner(np.array(tr).transpose(),labels=params,truths=values,quantiles=[1-0.6827,0.6827],show_titles=True)
+        fig=corner.corner(np.array(tr).transpose(),labels=params,truths=values,quantiles=[1-0.6827,0.5,0.6827],show_titles=True)
         return fig
 
     def Hist(self,param,new_fig=True,label=True):
