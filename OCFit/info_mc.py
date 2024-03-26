@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 #class for statistics about MC fitting from emcee package
-#version 0.2.1
-#update: 22.6.2022
-# (c) Pavol Gajdos, 2018-2022
+#version 0.2.2
+#update: 16.3.2024
+# (c) Pavol Gajdos, 2018-2024
 
 import gc #cleaning var from RAM
 

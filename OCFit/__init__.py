@@ -4,7 +4,7 @@ from .OC_class import OCFit
 from .OC_class import OCFitLoad
 from .OC_class import DeltaEpoch,Epoch
 
-__version__='0.2.1'
+__version__='0.2.2'
 
 del ga
 del OC_class

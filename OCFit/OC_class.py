@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 #main classes of OCFit package
-#version 0.2.1
-#update: 19.9.2022
-# (c) Pavol Gajdos, 2018-2022
+#version 0.2.2
+#update: 26.3.2024
+# (c) Pavol Gajdos, 2018-2024
 
 from time import time
 import sys
@@ -620,11 +620,11 @@ class SimpleFit(Common):
             epoch=np.round((lims-self.t0)/self.P*2)/2.
             ax2.set_xlim(epoch)
 
-        if name is None: mpl.show()
-        else:
+        if name is not None:
             mpl.savefig(name+'.png')
             if eps: mpl.savefig(name+'.eps')
             mpl.close(fig)
+        return fig
 
     def Plot(self,name=None,no_plot=0,no_plot_err=0,eps=False,oc_min=True,
              time_type='JD',offset=2400000,trans=True,title=None,epoch=False,
@@ -794,11 +794,11 @@ class SimpleFit(Common):
             ax2.set_xlim(epoch)
 
 
-        if name is None: mpl.show()
-        else:
+        if name is not None:
             mpl.savefig(name+'.png')
             if eps: mpl.savefig(name+'.eps')
             mpl.close(fig)
+        return fig
 
 class FitLinear(SimpleFit):
     '''fitting of O-C diagram with linear function'''
@@ -1569,13 +1569,14 @@ class OCFit(ComplexFit,Common):
         self._min_type=[]       #type of minima (primary=0 / secondary=1)
         self.availableModels=['LiTE3','LiTE34','LiTE3Quad','LiTE34Quad',\
                               'AgolInPlanet','AgolInPlanetLin','AgolExPlanet',\
-                              'AgolExPlanetLin','Apsidal','ApsidalQuad']   #list of available models
+                              'AgolExPlanetLin','Apsidal','ApsidalQuad',\
+                              'LiTE3Apsidal','LiTE3ApsidalQuad']   #list of available models
 
 
     def AvailableModels(self):
         '''print available models for fitting O-Cs'''
         print('Available Models:')
-        for s in self.availableModels: print(s)
+        for s in sorted(self.availableModels): print(s)
 
     def ModelParams(self,model=None,allModels=False):
         '''display parameters of model'''
@@ -1589,14 +1590,14 @@ class OCFit(ComplexFit,Common):
             if 'InPlanet' in model: s+='P, a, w, e, mu3, r3, w3, t03, P3, '
             if 'ExPlanet' in model: s+='P, mu3, e3, t03, P3, '
             if 'Apsidal' in model:
-                s+='t0, P,'
+                s+='t0, P, '
                 if 'Quad' in model: s+='Q, '
-                s+=' w0, dw, e, '
+                s+='w0, dw, e, '
             print(s[:-2])
 
         if model is None: model=self.model
         if allModels:
-            for m in self.availableModels: Display(m)
+            for m in sorted(self.availableModels): Display(m)
         else: Display(model)
 
 
@@ -1898,6 +1899,48 @@ class OCFit(ComplexFit,Common):
 
         return dt+Q*self.epoch**2
 
+    def LiTE3Apsidal(self,t,a_sin_i3,e3,w3,t03,P3,t0,P,w0,dw,e,min_type):
+        '''model of O-C by Light-Time effect caused by 3rd body given by Irwin (1952) with Apsidal motion (Gimenez&Bastero,1995)
+        t - times of minima (np.array or float) [days]
+        a_sin_i3 - semimayor axis of eclipsing binary around center of mass of triple system [AU]
+        e3 - eccentricity of 3rd body
+        w3 - longitude of pericenter of 3rd body [rad]
+        P3 - period of 3rd body [days]
+        t03 - time of pericenter passage of 3rd body [days]
+        t0 - time of refernce minima [days]
+        P - period of eclipsing binary [days]
+        w0 - initial position of pericenter [rad]
+        dw - angular velocity of line of apsides [rad/period]
+        e - eccentricity
+        min_type - type of minimas [0 or 1]
+        output in days
+        '''
+
+        dtL=self.LiTE(t,a_sin_i3,e3,w3,t03,P3)
+        dtA=self.Apsidal(t,t0,P,w0,dw,e,min_type)
+        return dtL+dtA
+
+    def LiTE3ApsidalQuad(self,t,a_sin_i3,e3,w3,t03,P3,t0,P,Q,w0,dw,e,min_type):
+        '''model of O-C by Light-Time effect caused by 3rd body given by Irwin (1952) with Apsidal motion (Gimenez&Bastero,1995) and quadratic model
+        t - times of minima (np.array or float) [days]
+        a_sin_i3 - semimayor axis of eclipsing binary around center of mass of triple system [AU]
+        e3 - eccentricity of 3rd body
+        w3 - longitude of pericenter of 3rd body [rad]
+        P3 - period of 3rd body [days]
+        t03 - time of pericenter passage of 3rd body [days]
+        t0 - time of refernce minima [days]
+        P - period of eclipsing binary [days]
+        Q - quadratic term [days]
+        w0 - initial position of pericenter [rad]
+        dw - angular velocity of line of apsides [rad/period]
+        e - eccentricity
+        min_type - type of minimas [0 or 1]
+        output in days
+        '''
+
+        dtL=self.LiTE(t,a_sin_i3,e3,w3,t03,P3)
+        dtA=self.Apsidal(t,t0,P,w0,dw,e,min_type)
+        return dtL+dtA+Q*self.epoch**2
 
     def PhaseCurve(self,P,t0,plot=False):
         '''create phase curve'''
@@ -2453,6 +2496,14 @@ class OCFit(ComplexFit,Common):
                 #remove values calculated before
                 del self.paramsMore['K4']
                 if 'K4' in self.paramsMore_err: del self.paramsMore_err['K4']
+            if 'KA' in self.paramsMore:
+                #remove values calculated before
+                del self.paramsMore['KA']
+                if 'KA' in self.paramsMore_err: del self.paramsMore_err['KA']
+            if 'K3+KA' in self.paramsMore:
+                #remove values calculated before
+                del self.paramsMore['K3+KA']
+                if 'K3+KA' in self.paramsMore_err: del self.paramsMore_err['K3+KA']
 
             self.paramsMore['K3']=self.params['a_sin_i3']*AU/c*np.sqrt(1-self.params['e3']**2*np.cos(self.params['w3'])**2)
             output['K3']=self.paramsMore['K3']
@@ -2479,6 +2530,15 @@ class OCFit(ComplexFit,Common):
 
         if 'LiTE34' in self.model:
             #LiTE34 and LiTE34Quad models
+            if 'KA' in self.paramsMore:
+                #remove values calculated before
+                del self.paramsMore['KA']
+                if 'KA' in self.paramsMore_err: del self.paramsMore_err['KA']
+            if 'K3+KA' in self.paramsMore:
+                #remove values calculated before
+                del self.paramsMore['K3+KA']
+                if 'K3+KA' in self.paramsMore_err: del self.paramsMore_err['K3+KA']
+
             self.paramsMore['K4']=self.params['a_sin_i4']*AU/c*np.sqrt(1-self.params['e4']**2*np.cos(self.params['w4'])**2)
             output['K4']=self.paramsMore['K4']
             if len(self.params_err)>0:
@@ -2508,6 +2568,14 @@ class OCFit(ComplexFit,Common):
                 #remove values calculated before
                 del self.paramsMore['K4']
                 if 'K4' in self.paramsMore_err: del self.paramsMore_err['K4']
+            if 'KA' in self.paramsMore:
+                #remove values calculated before
+                del self.paramsMore['KA']
+                if 'KA' in self.paramsMore_err: del self.paramsMore_err['KA']
+            if 'K3+KA' in self.paramsMore:
+                #remove values calculated before
+                del self.paramsMore['K3+KA']
+                if 'K3+KA' in self.paramsMore_err: del self.paramsMore_err['K3+KA']
 
             self.paramsMore['K3']=day*self.params['mu3']/(2*np.pi*(1-self.params['mu3']))*self.params['P']**2/self.params['P3']*\
                                   (1-self.params['e3']**2)**(-3./2.)*2*(np.arctan(self.params['e3']/(1+np.sqrt(1-self.params['e3']**2)))+self.params['e3'])
@@ -2545,6 +2613,14 @@ class OCFit(ComplexFit,Common):
                 #remove values calculated before
                 del self.paramsMore['K4']
                 if 'K4' in self.paramsMore_err: del self.paramsMore_err['K4']
+            if 'KA' in self.paramsMore:
+                #remove values calculated before
+                del self.paramsMore['KA']
+                if 'KA' in self.paramsMore_err: del self.paramsMore_err['KA']
+            if 'K3+KA' in self.paramsMore:
+                #remove values calculated before
+                del self.paramsMore['K3+KA']
+                if 'K3+KA' in self.paramsMore_err: del self.paramsMore_err['K3+KA']
 
             self.paramsMore['K3']=day*self.params['P']*self.params['mu3']*self.params['r3']*np.sqrt(1-self.params['e']**2)/\
                                   (2*np.pi*self.params['a']*(1-self.params['e']*np.sin(self.params['w'])))
@@ -2588,9 +2664,9 @@ class OCFit(ComplexFit,Common):
                 #remove values calculated before
                 del self.paramsMore['K4']
                 if 'K4' in self.paramsMore_err: del self.paramsMore_err['K4']
-            self.paramsMore['K3']=day*self.params['P']*self.params['e']/np.pi
+            self.paramsMore['KA']=day*self.params['P']*self.params['e']/np.pi
 
-            output['K3']=self.paramsMore['K3']
+            output['KA']=self.paramsMore['KA']
             if len(self.params_err)>0:
                 #calculate error of Amplitude
                 #get errors of params of 3rd body
@@ -2598,12 +2674,32 @@ class OCFit(ComplexFit,Common):
                 else: e_err=0
                 if 'P' in self.params_err: P_err=self.params_err['P']
                 else: P_err=0
-                self.paramsMore_err['K3']=self.paramsMore['K3']*np.sqrt((P_err/self.params['P'])**2+\
+                self.paramsMore_err['KA']=self.paramsMore['KA']*np.sqrt((P_err/self.params['P'])**2+\
                                           (e_err/self.params['e'])**2)
 
                 #if some errors = 0, del them; and return only non-zero errors
-                if self.paramsMore_err['K3']==0: del self.paramsMore_err['K3']
-                else: output['K3_err']=self.paramsMore_err['K3']
+                if self.paramsMore_err['KA']==0: del self.paramsMore_err['KA']
+                else: output['KA_err']=self.paramsMore_err['KA']
+
+            if 'K3' in self.paramsMore:
+                if 'LiTE' in self.model:
+                    self.paramsMore['K3+KA']=self.paramsMore['K3']+self.paramsMore['KA']
+                    output['K3+KA']=self.paramsMore['K3+KA']
+
+                    if 'K3' in self.paramsMore_err: K3err=self.paramsMore_err['K3']
+                    else:  K3err=0
+                    if 'KA' in self.paramsMore_err: KAerr=self.paramsMore_err['KA']
+                    else:  KAerr=0
+
+                    self.paramsMore_err['K3+KA']=K3err+KAerr
+                    #if some errors = 0, del them; and return only non-zero errors
+                    if self.paramsMore_err['K3+KA']==0: del self.paramsMore_err['K3+KA']
+                    else: output['K3+KA_err']=self.paramsMore_err['K3+KA']
+
+                else:
+                    #remove values calculated before
+                    del self.paramsMore['K3']
+                    if 'K3' in self.paramsMore_err: del self.paramsMore_err['K3']
 
         return output
 
@@ -2869,6 +2965,14 @@ class OCFit(ComplexFit,Common):
         elif self.model=='ApsidalQuad':
             if min_type is None: min_type=self._min_type
             model=self.ApsidalQuad(t,param['t0'],param['P'],param['Q'],param['w0'],param['dw'],param['e'],min_type)
+        elif self.model=='LiTE3Apsidal':
+            if min_type is None: min_type=self._min_type
+            model=self.LiTE3Apsidal(t,param['a_sin_i3'],param['e3'],param['w3'],param['t03'],param['P3'],
+                                    param['t0'],param['P'],param['w0'],param['dw'],param['e'],min_type)
+        elif self.model=='LiTE3ApsidalQuad':
+            if min_type is None: min_type=self._min_type
+            model=self.LiTE3ApsidalQuad(t,param['a_sin_i3'],param['e3'],param['w3'],param['t03'],param['P3'],
+                                        param['t0'],param['P'],param['Q'],param['w0'],param['dw'],param['e'],min_type)
         else:
             raise ValueError('The model "'+self.model+'" does not exist!')
         return model
@@ -3190,11 +3294,11 @@ class OCFit(ComplexFit,Common):
             mpl.subplots_adjust(hspace=.07)
             mpl.setp(ax1.get_xticklabels(),visible=False)
 
-        if name is None: mpl.show()
-        else:
+        if name is not None:
             mpl.savefig(name+'.png')
             if eps: mpl.savefig(name+'.eps')
             mpl.close(fig)
+        return fig
 
 
     def PlotRes(self,name=None,no_plot=0,no_plot_err=0,params=None,eps=False,oc_min=True,
@@ -3348,11 +3452,11 @@ class OCFit(ComplexFit,Common):
             epoch=np.round((lims-self._t0P[0])/self._t0P[1]*2)/2.
             ax2.set_xlim(epoch)
 
-        if name is None: mpl.show()
-        else:
+        if name is not None:
             mpl.savefig(name+'.png')
             if eps: mpl.savefig(name+'.eps')
             mpl.close(fig)
+        return fig
 
 
 
