@@ -1,5 +1,6 @@
 from OCFit import FitQuad, FitLinear
 import numpy as np
+import matplotlib.pyplot as mpl
 
 #generate data
 E = np.arange(0, 100, 1)  #epochs
@@ -28,6 +29,7 @@ lin.Summary() #summary of parameters
 lin.Plot(trans = False)
 #plot of residual O-C, without transformation of x axis
 lin.PlotRes(trans = False)
+mpl.show()
 
 #usage of class FitQuad
 #as estimation of linear ephemeris the resault from FitLinear are used
@@ -44,3 +46,4 @@ quad.Summary() #summary of parameters
 quad.Plot(trans = False)
 #plot of residual O-C, without transformation of x axis
 quad.PlotRes(trans = False)
+mpl.show()

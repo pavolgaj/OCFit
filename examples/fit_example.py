@@ -1,5 +1,6 @@
 from OCFit import OCFit, FitLinear
 import numpy as np
+import matplotlib.pyplot as mpl
 
 #generating data
 E = np.arange(0, 100, 1)  #epochs
@@ -47,4 +48,4 @@ fit.Summary()
 #figure with original O-C with fit without transformation of x axis
 #together with residue and 2nd axis in epochs
 fit.Plot(trans = False,with_res=True,double_ax=True)
-
+mpl.show()

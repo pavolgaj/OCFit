@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
 #main file for GUI for OCFit class
-#update: 19.9.2022
-# (c) Pavol Gajdos, 2018-2022
+#update: 26.3.2024
+# (c) Pavol Gajdos, 2018-2024
 
 import tkinter as tk
 import tkinter.ttk
@@ -870,6 +870,7 @@ def plot0(f=None):
 
     if not 'err' in data and 'w' in data: oc.Plot(name=f,trans=trans,weight=data['w'],min_type=True)
     else: oc.Plot(name=f,trans=trans,min_type=True)
+    if f is None: mpl.show()
 
 def save0(f=None):
     #save O-Cs calculated according to initial ephemeris
@@ -1398,7 +1399,7 @@ def plotS(f=None):
 
     if not 'err' in data and 'w' in data: simple.Plot(name=f,trans=trans,weight=data['w'],min_type=True)
     else: simple.Plot(name=f,trans=trans,min_type=True)
-
+    if f is None: mpl.show()
 
 def plotRS(f=None):
     #plot residual O-Cs after linear / quadratic fit
@@ -1407,7 +1408,7 @@ def plotRS(f=None):
 
     if not 'err' in data and 'w' in data: simple.PlotRes(name=f,trans=trans,weight=data['w'],min_type=True)
     else: simple.PlotRes(name=f,trans=trans,min_type=True)
-
+    if f is None: mpl.show()
 
 def sumS(f=None):
     #summary for linear / quadratic fit
@@ -3915,6 +3916,7 @@ def plot(f=None):
             if min(w)==max(w): ocf.Plot(name=f,trans=trans,weight=w,min_type=True)
             else: ocf.Plot(name=f,trans=trans,weight=w,trans_weight=True,min_type=True)
         else: ocf.Plot(name=f,trans=trans,min_type=True)
+        if f is None: mpl.show()
     except KeyError:
         mpl.close()
         tkinter.messagebox.showerror('Plot O-C','Fit the model!')
@@ -3940,6 +3942,7 @@ def plotR(f=None):
             if min(w)==max(w): ocf.PlotRes(name=f,trans=trans,weight=w,min_type=True)
             else: ocf.PlotRes(name=f,trans=trans,weight=w,trans_weight=True,min_type=True)
         else: ocf.PlotRes(name=f,trans=trans,min_type=True)
+        if f is None: mpl.show()
     except KeyError:
         mpl.close()
         tkinter.messagebox.showerror('Plot new O-C','Fit the model!')
@@ -4395,7 +4398,7 @@ bSaveAll.configure(text='Save All')
 #label
 Label3=tk.Label(master)
 Label3.place(relx=0.09,rely=1-24/mheight,relheight=l2height/mheight,relwidth=0.9)
-Label3.configure(text='(c) Pavol Gajdos, 2018 - 2022')
+Label3.configure(text='(c) Pavol Gajdos, 2018 - 2024')
 Label3.configure(font=('None',9))
 
 tk.mainloop()
