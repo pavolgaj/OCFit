@@ -1,5 +1,5 @@
 # OCFit
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.2547766.svg)](https://doi.org/10.5281/zenodo.2547766)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10875980.svg)](https://doi.org/10.5281/zenodo.2547766)
 [![DOI](https://img.shields.io/badge/ascl-1901.002-blue.svg?colorB=262255)](http://ascl.net/1901.002)
 [![DOI](https://img.shields.io/badge/ADS-2019OEJV..197...71G-red)](https://ui.adsabs.harvard.edu/abs/2019OEJV..197...71G)
 [![DOI](https://img.shields.io/badge/ADS-2023OEJV..241....1G-red)](https://ui.adsabs.harvard.edu/abs/2023OEJV..241....1G)
