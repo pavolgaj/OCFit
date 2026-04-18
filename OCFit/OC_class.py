@@ -572,16 +572,16 @@ class SimpleFit(Common):
         errors=GetMax(abs(self.new_oc),no_plot)
         if set_w:
             #using weights
-            prim=np.delete(prim,np.where(np.in1d(prim,errors)))
-            sec=np.delete(sec,np.where(np.in1d(sec,errors)))
+            prim=np.delete(prim,np.where(np.isin(prim,errors)))
+            sec=np.delete(sec,np.where(np.isin(sec,errors)))
             if not len(prim)==0:
                 for i in range(len(w)):
-                    ax1.plot(x[prim[np.where(np.in1d(prim,w[i]))]],
-                             (self.new_oc*k)[prim[np.where(np.in1d(prim,w[i]))]],color+'o',markersize=size[i])
+                    ax1.plot(x[prim[np.where(np.isin(prim,w[i]))]],
+                             (self.new_oc*k)[prim[np.where(np.isin(prim,w[i]))]],color+'o',markersize=size[i])
             if not len(sec)==0:
                 for i in range(len(w)):
-                    ax1.plot(x[sec[np.where(np.in1d(sec,w[i]))]],
-                             (self.new_oc*k)[sec[np.where(np.in1d(sec,w[i]))]],color+'o',markersize=size[i],
+                    ax1.plot(x[sec[np.where(np.isin(sec,w[i]))]],
+                             (self.new_oc*k)[sec[np.where(np.isin(sec,w[i]))]],color+'o',markersize=size[i],
                              fillstyle='none',markeredgewidth=1,markeredgecolor=color)
 
         else:
@@ -591,8 +591,8 @@ class SimpleFit(Common):
                 if self._corr_err: err=self._old_err
                 else: err=self.err
                 errors=np.append(errors,GetMax(err,no_plot_err))
-                prim=np.delete(prim,np.where(np.in1d(prim,errors)))
-                sec=np.delete(sec,np.where(np.in1d(sec,errors)))
+                prim=np.delete(prim,np.where(np.isin(prim,errors)))
+                sec=np.delete(sec,np.where(np.isin(sec,errors)))
                 if not len(prim)==0:
                     ax1.errorbar(x[prim],(self.new_oc*k)[prim],yerr=(err*k)[prim],fmt=color+'o',markersize=5)
                 if not len(sec)==0:
@@ -601,8 +601,8 @@ class SimpleFit(Common):
 
             else:
                 #without errors
-                prim=np.delete(prim,np.where(np.in1d(prim,errors)))
-                sec=np.delete(sec,np.where(np.in1d(sec,errors)))
+                prim=np.delete(prim,np.where(np.isin(prim,errors)))
+                sec=np.delete(sec,np.where(np.isin(sec,errors)))
                 if not len(prim)==0:
                     ax1.plot(x[prim],(self.new_oc*k)[prim],color+'o')
                 if not len(sec)==0:
@@ -717,16 +717,16 @@ class SimpleFit(Common):
         else: errors=np.array([])
         if set_w:
             #using weights
-            prim=np.delete(prim,np.where(np.in1d(prim,errors)))
-            sec=np.delete(sec,np.where(np.in1d(sec,errors)))
+            prim=np.delete(prim,np.where(np.isin(prim,errors)))
+            sec=np.delete(sec,np.where(np.isin(sec,errors)))
             if not len(prim)==0:
                 for i in range(len(w)):
-                    ax1.plot(x[prim[np.where(np.in1d(prim,w[i]))]],
-                             (self.oc*k)[prim[np.where(np.in1d(prim,w[i]))]],color+'o',markersize=size[i],zorder=1)
+                    ax1.plot(x[prim[np.where(np.isin(prim,w[i]))]],
+                             (self.oc*k)[prim[np.where(np.isin(prim,w[i]))]],color+'o',markersize=size[i],zorder=1)
             if not len(sec)==0:
                 for i in range(len(w)):
-                    ax1.plot(x[sec[np.where(np.in1d(sec,w[i]))]],
-                             (self.oc*k)[sec[np.where(np.in1d(sec,w[i]))]],color+'o',markersize=size[i],
+                    ax1.plot(x[sec[np.where(np.isin(sec,w[i]))]],
+                             (self.oc*k)[sec[np.where(np.isin(sec,w[i]))]],color+'o',markersize=size[i],
                              fillstyle='none',markeredgewidth=1,markeredgecolor=color,zorder=1)
 
         else:
@@ -736,8 +736,8 @@ class SimpleFit(Common):
                 if self._corr_err: err=self._old_err
                 else: err=self.err
                 errors=np.append(errors,GetMax(err,no_plot_err))  #remove errorful points
-                prim=np.delete(prim,np.where(np.in1d(prim,errors)))
-                sec=np.delete(sec,np.where(np.in1d(sec,errors)))
+                prim=np.delete(prim,np.where(np.isin(prim,errors)))
+                sec=np.delete(sec,np.where(np.isin(sec,errors)))
                 if not len(prim)==0:
                     ax1.errorbar(x[prim],(self.oc*k)[prim],yerr=(err*k)[prim],fmt=color+'o',markersize=5,zorder=1)
                 if not len(sec)==0:
@@ -746,8 +746,8 @@ class SimpleFit(Common):
 
             else:
                 #without errors
-                prim=np.delete(prim,np.where(np.in1d(prim,errors)))
-                sec=np.delete(sec,np.where(np.in1d(sec,errors)))
+                prim=np.delete(prim,np.where(np.isin(prim,errors)))
+                sec=np.delete(sec,np.where(np.isin(sec,errors)))
                 if not len(prim)==0:
                     ax1.plot(x[prim],(self.oc*k)[prim],color+'o',zorder=1)
                 if not len(sec)==0:
@@ -3152,16 +3152,16 @@ class OCFit(ComplexFit,Common):
         else: color='b'
         if set_w:
             #using weights
-            prim=np.delete(prim,np.where(np.in1d(prim,errors)))
-            sec=np.delete(sec,np.where(np.in1d(sec,errors)))
+            prim=np.delete(prim,np.where(np.isin(prim,errors)))
+            sec=np.delete(sec,np.where(np.isin(sec,errors)))
             if not len(prim)==0:
                 for i in range(len(w)):
-                    ax1.plot(x[prim[np.where(np.in1d(prim,w[i]))]],
-                             (self.oc*k)[prim[np.where(np.in1d(prim,w[i]))]],color+'o',markersize=size[i],label=legend[0],zorder=1)
+                    ax1.plot(x[prim[np.where(np.isin(prim,w[i]))]],
+                             (self.oc*k)[prim[np.where(np.isin(prim,w[i]))]],color+'o',markersize=size[i],label=legend[0],zorder=1)
             if not len(sec)==0:
                 for i in range(len(w)):
-                    ax1.plot(x[sec[np.where(np.in1d(sec,w[i]))]],
-                             (self.oc*k)[sec[np.where(np.in1d(sec,w[i]))]],color+'o',markersize=size[i],
+                    ax1.plot(x[sec[np.where(np.isin(sec,w[i]))]],
+                             (self.oc*k)[sec[np.where(np.isin(sec,w[i]))]],color+'o',markersize=size[i],
                              fillstyle='none',markeredgewidth=1,markeredgecolor=color,label=legend[0],zorder=1)
 
         else:
@@ -3171,8 +3171,8 @@ class OCFit(ComplexFit,Common):
                 if self._corr_err: err=self._old_err
                 else: err=self.err
                 errors=np.append(errors,GetMax(err,no_plot_err))  #remove errorful points
-                prim=np.delete(prim,np.where(np.in1d(prim,errors)))
-                sec=np.delete(sec,np.where(np.in1d(sec,errors)))
+                prim=np.delete(prim,np.where(np.isin(prim,errors)))
+                sec=np.delete(sec,np.where(np.isin(sec,errors)))
                 if not len(prim)==0:
                     ax1.errorbar(x[prim],(self.oc*k)[prim],yerr=(err*k)[prim],fmt=color+'o',markersize=5,label=legend[0],zorder=1)
                 if not len(sec)==0:
@@ -3181,8 +3181,8 @@ class OCFit(ComplexFit,Common):
 
             else:
                 #without errors
-                prim=np.delete(prim,np.where(np.in1d(prim,errors)))
-                sec=np.delete(sec,np.where(np.in1d(sec,errors)))
+                prim=np.delete(prim,np.where(np.isin(prim,errors)))
+                sec=np.delete(sec,np.where(np.isin(sec,errors)))
                 if not len(prim)==0:
                     ax1.plot(x[prim],(self.oc*k)[prim],color+'o',label=legend[0],zorder=1)
                 if not len(sec)==0:
@@ -3402,16 +3402,16 @@ class OCFit(ComplexFit,Common):
         else: color='b'
         if set_w:
             #using weights
-            prim=np.delete(prim,np.where(np.in1d(prim,errors)))
-            sec=np.delete(sec,np.where(np.in1d(sec,errors)))
+            prim=np.delete(prim,np.where(np.isin(prim,errors)))
+            sec=np.delete(sec,np.where(np.isin(sec,errors)))
             if not len(prim)==0:
                 for i in range(len(w)):
-                    mpl.plot(x[prim[np.where(np.in1d(prim,w[i]))]],
-                             (self.res*k)[prim[np.where(np.in1d(prim,w[i]))]],color+'o',markersize=size[i])
+                    mpl.plot(x[prim[np.where(np.isin(prim,w[i]))]],
+                             (self.res*k)[prim[np.where(np.isin(prim,w[i]))]],color+'o',markersize=size[i])
             if not len(sec)==0:
                 for i in range(len(w)):
-                    mpl.plot(x[sec[np.where(np.in1d(sec,w[i]))]],
-                             (self.res*k)[sec[np.where(np.in1d(sec,w[i]))]],color+'o',markersize=size[i],
+                    mpl.plot(x[sec[np.where(np.isin(sec,w[i]))]],
+                             (self.res*k)[sec[np.where(np.isin(sec,w[i]))]],color+'o',markersize=size[i],
                              fillstyle='none',markeredgewidth=1,markeredgecolor=color)
 
         else:
@@ -3421,8 +3421,8 @@ class OCFit(ComplexFit,Common):
                 if self._corr_err: err=self._old_err
                 else: err=self.err
                 errors=np.append(errors,GetMax(err,no_plot_err))  #remove errorful points
-                prim=np.delete(prim,np.where(np.in1d(prim,errors)))
-                sec=np.delete(sec,np.where(np.in1d(sec,errors)))
+                prim=np.delete(prim,np.where(np.isin(prim,errors)))
+                sec=np.delete(sec,np.where(np.isin(sec,errors)))
                 if not len(prim)==0:
                     mpl.errorbar(x[prim],(self.res*k)[prim],yerr=(err*k)[prim],fmt=color+'o',markersize=5)
                 if not len(sec)==0:
@@ -3431,8 +3431,8 @@ class OCFit(ComplexFit,Common):
 
             else:
                 #without errors
-                prim=np.delete(prim,np.where(np.in1d(prim,errors)))
-                sec=np.delete(sec,np.where(np.in1d(sec,errors)))
+                prim=np.delete(prim,np.where(np.isin(prim,errors)))
+                sec=np.delete(sec,np.where(np.isin(sec,errors)))
                 if not len(prim)==0:
                     mpl.plot(x[prim],(self.res*k)[prim],color+'o')
                 if not len(sec)==0:
